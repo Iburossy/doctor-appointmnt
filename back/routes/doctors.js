@@ -22,6 +22,24 @@ router.post('/upgrade',
     { name: 'clinicPhotos', maxCount: 5 },
     { name: 'certifications', maxCount: 5 }
   ]),
+  // Middleware pour parser les données JSON du champ 'data'
+  (req, res, next) => {
+    if (req.body.data && typeof req.body.data === 'string') {
+      try {
+        const parsedData = JSON.parse(req.body.data);
+        // Fusionner les données parsées avec req.body pour la validation
+        req.body = { ...req.body, ...parsedData };
+        console.log('✅ Données JSON parsées avec succès');
+      } catch (e) {
+        console.error('❌ Erreur de parsing du champ data JSON:', e);
+        return res.status(400).json({
+          error: 'Format JSON invalide dans le champ data',
+          details: e.message
+        });
+      }
+    }
+    next();
+  },
   [
   body('medicalLicenseNumber')
     .trim()
@@ -59,18 +77,6 @@ router.post('/upgrade',
     .withMessage('Au moins une langue est requise')
 ], async (req, res) => {
   try {
-    // Gestion du cas où les données sont envoyées via un champ 'data' JSON (multipart/form-data)
-    let requestData = req.body;
-    if (req.body.data && typeof req.body.data === 'string') {
-      try {
-        requestData = JSON.parse(req.body.data);
-        // Fusionner les données parsées avec req.body pour la validation
-        req.body = { ...req.body, ...requestData };
-      } catch (e) {
-        console.error('Erreur de parsing du champ data JSON:', e);
-      }
-    }
-
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({

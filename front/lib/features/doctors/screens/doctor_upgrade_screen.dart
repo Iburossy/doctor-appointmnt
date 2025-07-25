@@ -198,9 +198,9 @@ class _DoctorUpgradeScreenState extends State<DoctorUpgradeScreen> {
       // Utilisation du service d'upload de documents
       final uploadService = DoctorUploadService.instance;
       
-      // Préparation des documents
+      // Préparation des documents avec les noms exacts attendus par le backend
       final documents = <String, List<File>>{
-        'license': [_licenseDocument!],
+        'medicalLicense': [_licenseDocument!],
         'diploma': [_diplomaDocument!],
       };
       

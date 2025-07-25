@@ -15,11 +15,11 @@ class DoctorUploadService {
 
   /// Types de documents supportés
   static const Map<String, String> documentTypes = {
-    'license': 'Licence médicale',
+    'medicalLicense': 'Licence médicale',
     'diploma': 'Diplôme',
-    'certification': 'Certification',
-    'profile': 'Photo de profil',
-    'clinic': 'Photo de clinique',
+    'certifications': 'Certification',
+    'profilePhoto': 'Photo de profil',
+    'clinicPhotos': 'Photo de clinique',
   };
 
   /// Crée un profil médecin et upload tous les documents en une seule requête
@@ -38,13 +38,24 @@ class DoctorUploadService {
       final Map<String, File> filesToUpload = {};
       final List<String> processedFiles = [];
       
+      // Mapping des noms de champs anciens vers nouveaux
+      final Map<String, String> fieldMapping = {
+        'license': 'medicalLicense',
+        'diploma': 'diploma', // déjà correct
+        'certification': 'certifications',
+        'profile': 'profilePhoto',
+        'clinic': 'clinicPhotos',
+      };
+      
       documents.forEach((documentType, files) {
         if (files.isNotEmpty) {
-          filesToUpload[documentType] = files.first;
-          processedFiles.add('${documentType}: ${files.first.path}');
+          // Utiliser le nom de champ mappé pour le backend
+          final backendFieldName = fieldMapping[documentType] ?? documentType;
+          filesToUpload[backendFieldName] = files.first;
+          processedFiles.add('${backendFieldName}: ${files.first.path}');
           
           {
-            Logger.log('🔄 Préparation fichier $documentType: ${files.first.path}');
+            Logger.log('🔄 Préparation fichier $backendFieldName (original: $documentType): ${files.first.path}');
           }
         }
       });
