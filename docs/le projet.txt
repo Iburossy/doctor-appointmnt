@@ -1,0 +1,147 @@
+# Fonctionnalités Essentielles - Application Médicale Sénégal
+
+## Authentification et Gestion des Comptes
+
+### Sélection de rôle
+- Choix du type de compte lors de l'inscription : **Patient** ou **Médecin**
+- Interface différente selon le rôle sélectionné
+
+### Création de compte Patient
+- Inscription avec numéro de téléphone (méthode privilégiée au Sénégal)
+- Vérification par SMS avec code OTP
+- Option inscription avec email en alternative
+
+### Création de compte Médecin
+- Inscription initiale identique aux patients (nom, téléphone, email, mot de passe)
+- Vérification par SMS avec code OTP
+- **Compte créé avec statut "Patient" par défaut**
+- Accès à une section "Devenir Médecin" dans le profil pour compléter l'inscription professionnelle
+
+### Connexion (commune aux deux rôles)
+- Connexion avec numéro de téléphone + mot de passe
+- Option "Se souvenir de moi"
+- Récupération de mot de passe par SMS
+- Connexion biométrique (empreinte/Face ID) après première connexion
+
+### Profil Patient
+
+#### Informations personnelles
+- Nom complet, âge, sexe
+- Numéro de téléphone (principal)
+- Adresse (localisation récupérée automatiquement)
+- Photo de profil (optionnelle)
+
+#### Historique médical
+- Liste des rendez-vous passés
+- Médecins consultés précédemment
+- Notes personnelles sur les consultations
+
+### Upgrade vers compte Médecin
+
+#### Dans le profil utilisateur
+- Section "Devenir Médecin" accessible depuis le profil patient
+- Formulaire de complétion avec :
+  * Spécialité(s) médicale(s)
+  * Numéro d'ordre des médecins du Sénégal
+  * Diplômes et certifications (upload documents)
+  * Années d'expérience
+  * Informations du cabinet (nom, adresse, horaires, tarifs)
+  * Photos du cabinet
+  * Langues parlées
+
+#### Processus de validation
+- Soumission du dossier complet
+- **Statut "En cours de validation"** pendant la vérification (24-48h)
+- Vérification manuelle des documents par l'équipe
+- **Activation du statut "Médecin"** après validation
+- Notification de confirmation ou de rejet avec motifs
+
+#### Statuts des comptes
+- **Patient** : accès aux fonctionnalités de recherche et prise de RDV
+- **En validation** : patient + message "Dossier en cours d'examen"
+- **Médecin** : accès complet aux fonctionnalités médecin + patients
+
+### Sécurité et Confidentialité
+
+#### Protection des données
+- Chiffrement des données médicales sensibles
+- Possibilité de supprimer le compte
+- Contrôle de la visibilité des informations
+- Conformité avec les réglementations locales sur les données de santé
+
+#### Validation des médecins
+- Vérification manuelle des documents d'identité professionnelle
+- Badge "Médecin vérifié" sur les profils validés
+- Processus de signalement pour les profils suspects
+
+## Fonctionnalités Patient
+
+### Recherche et découverte
+- Recherche de médecins par spécialité, localisation (quartier, ville) et nom
+- Géolocalisation pour trouver les médecins les plus proches
+- Filtres par prix de consultation, disponibilité, par secteur public ou privé et évaluations
+- Carte interactive montrant les cabinets médicaux autour
+
+### Prise de rendez-vous
+- Visualisation des créneaux disponibles en temps réel
+- Réservation en un clic avec confirmation instantanée
+- Rappels automatiques par notification (24h et 2h avant)
+- Possibilité d'annuler ou reporter un rendez-vous
+
+### Profil médecin détaillé
+- Photo, spécialités, expérience, diplômes
+- Tarifs de consultation clairement affichés
+- Avis et notes des autres patients
+- Langues parlées (français, wolof, etc.)
+
+## Fonctionnalités Médecin
+
+### Gestion d'agenda
+- Calendrier simple pour définir les disponibilités
+- Blocage de créneaux pour congés ou urgences
+- Vue journalière/hebdomadaire des rendez-vous
+
+### Gestion patients
+- Liste des rendez-vous avec détails patients
+- Possibilité de confirmer, reporter ou annuler
+- Historique des consultations
+
+### Profil professionnel
+- Mise à jour facile des informations (tarifs, horaires, spécialités)
+- Ajout de photos du cabinet
+- Gestion des modes de paiement acceptés
+
+## Fonctionnalités communes
+
+### Communication
+- Chat simple entre patient et médecin
+- Notifications push pour les confirmations/annulations
+- Appel direct depuis l'app (intégration téléphone)
+
+### Paiement (adapté au contexte sénégalais)
+- Paiement mobile money (Orange Money, Wave, Free Money)
+- Paiement en espèces avec confirmation sur place
+- Transparence totale sur les frais
+
+### Fonctionnalités spécifiques Sénégal
+- Support des langues locales (au minimum français/wolof)
+- Adaptation aux quartiers et références locales de Dakar
+- Mode hors-ligne pour les zones à faible connexion
+
+
+
+
+🔧 Suggestions stratégiques :
+Modularise le projet en 3 MVP successifs :
+
+MVP 1 : Authentification + inscription patient + géolocalisation + prise de RDV simple
+
+MVP 2 : Upgrade médecin + gestion des consultations + agenda + validation manuelle
+
+MVP 3 : Paiement, chat, appels, multilingue, mode hors-ligne, prière, etc.
+
+Ajoute un système de feedback dès le début : même dans le MVP, les notes & avis patients sont un levier important pour la confiance.
+
+Prévois un mode "intermittent" pour médecins : utile en zone rurale ou pour les médecins qui ne consultent que certains jours.
+
+Offre un support hors-ligne intelligent (stockage local temporaire + synchronisation dès que la connexion revient).

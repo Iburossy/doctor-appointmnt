@@ -1,0 +1,56 @@
+RÉCAPITULATIF DE TON CONTEXTE :
+
+
+| Élément                 | Détail                                                 |
+| ----------------------- | ------------------------------------------------------ |
+| **Zone cible initiale** | Dakar                                                  |
+| **Plateformes**         | Flutter (Patients & Médecins), React (Admin Dashboard) |
+| **Stack**               | Flutter, Node.js, MongoDB                              |
+| **Hébergement**         | Alwaysdata                                             |
+| **Service SMS**         | Local (à définir selon disponibilité API locale)       |
+| **Nom/logo**            | À définir plus tard                                    |
+| **Monétisation**        | Gratuit d’abord, mode payant plus tard                 |
+
+ Étape 2 : API d’authentification sécurisée (Node.js + JWT)
+Inscription (OTP SMS + fallback e-mail)
+
+Connexion (téléphone + mot de passe)
+
+Récupération mot de passe via OTP
+
+Gestion des rôles
+
+🔹 Étape 3 : Maquettes Flutter (Patient + Médecin)
+Flow inscription patient
+
+Flow mise à jour vers médecin
+
+Tableau de bord patient
+
+Dashboard médecin
+
+🔹 Étape 4 : Dashboard admin React
+Authentification admin
+
+Liste des demandes de validation médecin
+
+Validation/Rejet avec motifs
+
+🔹 Étape 5 : Prise de rendez-vous
+Agenda médecin (slots disponibles)
+
+Vue et réservation côté patient
+
+Gestion du calendrier par le médecin
+
+🔹 Étape 6 : Paiement Mobile Money (Wave, Orange)
+Pour consultation future (freemium)
+
+Intégration APIs locales (Wave API, Orange Money API)
+
+🔹 Étape 7 : Communication (chat, notifications, appel)
+Chat en temps réel via socket.io ou Firebase
+
+Notifications push (Firebase Cloud Messaging)
+
+Intégration appel vocal via téléphone

@@ -1,0 +1,167 @@
+# Cahier des charges MVP - Prise de rendez-vous médecin
+
+## 1. Vision du produit
+
+**Application mobile simple permettant aux Sénégalais de trouver des médecins près de chez eux et de prendre rendez-vous directement.**
+
+## 2. Fonctionnalités MVP
+
+### 2.1 Pour les patients
+
+**Recherche de médecins :**
+- Localisation automatique ou saisie manuelle de l'adresse
+- Liste des médecins dans un rayon de X km
+- Filtrage par spécialité (généraliste, cardiologue, pédiatre, etc.)
+- Informations médecin : nom, spécialité, adresse, distance, tarif
+
+**Prise de rendez-vous :**
+- Consultation des créneaux disponibles (calendrier simple)
+- Sélection d'un créneau libre
+- Confirmation du rendez-vous
+- Notification de confirmation par SMS
+
+**Gestion basique :**
+- Mes rendez-vous à venir
+- Annulation de rendez-vous
+- Profil patient simple (nom, téléphone, email)
+
+### 2.2 Pour les médecins
+
+**Profil médecin :**
+- Informations de base (nom, spécialité, adresse, téléphone)
+- Horaires de consultation
+- Tarif de consultation
+- Photo de profil
+
+**Gestion des rendez-vous :**
+- Calendrier des disponibilités
+- Blocage/déblocage de créneaux
+- Liste des rendez-vous du jour/semaine
+- Validation automatique des demandes
+
+**Notifications :**
+- Nouveau rendez-vous pris
+- Annulation de rendez-vous
+
+## 3. Flux utilisateur simplifié
+
+### Patient :
+1. Ouvre l'app → Localisation automatique
+2. Voit la liste des médecins proches
+3. Clique sur un médecin → Voit ses créneaux
+4. Sélectionne un créneau → Confirme
+5. Reçoit SMS de confirmation
+
+### Médecin :
+1. S'inscrit avec validation admin
+2. Configure son profil et horaires
+3. Reçoit notifications des nouveaux RDV
+4. Consulte son planning
+
+## 4. Architecture technique simplifiée
+
+### 4.1 Stack technique
+- **Mobile** : Flutter
+- **Backend** : Node.js + Express
+- **Base de données** : MongoDB
+- **Maps** : Google Maps Platform
+- **SMS** : Service local (Orange/Tigo)
+- **Hébergement** : DigitalOcean ou AWS
+
+### 4.2 Structure de données
+
+**Utilisateur :**
+```json
+{
+  "_id": "ObjectId",
+  "nom": "string",
+  "telephone": "string",
+  "email": "string", 
+  "role": "patient|medecin",
+  "localisation": {
+    "latitude": "number",
+    "longitude": "number"
+  }
+}
+```
+
+**Médecin :**
+```json
+{
+  "_id": "ObjectId",
+  "userId": "ObjectId",
+  "specialite": "string",
+  "adresse": "string",
+  "tarif": "number",
+  "horaires": {
+    "lundi": ["09:00-12:00", "15:00-18:00"],
+    "mardi": ["09:00-12:00", "15:00-18:00"]
+  },
+  "valide": "boolean"
+}
+```
+
+**Rendez-vous :**
+```json
+{
+  "_id": "ObjectId",
+  "patientId": "ObjectId",
+  "medecinId": "ObjectId", 
+  "dateHeure": "Date",
+  "statut": "confirme|annule",
+  "createdAt": "Date"
+}
+```
+
+## 5. Interface utilisateur (écrans principaux)
+
+### Pour patients :
+1. **Écran d'accueil** : Recherche et localisation
+2. **Liste médecins** : Résultats avec distance et spécialité
+3. **Profil médecin** : Détails + calendrier disponibilités
+4. **Mes RDV** : Liste des rendez-vous à venir
+5. **Profil** : Informations personnelles
+
+### Pour médecins :
+1. **Tableau de bord** : RDV du jour + statistiques simples
+2. **Mon planning** : Calendrier hebdomadaire
+3. **Mes horaires** : Configuration des disponibilités
+4. **Mon profil** : Informations professionnelles
+
+## 6. API endpoints essentiels
+
+```
+GET /api/medecins/proche?lat=X&lng=Y&rayon=Z
+GET /api/medecins/:id/disponibilites?date=YYYY-MM-DD
+POST /api/rendez-vous
+GET /api/rendez-vous/patient/:patientId
+DELETE /api/rendez-vous/:id
+
+POST /api/auth/login
+POST /api/auth/register
+PUT /api/profil/:userId
+```
+
+## 7. Contraintes MVP
+
+### Simplifications volontaires :
+- Pas de système de paiement (paiement sur place)
+- Pas de notifications push (SMS uniquement)
+- Pas de chat/messagerie
+- Pas de système d'avis/notes
+- Validation médecin manuelle par admin
+- Interface en français uniquement
+
+### Priorités techniques :
+- Fonctionnement en réseau 3G/4G
+- Interface intuitive (pas de formation nécessaire)
+- Temps de réponse < 3 secondes
+- Géolocalisation fiable
+
+## Risques principaux
+
+- **Connectivité** : Optimiser pour 3G, mode offline basique
+
+
+
+Objectif MVP : Prouver que le concept marche avec le minimum viable

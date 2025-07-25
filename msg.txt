@@ -1,0 +1,158 @@
+
+jai deplacer le dossier models qui se trouvait dans lib  dans le dossier core
+     lib\service dans le dossier core\services
+
+
+
+## il ya pas moyen pour retourner vers la page d'accueil sur la page de upgrade de profil
+
+
+## les documents que televerse le patient pour upgader vers medecin n'arrive pas
+
+## si l'admin rejete la demande d'upgrade, ses informations ne devrait plus apparaitre dans le document "doctors" de mongodb 
+## si la demande est rejetee ou approuve, le demandeur doit etre notifié de l'etat de sa demande peut
+
+## Get-NetTCPConnection -LocalPort 5000 | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force }
+
+
+les champs "non spécifié" je les ai pas remplis car ils ne sont pas visible dans les formulaires.
+
+" === DÉBUT UPLOAD MIDDLEWARE ===
+📨 Méthode: POST
+📨 URL: /upgrade
+📨 Content-Type: application/json
+📨 Content-Length: 1453
+📨 User-Agent: Dart/3.7 (dart:io)
+📋 Champs de fichiers attendus: [
+  { name: 'medicalLicense', maxCount: 1 },
+  { name: 'diploma', maxCount: 3 },
+  { name: 'profilePhoto', maxCount: 1 },
+  { name: 'clinicPhotos', maxCount: 5 },
+  { name: 'certifications', maxCount: 5 }
+]
+📁 Fichiers reçus: Aucun
+📝 Corps de la requête (sans fichiers): {
+  "medicalLicenseNumber": "SN11111111",
+  "specialties": [
+    "Orthopédie"
+  ],
+  "yearsOfExperience": 10,
+  "education": [
+    {
+      "degree": "oxford, doctorat, orthopedique, orthope",
+      "institution": "Non spécifié",
+      "field": "Médecine",
+      "graduationYear": 2025
+    }
+  ],
+  "bio": "11111111111111111111aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "languages": [
+    "Anglais"
+  ],
+  "consultationFee": 10000,
+  "clinic": {
+    "name": "cabinet Dr. mbengue",
+    "address": {
+      "street": "sicap foire",
+      "city": "Dakar",
+      "region": "Dakar",
+      "country": "Sénégal",
+      "coordinates": {
+        "latitude": 14.6937,
+        "longitude": -17.4441
+      }
+    },
+    "phone": "771111111",
+    "photos": null,
+    "description": "Cabinet médical de cabinet Dr. mbengue"
+  },
+  "workingHours": {
+    "monday": {
+      "isWorking": true,
+      "morning": {
+        "start": "08:00",
+        "end": "12:00"
+      },
+      "afternoon": {
+        "start": "15:00",
+        "end": "18:00"
+      }
+    },
+    "tuesday": {
+      "isWorking": true,
+      "morning": {
+        "start": "08:00",
+        "end": "12:00"
+      },
+      "afternoon": {
+        "start": "15:00",
+        "end": "18:00"
+      }
+    },
+    "wednesday": {
+      "isWorking": true,
+      "morning": {
+        "start": "08:00",
+        "end": "12:00"
+      },
+      "afternoon": {
+        "start": "15:00",
+        "end": "18:00"
+      }
+    },
+    "thursday": {
+      "isWorking": true,
+      "morning": {
+        "start": "08:00",
+        "end": "12:00"
+      },
+      "afternoon": {
+        "start": "15:00",
+        "end": "18:00"
+      }
+    },
+    "friday": {
+      "isWorking": true,
+      "morning": {
+        "start": "08:00",
+        "end": "12:00"
+      },
+      "afternoon": {
+        "start": "15:00",
+        "end": "18:00"
+      }
+    },
+    "saturday": {
+      "isWorking": false,
+      "morning": {
+        "start": "08:00",
+        "end": "12:00"
+      },
+      "afternoon": {
+        "start": "15:00",
+        "end": "18:00"
+      }
+    },
+    "sunday": {
+      "isWorking": false,
+      "morning": {
+        "start": "08:00",
+        "end": "12:00"
+      },
+      "afternoon": {
+        "start": "15:00",
+        "end": "18:00"
+      }
+    }
+  }
+}
+🏁 === FIN UPLOAD MIDDLEWARE ===
+
+
+📁 === TRAITEMENT DES FICHIERS ===
+📁 Fichiers reçus: Aucun
+⚠️ Aucun fichier reçu dans req.files
+📁 === FIN TRAITEMENT DES FICHIERS ===
+
+✅ Demande de médecin créée avec succès, ID: new ObjectId("68837cb0f97d276e47ec5c78")
+"
