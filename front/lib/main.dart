@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'config/app_config.dart' as new_config;
 import 'core/config/app_config.dart';
@@ -62,6 +63,15 @@ class DoctorsApp extends StatelessWidget {
             // Theme
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
+            localizationsDelegates: const [
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: const [
+              Locale('fr', 'FR'),
+              Locale('en', 'US'),
+            ],
             themeMode: ThemeMode.system,
             
             // Localization

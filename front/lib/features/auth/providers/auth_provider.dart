@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import '../../../core/services/api_service.dart';
 import '../../../core/services/storage_service.dart';
@@ -247,30 +249,91 @@ class AuthProvider with ChangeNotifier {
     }
   }
   
-  // Update user profile
-  Future<bool> updateProfile(Map<String, dynamic> data) async {
-    _setLoading(true);
-    _clearError();
-    
+  // Update user profile - supports both Map and named parameters
+  Future<bool> updateUserProfile({
+    // Paramètres pour l'appel avec Map
+    Map<String, dynamic>? data,
+    File? avatar,
+    // Paramètres nommés pour la compatibilité avec l'ancien code
+    String? firstName,
+    String? lastName,
+    String? email,
+    DateTime? dateOfBirth,
+    String? gender,
+    String? address,
+    String? street,
+    String? city,
+    File? avatarFile,
+  }) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
     try {
-      final response = await _apiService.put('/users/profile', data: data);
+      // Construire les données du profil à partir des paramètres nommés ou du Map
+      final Map<String, dynamic> profileData = data ?? {};
       
-      if (response.isSuccess && response.data != null) {
-        _user = UserModel.fromJson(response.data);
-        notifyListeners();
-        return true;
-      } else {
-        _setError(response.message ?? 'Erreur lors de la mise à jour');
-        return false;
+      // Ajouter les paramètres nommés s'ils sont fournis
+      if (firstName != null) profileData['firstName'] = firstName;
+      if (lastName != null) profileData['lastName'] = lastName;
+      if (email != null) profileData['email'] = email;
+      if (dateOfBirth != null) profileData['dateOfBirth'] = dateOfBirth.toIso8601String();
+      if (gender != null) profileData['gender'] = gender;
+      
+      // Gérer l'adresse correctement
+      if (address != null) {
+        // Ancien format - chaîne simple
+        profileData['address'] = {'street': address};
+      } else if ((street != null || city != null) || 
+                (profileData.containsKey('street') || profileData.containsKey('city'))) {
+        // Nouveau format - objet avec street et city
+        final addressObj = {
+          'street': street ?? profileData.remove('street'),
+          'city': city ?? profileData.remove('city'),
+        };
+        // Supprimer les valeurs nulles ou vides
+        addressObj.removeWhere((key, value) => value == null || value.toString().isEmpty);
+        if (addressObj.isNotEmpty) {
+          profileData['address'] = addressObj;
+        }
       }
+
+      // Étape 1: Mettre à jour les informations textuelles
+      if (profileData.isNotEmpty) {
+        final response = await _apiService.put('/users/profile', data: profileData);
+        if (!response.isSuccess) {
+          _error = response.message ?? 'Erreur lors de la mise à jour du profil';
+          return false;
+        }
+      }
+
+      // Étape 2: Mettre à jour la photo de profil si une nouvelle est fournie
+      final fileToUpload = avatar ?? avatarFile;
+      if (fileToUpload != null) {
+        final avatarResponse = await _apiService.uploadFile(
+          '/users/upload-avatar',
+          fileToUpload,
+          fieldName: 'avatar'
+        );
+        if (!avatarResponse.isSuccess) {
+          _error = avatarResponse.message ?? 'Erreur lors de l\'upload de l\'avatar';
+          return false;
+        }
+      }
+
+      // Étape 3: Recharger les données de l'utilisateur pour mettre à jour l'interface
+      await _getCurrentUser();
+      return true;
+
     } catch (e) {
-      _setError('Erreur de connexion: $e');
+      _error = e.toString();
       return false;
     } finally {
-      _setLoading(false);
+      _isLoading = false;
+      notifyListeners();
     }
   }
-  
+
   // Change password
   Future<bool> changePassword({
     required String currentPassword,
@@ -379,6 +442,8 @@ class AuthProvider with ChangeNotifier {
     }
   }
   
+
+
   // Helper methods
   void _setLoading(bool loading) {
     _isLoading = loading;

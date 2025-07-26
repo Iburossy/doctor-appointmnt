@@ -1,12 +1,15 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/routes/app_router.dart';
 import '../../../models/doctor.dart';
 import '../../../core/services/doctor_upload_service.dart';
 import '../../../shared/widgets/custom_button.dart';
 import '../../../shared/widgets/loading_overlay.dart';
+import '../../../shared/widgets/app_bottom_navigation.dart';
 
 class DoctorUpgradeScreen extends StatefulWidget {
   const DoctorUpgradeScreen({super.key});
@@ -25,6 +28,7 @@ class _DoctorUpgradeScreenState extends State<DoctorUpgradeScreen> {
   final _consultationFeeController = TextEditingController();
   final _clinicNameController = TextEditingController();
   final _clinicAddressController = TextEditingController();
+  final _clinicCityController = TextEditingController(); // Ajout du contrôleur pour la ville
   final _clinicPhoneController = TextEditingController();
   
   final List<String> _selectedLanguages = ['FranÃ§ais'];
@@ -59,6 +63,73 @@ class _DoctorUpgradeScreenState extends State<DoctorUpgradeScreen> {
     'Mandinka',
   ];
   
+  Future<void> _getCurrentLocationAndFillAddress() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // 1. Gérer les permissions
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('La permission de localisation est requise.')),
+          );
+          return;
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('La permission de localisation est bloquée. Veuillez l\'activer dans les paramètres.')),
+        );
+        return;
+      }
+
+      // 2. Obtenir la position
+      final Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+
+      // 3. Convertir la position en adresse (geocoding)
+      final List<Placemark> placemarks = await placemarkFromCoordinates(
+        position.latitude,
+        position.longitude,
+      );
+
+      if (placemarks.isNotEmpty) {
+        final Placemark place = placemarks[0];
+        final String street = place.street ?? '';
+        final String city = place.locality ?? '';
+        final String fullAddress = '$street, $city, ${place.country}';
+
+        // 4. Remplir les champs
+        setState(() {
+          _clinicAddressController.text = street;
+          _clinicCityController.text = city;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Adresse remplie: $fullAddress')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Impossible de déterminer l\'adresse.')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erreur de géolocalisation: $e')),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
   @override
   void dispose() {
     _specializationController.dispose();
@@ -69,6 +140,7 @@ class _DoctorUpgradeScreenState extends State<DoctorUpgradeScreen> {
     _consultationFeeController.dispose();
     _clinicNameController.dispose();
     _clinicAddressController.dispose();
+    _clinicCityController.dispose();
     _clinicPhoneController.dispose();
     super.dispose();
   }
@@ -125,7 +197,7 @@ class _DoctorUpgradeScreenState extends State<DoctorUpgradeScreen> {
       final coordinates = Coordinates(latitude: 14.6937, longitude: -17.4441);
       final address = ClinicAddress(
         street: _clinicAddressController.text,
-        city: 'Dakar',
+        city: _clinicCityController.text, // Utiliser la valeur du champ ville
         region: 'Dakar',
         country: 'Sénégal',
         coordinates: coordinates
@@ -276,39 +348,58 @@ class _DoctorUpgradeScreenState extends State<DoctorUpgradeScreen> {
       isLoading: _isLoading,
       child: Scaffold(
         backgroundColor: Colors.grey[50],
-        appBar: null, // Suppression de l'AppBar pour éviter les conflits
+        appBar: AppBar(
+          title: const Text('Devenir médecin'),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () {
+              if (_currentStep > 0) {
+                setState(() {
+                  _currentStep--;
+                });
+              } else {
+                AppNavigation.pop();
+              }
+            },
+          ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.home),
+              onPressed: () {
+                // Confirmer avant de retourner à l'accueil
+                showDialog(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Retourner à l\'accueil'),
+                    content: const Text(
+                      'Voulez-vous vraiment retourner à l\'accueil ? '
+                      'Vos modifications non sauvegardées seront perdues.',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: const Text('Annuler'),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          AppNavigation.goToHome();
+                        },
+                        child: const Text('Confirmer'),
+                      ),
+                    ],
+                  ),
+                );
+              },
+              tooltip: 'Retourner à l\'accueil',
+            ),
+          ],
+        ),
         body: SafeArea(
           child: Form(
             key: _formKey,
             child: Column(
               children: [
-                // Bouton de retour personnalisé bien visible avec texte
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                  color: Colors.white,
-                  child: Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(
-                          Icons.arrow_back,
-                          color: Color.fromARGB(255, 32, 28, 28),
-                          size: 30,
-                        ),
-                        onPressed: () => AppNavigation.goToHome(),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Devenir médecin',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.textPrimaryColor,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
                 Expanded(
                   child: Stepper(
                     currentStep: _currentStep,
@@ -378,6 +469,9 @@ class _DoctorUpgradeScreenState extends State<DoctorUpgradeScreen> {
               ],
             ),
           ),
+        ),
+        bottomNavigationBar: const AppBottomNavigation(
+          currentIndex: -1, // Écran spécial, pas dans la navigation principale
         ),
       ),
     );
@@ -487,17 +581,91 @@ class _DoctorUpgradeScreenState extends State<DoctorUpgradeScreen> {
           ),
         ),
         const SizedBox(height: 20),
-        _buildTextField(
-          controller: _clinicNameController,
-          label: 'Nom du cabinet',
-          hintText: 'Cabinet Dr. Nom',
-        ),
-        const SizedBox(height: 16),
-        _buildTextField(
-          controller: _clinicAddressController,
-          label: 'Adresse du cabinet',
-          maxLines: 2,
-          hintText: 'Adresse complète du cabinet',
+        // Adresse automatique par géolocalisation
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.grey[50],
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey[300]!),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.location_on, color: AppTheme.primaryColor, size: 20),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'Adresse du cabinet',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              if (_clinicAddressController.text.isNotEmpty) ...[
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.grey[300]!),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _clinicAddressController.text,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      if (_clinicCityController.text.isNotEmpty)
+                        Text(
+                          _clinicCityController.text,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: _getCurrentLocationAndFillAddress,
+                  icon: const Icon(Icons.my_location),
+                  label: Text(_clinicAddressController.text.isEmpty 
+                    ? 'Détecter automatiquement l\'adresse' 
+                    : 'Mettre à jour l\'adresse'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryColor,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Nous utilisons votre position actuelle pour déterminer automatiquement l\'adresse de votre cabinet.',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey[600],
+                ),
+              ),
+            ],
+          ),
         ),
         const SizedBox(height: 16),
         _buildTextField(
@@ -585,33 +753,45 @@ class _DoctorUpgradeScreenState extends State<DoctorUpgradeScreen> {
     required TextEditingController controller,
     required String label,
     String? hintText,
+    IconData? icon,
     TextInputType? keyboardType,
     int maxLines = 1,
     String? Function(String?)? validator,
   }) {
-    return TextFormField(
-      controller: controller,
-      decoration: InputDecoration(
-        labelText: label,
-        hintText: hintText,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey[300]!),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: AppTheme.textSecondaryColor,
+          ),
         ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey[300]!),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: controller,
+          keyboardType: keyboardType,
+          maxLines: maxLines,
+          decoration: InputDecoration(
+            prefixIcon: icon != null ? Icon(icon, color: AppTheme.primaryColor) : null,
+            hintText: hintText,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Colors.grey),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AppTheme.primaryColor, width: 2),
+            ),
+            filled: true,
+            fillColor: Colors.white,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          ),
+          validator: validator,
         ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppTheme.primaryColor),
-        ),
-        filled: true,
-        fillColor: Colors.white,
-      ),
-      keyboardType: keyboardType,
-      maxLines: maxLines,
-      validator: validator,
+      ],
     );
   }
   

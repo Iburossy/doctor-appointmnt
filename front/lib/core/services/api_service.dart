@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:http_parser/http_parser.dart';
 import '../config/app_config.dart';
 import 'storage_service.dart';
 
@@ -164,10 +165,34 @@ class ApiService {
     try {
       final formData = FormData();
       
-      // Add file
+      // Déterminer le type MIME basé sur l'extension du fichier
+      String? contentType;
+      final extension = file.path.toLowerCase().split('.').last;
+      switch (extension) {
+        case 'jpg':
+        case 'jpeg':
+          contentType = 'image/jpeg';
+          break;
+        case 'png':
+          contentType = 'image/png';
+          break;
+        case 'gif':
+          contentType = 'image/gif';
+          break;
+        case 'webp':
+          contentType = 'image/webp';
+          break;
+        default:
+          contentType = 'image/jpeg'; // Par défaut
+      }
+      
+      // Add file avec le bon type MIME
       formData.files.add(MapEntry(
         fieldName,
-        await MultipartFile.fromFile(file.path),
+        await MultipartFile.fromFile(
+          file.path,
+          contentType: MediaType.parse(contentType),
+        ),
       ));
       
       // Add additional data

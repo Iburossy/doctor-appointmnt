@@ -2,8 +2,11 @@ const express = require('express');
 const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
 const { authenticate } = require('../middleware/auth');
+const { uploadWithLogs } = require('../middleware/upload');
 
 const router = express.Router();
+
+const normalizePath = (path) => path.replace(/\\/g, '/');
 
 // @route   PUT /api/users/profile
 // @desc    Mettre à jour le profil utilisateur
@@ -29,8 +32,8 @@ router.put('/profile', authenticate, [
     .withMessage('Date de naissance invalide'),
   body('gender')
     .optional()
-    .isIn(['male', 'female', 'other'])
-    .withMessage('Genre invalide')
+    .isIn(['male', 'female'])
+    .withMessage('Genre invalide (seuls male et female sont autorisés au Sénégal)')
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -159,34 +162,37 @@ router.put('/change-password', authenticate, [
 // @route   POST /api/users/upload-avatar
 // @desc    Upload de photo de profil
 // @access  Private
-router.post('/upload-avatar', authenticate, async (req, res) => {
-  try {
-    // TODO: Implémenter l'upload de fichier avec multer
-    // Pour le moment, on accepte juste une URL
-    const { profilePictureUrl } = req.body;
+router.post('/upload-avatar', 
+  authenticate, 
+  uploadWithLogs([{ name: 'avatar', maxCount: 1 }]), 
+  async (req, res) => {
+    try {
+      // Vérifier si des fichiers ont été uploadés
+      if (!req.files || !req.files.avatar || req.files.avatar.length === 0) {
+        return res.status(400).json({ error: 'Aucun fichier n\'a été envoyé' });
+      }
 
-    if (!profilePictureUrl) {
-      return res.status(400).json({
-        error: 'URL de la photo de profil requise'
+      const user = req.user;
+      // Prendre le premier fichier avatar
+      const avatarFile = req.files.avatar[0];
+      // On stocke le chemin relatif de l'image
+      const filePath = normalizePath(avatarFile.path);
+      user.profilePicture = filePath;
+      await user.save();
+
+      res.json({
+        message: 'Photo de profil mise à jour avec succès',
+        profilePicture: user.profilePicture
+      });
+
+    } catch (error) {
+      console.error('Erreur upload avatar:', error);
+      res.status(500).json({
+        error: 'Erreur lors de l\'upload de la photo de profil'
       });
     }
-
-    const user = req.user;
-    user.profilePicture = profilePictureUrl;
-    await user.save();
-
-    res.json({
-      message: 'Photo de profil mise à jour avec succès',
-      profilePicture: user.profilePicture
-    });
-
-  } catch (error) {
-    console.error('Erreur upload avatar:', error);
-    res.status(500).json({
-      error: 'Erreur lors de l\'upload de la photo de profil'
-    });
   }
-});
+);
 
 // @route   PUT /api/users/location
 // @desc    Mettre à jour la localisation

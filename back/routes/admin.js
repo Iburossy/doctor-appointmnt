@@ -759,42 +759,54 @@ router.get('/doctor-requests', authenticate, authorize('admin'), [
 
     // Récupérer les demandes avec pagination
     const requests = await DoctorRequest.find(filter)
-      .populate('userId', 'firstName lastName phone email createdAt')
+      .populate({
+        path: 'userId',
+        select: 'firstName lastName phone email createdAt',
+        model: 'User'
+      })
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(parseInt(limit))
       .lean();
+      
+    console.log('👤 Premier utilisateur:', requests[0]?.userId);
 
     // Compter le total
     const total = await DoctorRequest.countDocuments(filter);
 
     // Formater les données pour l'admin
-    const formattedRequests = requests.map(request => ({
-      id: request._id,
-      user: {
-        id: request.userId._id,
-        firstName: request.userId.firstName,
-        lastName: request.userId.lastName,
-        phone: request.userId.phone,
-        email: request.userId.email,
-        registeredAt: request.userId.createdAt
-      },
-      specialties: request.specialties,
-      yearsOfExperience: request.yearsOfExperience,
-      education: request.education,
-      documents: request.documents,
-      workingHours: request.workingHours,
-      consultationFee: request.consultationFee,
-      clinic: request.clinic,
-      languages: request.languages,
-      bio: request.bio,
-      status: request.status, // 'pending', 'approved', 'rejected'
-      rejectionReason: request.rejectionReason,
-      reviewedAt: request.reviewedAt,
-      reviewedBy: request.reviewedBy,
-      requestedAt: request.requestedAt || request.createdAt,
-      updatedAt: request.updatedAt
-    }));
+    const formattedRequests = requests.map(request => {
+      // Vérifier si userId est correctement populé
+      const userId = request.userId || {};
+      console.log('👤 Données utilisateur pour la demande:', request._id, userId);
+      
+      return {
+        id: request._id,
+        user: {
+          id: userId._id || 'inconnu',
+          firstName: userId.firstName || 'Utilisateur',
+          lastName: userId.lastName || '',
+          phone: userId.phone || '',
+          email: userId.email || '',
+          registeredAt: userId.createdAt || new Date()
+        },
+        specialties: request.specialties,
+        yearsOfExperience: request.yearsOfExperience,
+        education: request.education,
+        documents: request.documents,
+        workingHours: request.workingHours,
+        consultationFee: request.consultationFee,
+        clinic: request.clinic,
+        languages: request.languages,
+        bio: request.bio,
+        status: request.status, // 'pending', 'approved', 'rejected'
+        rejectionReason: request.rejectionReason,
+        reviewedAt: request.reviewedAt,
+        reviewedBy: request.reviewedBy,
+        requestedAt: request.requestedAt || request.createdAt,
+        updatedAt: request.updatedAt
+      };
+    });
 
     res.json({
       success: true,

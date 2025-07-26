@@ -8,13 +8,30 @@ require('dotenv').config();
 const app = express();
 
 // Security middleware
-app.use(helmet());
-app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? ['https://yourdomain.com'] 
-    : ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:8080'],
-  credentials: true
-}));
+// Configuration de Helmet pour autoriser le chargement des ressources cross-origin (images, etc.)
+app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
+// Configuration CORS plus flexible pour le développement
+const whitelist = ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:8080'];
+if (process.env.NODE_ENV === 'production') {
+  // Ajoutez ici vos domaines de production
+  // whitelist.push('https://your-production-domain.com');
+}
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    // `!origin` est utilisé pour autoriser les requêtes sans origine (ex: Postman, apps mobiles)
+    if (whitelist.indexOf(origin) !== -1 || !origin) {
+      console.log(`CORS: Autorisation de l'origine ${origin}`);
+      callback(null, true);
+    } else {
+      console.error(`CORS: Blocage de l'origine ${origin}`);
+      callback(new Error('Non autorisé par CORS'));
+    }
+  },
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
 
 // Rate limiting
 const limiter = rateLimit({

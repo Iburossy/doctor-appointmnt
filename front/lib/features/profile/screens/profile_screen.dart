@@ -4,6 +4,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/routes/app_router.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../../shared/widgets/custom_button.dart';
+import '../../../shared/widgets/app_bottom_navigation.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -60,10 +61,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 ),
                               ],
                             ),
-                            child: const Icon(
-                              Icons.person,
-                              size: 40,
-                              color: AppTheme.primaryColor,
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(40),
+                              child: user?.avatar != null && user!.avatar!.isNotEmpty
+                                  ? Image.network(
+                                      user.avatar!,
+                                      width: 80,
+                                      height: 80,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (context, error, stackTrace) {
+                                        return const Icon(
+                                          Icons.person,
+                                          size: 40,
+                                          color: AppTheme.primaryColor,
+                                        );
+                                      },
+                                    )
+                                  : const Icon(
+                                      Icons.person,
+                                      size: 40,
+                                      color: AppTheme.primaryColor,
+                                    ),
                             ),
                           ),
                           const SizedBox(height: 12),
@@ -76,6 +94,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
                               color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          // Badge de rôle
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: user?.role == 'doctor' ? Colors.green : Colors.blue,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              user?.role == 'doctor' ? 'Médecin' : 'Patient',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Colors.white,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -124,9 +159,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 : 'Non renseigné',
                           ),
                           _buildInfoTile(
+                            icon: Icons.wc_outlined,
+                            title: 'Genre',
+                            value: user?.gender == 'male' ? 'Homme' : (user?.gender == 'female' ? 'Femme' : 'Non renseigné'),
+                          ),
+                          _buildInfoTile(
                             icon: Icons.location_on_outlined,
                             title: 'Adresse',
-                            value: user?.address ?? 'Non renseigné',
+                            value: _formatAddress(user?.address),
                           ),
                         ],
                       ),
@@ -216,7 +256,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
           );
         },
       ),
+      bottomNavigationBar: const AppBottomNavigation(
+        currentIndex: 3, // Index du profil
+      ),
     );
+  }
+  
+  String _formatAddress(dynamic address) {
+    if (address == null) return 'Non renseigné';
+    
+    if (address is Map) {
+      final street = address['street'] ?? '';
+      final city = address['city'] ?? '';
+      if (street.isNotEmpty && city.isNotEmpty) {
+        return '$street, $city';
+      } else if (street.isNotEmpty) {
+        return street;
+      } else if (city.isNotEmpty) {
+        return city;
+      }
+      return 'Non renseigné';
+    }
+    
+    return address.toString().isNotEmpty ? address.toString() : 'Non renseigné';
   }
   
   Widget _buildSectionCard({

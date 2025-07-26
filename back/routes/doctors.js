@@ -8,6 +8,8 @@ const { uploadWithLogs } = require('../middleware/upload');
 
 const router = express.Router();
 
+const normalizePath = (path) => path.replace(/\\/g, '/');
+
 // @route   POST /api/doctors/upgrade
 // @desc    Upgrade d'un compte patient vers médecin
 // @access  Private (Patient vérifié)
@@ -151,7 +153,7 @@ router.post('/upgrade',
         doctorData.documents.medicalLicense = {
           filename: req.files.medicalLicense[0].filename,
           originalName: req.files.medicalLicense[0].originalname,
-          path: req.files.medicalLicense[0].path,
+          path: normalizePath(req.files.medicalLicense[0].path),
           mimetype: req.files.medicalLicense[0].mimetype,
           size: req.files.medicalLicense[0].size,
           uploadedAt: new Date()
@@ -165,7 +167,7 @@ router.post('/upgrade',
         doctorData.documents.diplomas = req.files.diploma.map(file => ({
           filename: file.filename,
           originalName: file.originalname,
-          path: file.path,
+          path: normalizePath(file.path),
           mimetype: file.mimetype,
           size: file.size,
           uploadedAt: new Date()
@@ -178,7 +180,7 @@ router.post('/upgrade',
         doctorData.profilePhoto = {
           filename: req.files.profilePhoto[0].filename,
           originalName: req.files.profilePhoto[0].originalname,
-          path: req.files.profilePhoto[0].path,
+          path: normalizePath(req.files.profilePhoto[0].path),
           mimetype: req.files.profilePhoto[0].mimetype,
           size: req.files.profilePhoto[0].size,
           uploadedAt: new Date()
@@ -191,7 +193,7 @@ router.post('/upgrade',
         doctorData.clinic.photos = req.files.clinicPhotos.map(file => ({
           filename: file.filename,
           originalName: file.originalname,
-          path: file.path,
+          path: normalizePath(file.path),
           mimetype: file.mimetype,
           size: file.size,
           uploadedAt: new Date()
@@ -205,7 +207,7 @@ router.post('/upgrade',
         doctorData.documents.certifications = req.files.certifications.map(file => ({
           filename: file.filename,
           originalName: file.originalname,
-          path: file.path,
+          path: normalizePath(file.path),
           mimetype: file.mimetype,
           size: file.size,
           uploadedAt: new Date()

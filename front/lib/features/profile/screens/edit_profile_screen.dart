@@ -1,10 +1,14 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/routes/app_router.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../../shared/widgets/custom_button.dart';
 import '../../../shared/widgets/loading_overlay.dart';
+import '../../../shared/widgets/app_bottom_navigation.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -19,16 +23,21 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final _lastNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _addressController = TextEditingController();
+  late TextEditingController _streetController;
+  late TextEditingController _cityController;
   
   DateTime? _selectedDate;
   String? _selectedGender;
   bool _isLoading = false;
+  File? _profileImageFile;
   
-  final List<String> _genders = ['Homme', 'Femme', 'Autre'];
+  final List<String> _genders = ['Homme', 'Femme'];
   
   @override
   void initState() {
     super.initState();
+    _streetController = TextEditingController();
+    _cityController = TextEditingController();
     _loadCurrentProfile();
   }
   
@@ -38,6 +47,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _lastNameController.dispose();
     _emailController.dispose();
     _addressController.dispose();
+    _streetController.dispose();
+    _cityController.dispose();
     super.dispose();
   }
   
@@ -49,9 +60,29 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       _firstNameController.text = user.firstName;
       _lastNameController.text = user.lastName;
       _emailController.text = user.email ?? '';
-      _addressController.text = user.address ?? '';
+      
+      // Gestion de l'adresse - compatible avec l'ancien et le nouveau format
+      if (user.address != null) {
+        if (user.address is Map) {
+          // Nouveau format: objet avec street et city
+          final addressMap = user.address as Map;
+          _streetController.text = addressMap['street'] ?? '';
+          _cityController.text = addressMap['city'] ?? '';
+        } else {
+          // Ancien format: chaîne simple
+          _streetController.text = user.address.toString();
+        }
+      }
+      
+      // Valeurs pour le genre et la date de naissance
       _selectedDate = user.dateOfBirth;
-      _selectedGender = user.gender;
+      
+      // Conversion du genre pour l'interface utilisateur
+      if (user.gender == 'male') {
+        _selectedGender = 'Homme';
+      } else if (user.gender == 'female') {
+        _selectedGender = 'Femme';
+      }
     }
   }
   
@@ -62,24 +93,49 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       _isLoading = true;
     });
     
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    
     try {
-      // TODO: Implémenter la mise à jour du profil via l'API
-      await Future.delayed(const Duration(seconds: 2)); // Simulation
+      final success = await authProvider.updateUserProfile(
+        firstName: _firstNameController.text,
+        lastName: _lastNameController.text,
+        email: _emailController.text,
+        dateOfBirth: _selectedDate,
+        gender: _selectedGender == 'Homme' ? 'male' : (_selectedGender == 'Femme' ? 'female' : null),
+        street: _streetController.text,
+        city: _cityController.text,
+        avatarFile: _profileImageFile,
+      );
       
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Profil mis à jour avec succès'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        AppNavigation.pop();
+        if (success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Profil mis à jour avec succès'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          
+          // Navigation robuste - retourner à l'écran précédent ou à l'accueil
+          if (Navigator.of(context).canPop()) {
+            Navigator.of(context).pop();
+          } else {
+            AppNavigation.goToHome();
+          }
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(authProvider.error ?? 'Une erreur est survenue'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Erreur: $e'),
+            content: Text('Erreur inattendue: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -107,6 +163,55 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         _selectedDate = picked;
       });
     }
+  }
+
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+
+    if (pickedFile != null) {
+      setState(() {
+        _profileImageFile = File(pickedFile.path);
+      });
+    }
+  }
+
+  Widget _buildAvatarPicker() {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final user = authProvider.user;
+
+    return Center(
+      child: Stack(
+        children: [
+          CircleAvatar(
+            radius: 50,
+            backgroundImage: _profileImageFile != null
+                ? FileImage(_profileImageFile!)
+                : (user?.avatar != null && user!.avatar!.isNotEmpty
+                    ? NetworkImage(user.avatar!)
+                    : null) as ImageProvider?,
+            child: _profileImageFile == null && (user?.avatar == null || user!.avatar!.isEmpty)
+                ? const Icon(Icons.person, size: 50, color: Colors.grey)
+                : null,
+          ),
+          Positioned(
+            bottom: 0,
+            right: 0,
+            child: GestureDetector(
+              onTap: _pickImage,
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: const BoxDecoration(
+                  color: AppTheme.primaryColor,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.edit, color: Colors.white, size: 20),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -140,6 +245,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                _buildAvatarPicker(),
+                const SizedBox(height: 24),
                 // Section Informations personnelles
                 _buildSectionCard(
                   title: 'Informations personnelles',
@@ -194,9 +301,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     _buildGenderDropdown(),
                     const SizedBox(height: 16),
                     _buildTextField(
-                      controller: _addressController,
-                      label: 'Adresse',
-                      maxLines: 2,
+                      controller: _streetController,
+                      label: 'Rue',
+                      icon: Icons.location_on,
+                    ),
+                    const SizedBox(height: 24),
+                    _buildTextField(
+                      controller: _cityController,
+                      label: 'Ville',
+                      icon: Icons.location_city,
                     ),
                   ],
                 ),
@@ -214,6 +327,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               ],
             ),
           ),
+        ),
+        bottomNavigationBar: const AppBottomNavigation(
+          currentIndex: 3, // Index du profil
         ),
       ),
     );
@@ -263,34 +379,48 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   Widget _buildTextField({
     required TextEditingController controller,
     required String label,
-    String? hintText,
-    TextInputType? keyboardType,
+    IconData? icon,
+    bool isObscure = false,
+    bool isEnabled = true,
     int maxLines = 1,
+    TextInputType? keyboardType,
     String? Function(String?)? validator,
   }) {
-    return TextFormField(
-      controller: controller,
-      decoration: InputDecoration(
-        labelText: label,
-        hintText: hintText,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey[300]!),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: AppTheme.textSecondaryColor,
+          ),
         ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey[300]!),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: controller,
+          obscureText: isObscure,
+          enabled: isEnabled,
+          maxLines: maxLines,
+          keyboardType: keyboardType,
+          validator: validator,
+          decoration: InputDecoration(
+            prefixIcon: icon != null ? Icon(icon, color: AppTheme.primaryColor) : null,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Colors.grey),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AppTheme.primaryColor, width: 2),
+            ),
+            filled: true,
+            fillColor: isEnabled ? Colors.white : Colors.grey[200],
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          ),
         ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppTheme.primaryColor),
-        ),
-        filled: true,
-        fillColor: Colors.white,
-      ),
-      keyboardType: keyboardType,
-      maxLines: maxLines,
-      validator: validator,
+      ],
     );
   }
   
