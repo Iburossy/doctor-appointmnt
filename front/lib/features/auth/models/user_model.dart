@@ -10,7 +10,7 @@ class UserModel {
   final String? avatar;
   final DateTime? dateOfBirth;
   final String? gender;
-  final String? address;
+  final dynamic address; // Peut être String ou Map<String, dynamic>
   final LocationData? location;
   final NotificationSettings notificationSettings;
   final DoctorProfile? doctorProfile;

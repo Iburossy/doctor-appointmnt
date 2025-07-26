@@ -1,3 +1,5 @@
+quand j'ai appuyer sur "devenir medecin" depuis la page de profil, jai eu ce probleme
+
 je devrais pouvoir mettre a jour seulement les information que je veux sans etre obliger de remplir tous les champs 
 
 il ny a que deux genre au senegal:
@@ -71,30 +73,6 @@ Maintenant, je dois trouver où, dans votre code Flutter, vous construisez et en
 
 
 
-ncohérences et Champs Manquants
-Voici la liste des problèmes que j'ai identifiés dans 
-doctor_upgrade_screen.dart
- :
-
-clinic.address.city : Manquant.
-Backend : Requis.
-Flutter : Le champ _clinicAddressController est utilisé pour la street, mais la city est codée en dur à "Dakar". Si l'utilisateur entre une adresse complète, la ville n'est pas extraite et envoyée séparément.
-clinic.address.coordinates : Codées en dur.
-Backend : Requis.
-Flutter : Les coordonnées sont toujours latitude: 14.6937, longitude: -17.4441 (Dakar). Elles ne sont pas calculées à partir de l'adresse saisie, ce qui rendra la géolocalisation des médecins incorrecte pour tous ceux qui ne sont pas à cet endroit précis.
-specialties : Mal formaté.
-Backend : Attend un tableau de strings (ex: ["Cardiologie"]).
-Flutter : Envoie [_specializationController.text], ce qui est correct, mais le champ de sélection est un simple dropdown qui ne permet de choisir qu'une seule spécialité. Le backend est prêt à en accepter plusieurs.
-Recommandations et Plan d'Action
-Pour résoudre ces problèmes et assurer une synchronisation parfaite, je propose les modifications suivantes :
-
-Mettre à jour le formulaire Flutter :
-Ajouter un champ de texte séparé pour la ville (city).
-(Optionnel mais recommandé) Intégrer un service de géocodage (comme Google Places API) pour convertir l'adresse textuelle en coordonnées GPS précises. Pour l'instant, nous pouvons laisser les coordonnées codées en dur, mais il faut être conscient de cette limitation.
-(Optionnel) Remplacer le dropdown des spécialités par un champ de sélection multiple pour permettre au médecin de choisir plusieurs spécialités.
-Mettre à jour la logique d'envoi (
-_submitUpgradeRequest
-c:\Users\Inspiron 563
 
 
 
