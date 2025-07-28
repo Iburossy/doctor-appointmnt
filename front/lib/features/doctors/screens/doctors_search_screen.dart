@@ -105,7 +105,7 @@ class _DoctorsSearchScreenState extends State<DoctorsSearchScreen> {
               slivers: [
                 // App Bar
                 SliverAppBar(
-                  expandedHeight: _showFilters ? 280 : 180,
+                  expandedHeight: _showFilters ? 280 : 210,
                   floating: false,
                   pinned: true,
                   backgroundColor: AppTheme.primaryColor,
@@ -122,27 +122,26 @@ class _DoctorsSearchScreenState extends State<DoctorsSearchScreen> {
                         ),
                       ),
                       child: SafeArea(
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Column(
-                            children: [
-                              const SizedBox(height: 60), // Space for app bar
-                              
-                              // Search Bar
-                              _buildSearchBar(),
-                              
-                              const SizedBox(height: 16),
-                              
-                              // Filter Toggle
-                              _buildFilterToggle(),
-                              
-                              // Filters (if expanded)
-                              if (_showFilters) ...[
-                                const SizedBox(height: 16),
-                                _buildFilters(),
-                              ],
-                            ],
-                          ),
+                        child: Stack(
+                          children: [
+                            Positioned(
+                              bottom: 16,
+                              left: 16,
+                              right: 16,
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  _buildSearchBar(),
+                                  const SizedBox(height: 16),
+                                  _buildFilterToggle(),
+                                  if (_showFilters) ...[
+                                    const SizedBox(height: 16),
+                                    _buildFilters(),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),

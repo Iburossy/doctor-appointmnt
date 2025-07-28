@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/routes/app_router.dart';
+import '../../../core/config/app_config.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../../shared/widgets/custom_button.dart';
 import '../../../shared/widgets/loading_overlay.dart';
@@ -50,6 +51,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _streetController.dispose();
     _cityController.dispose();
     super.dispose();
+  }
+  
+  String _getFullAvatarUrl(String avatarPath) {
+    if (avatarPath.startsWith('http')) {
+      return avatarPath;
+    }
+    return '${AppConfig.baseUrl}/$avatarPath';
   }
   
   void _loadCurrentProfile() {
@@ -186,11 +194,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           CircleAvatar(
             radius: 50,
             backgroundImage: _profileImageFile != null
-                ? FileImage(_profileImageFile!)
-                : (user?.avatar != null && user!.avatar!.isNotEmpty
-                    ? NetworkImage(user.avatar!)
-                    : null) as ImageProvider?,
-            child: _profileImageFile == null && (user?.avatar == null || user!.avatar!.isEmpty)
+                ? FileImage(_profileImageFile!) as ImageProvider
+                : (user?.profilePicture != null && user!.profilePicture!.isNotEmpty
+                    ? NetworkImage(_getFullAvatarUrl(user.profilePicture!))
+                    : const AssetImage('assets/images/default_avatar.png')),
+            child: _profileImageFile == null && (user?.profilePicture == null || user!.profilePicture!.isEmpty)
                 ? const Icon(Icons.person, size: 50, color: Colors.grey)
                 : null,
           ),

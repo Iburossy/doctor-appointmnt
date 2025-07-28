@@ -221,16 +221,33 @@ class AuthProvider with ChangeNotifier {
   // Get current user data
   Future<void> _getCurrentUser() async {
     try {
+      print('DEBUG: Calling /auth/me API...');
       final response = await _apiService.get('/auth/me');
       
-      if (response.isSuccess && response.data != null) {
-        _user = UserModel.fromJson(response.data);
+      print('DEBUG: API Response success: ${response.isSuccess}');
+      print('DEBUG: API Response data: ${response.data}');
+      
+      if (response.isSuccess && response.data != null && response.data['user'] != null) {
+        final userData = response.data['user'] as Map<String, dynamic>;
+        print('DEBUG: Creating UserModel from JSON with data: $userData');
+        
+        _user = UserModel.fromJson(userData);
+        print('DEBUG: UserModel created successfully');
+        print('DEBUG: Parsed user data:');
+        print('  - Phone: ${_user?.phone}');
+        print('  - Email: ${_user?.email}');
+        print('  - DateOfBirth: ${_user?.dateOfBirth}');
+        print('  - Gender: ${_user?.gender}');
+        print('  - Address: ${_user?.address}');
+        print('  - Avatar: ${_user?.profilePicture}');
         _isAuthenticated = true;
         notifyListeners();
       } else {
+        print('DEBUG: Invalid user data received');
         throw Exception('Invalid user data');
       }
     } catch (e) {
+      print('DEBUG: Error in _getCurrentUser: $e');
       await logout();
       rethrow;
     }

@@ -710,10 +710,10 @@ class _DoctorProfileTab extends StatelessWidget {
                       CircleAvatar(
                         radius: 40,
                         backgroundColor: AppTheme.primaryColor,
-                        backgroundImage: user?.avatar != null 
-                            ? NetworkImage(user!.avatar!) 
+                        backgroundImage: user?.profilePicture != null 
+                            ? NetworkImage(user!.profilePicture!) 
                             : null,
-                        child: user?.avatar == null 
+                        child: user?.profilePicture == null 
                             ? Text(
                                 (user?.firstName.isNotEmpty == true) ? user!.firstName.substring(0, 1).toUpperCase() : 'D',
                                 style: const TextStyle(

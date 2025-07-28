@@ -96,7 +96,8 @@ const userSchema = new mongoose.Schema({
     deviceId: String,
     platform: String,
     version: String
-  }
+  },
+  fcmTokens: [{ type: String }]
 }, {
   timestamps: true,
   toJSON: { virtuals: true },

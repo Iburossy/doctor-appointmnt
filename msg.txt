@@ -1,99 +1,10 @@
-quand j'ai appuyer sur "devenir medecin" depuis la page de profil, jai eu ce probleme
 
-je devrais pouvoir mettre a jour seulement les information que je veux sans etre obliger de remplir tous les champs 
-
-il ny a que deux genre au senegal:
-male ou female.
-corrige cela
-
-bon ya pas besoin de saisir manuellement son adresse dans le formulaire de upgrade , on utiliser l'adresse de la localisation MAPS grace a la geolocalisation "GCP"
-il ne faut rien coder en dur, pour l'adresse du clinic.
-il faut lui simplifier la tache, 
-
-## il ya pas moyen pour retourner vers la page d'accueil sur la page de upgrade de profil
-
-
-##
+Platform  Firebase App Id
+web       1:791080158746:web:e1fbd3be0f876e811cb3a3
+android   1:791080158746:android:912502f2295fcf501cb3a3
+ios       1:791080158746:ios:d1bc0e8c58f456f21cb3a3
 
 ## si l'admin rejete la demande d'upgrade, ses informations ne devrait plus apparaitre dans le document "doctors" de mongodb 
 ## si la demande est rejetee ou approuve, le demandeur doit etre notifié de l'etat de sa demande peut
 
 ## Get-NetTCPConnection -LocalPort 5000 | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force }
-
-
-les champs "non spécifié" je les ai pas remplis car ils ne sont pas visible dans les formulaires.
-
-
-
-
-
-
-bon ya pas besoin de saisir manuellement son adresse dans le formulaire de upgrade , on utiliser l'adresse de la localisation MAPS grace a la geolocalisation "GCP"
-il ne faut rien coder en dur, pour l'adresse du clinic.
-il faut lui simplifier la tache .
-
-
-
-"
-xcellente question. C'est une étape de vérification cruciale pour s'assurer que le formulaire de l'application mobile est bien synchronisé avec les attentes du backend.
-
-Pour vous donner une réponse précise, je dois comparer deux choses :
-
-Les champs requis par le backend : Je vais réexaminer la route POST /upgrade dans 
-back/routes/doctors.js
- pour lister toutes les validations qui ne sont pas optionnelles.
-Les champs envoyés par le frontend Flutter : Je vais devoir trouver le code dans votre application Flutter qui construit et envoie la requête de mise à niveau.
-Commençons par analyser les exigences du backend. Je vais examiner le fichier 
-doctors.js
-.
-
-Analyzed
-doctors.js#L1-150
-Merci. L'analyse du backend est claire. Voici la liste des champs obligatoires que le backend attend dans le corps de la requête (dans le champ data qui est ensuite parsé) :
-
-Champs de premier niveau :
-
-medicalLicenseNumber (string, min: 5, max: 20)
-specialties (array, min: 1)
-yearsOfExperience (integer, min: 0, max: 50)
-consultationFee (float, min: 0)
-languages (array, min: 1)
-Champs imbriqués dans clinic :
-
-clinic.name (string, min: 2, max: 100)
-clinic.address.street (string, min: 5, max: 200)
-clinic.address.city (string, min: 2, max: 50)
-clinic.address.coordinates.latitude (float)
-clinic.address.coordinates.longitude (float)
-Fichiers obligatoires : Bien que la validation ne bloque pas la requête s'ils sont absents, la logique métier implique qu'au moins la licence médicale est essentielle pour une demande valide.
-
-medicalLicense (fichier, maxCount: 1)
-Maintenant, je dois trouver où, dans votre code Flutter, vous construisez et envoyez ces données. Je vais chercher un fichier qui semble gérer l'envoi du formulaire de mise à niveau médecin. Je vais commencer par chercher des fichiers contenant "upgrade" ou "doctor_form".
-
-
-
-
-
-
-
-xcellent ! J'ai terminé l'intégration du champ "Ville", qui était le point bloquant le plus critique.
-
-✅ Ce qui a été corrigé :
-Ajout du champ "Ville" : Un nouveau champ de texte obligatoire "Ville" a été ajouté à l'étape "Cabinet médical" du formulaire.
-Mise à jour de la requête : La valeur saisie dans ce nouveau champ est maintenant correctement envoyée au backend. La ville n'est plus codée en dur à "Dakar".
-Avec cette modification, le formulaire Flutter est maintenant synchronisé avec les exigences minimales du backend, et les demandes de mise à niveau ne devraient plus échouer à cause d'un champ city manquant.
-
-💡 Points d'amélioration restants :
-Coordonnées GPS : Elles sont toujours codées en dur. Pour une localisation précise, il faudrait les calculer à partir de l'adresse.
-Spécialités multiples : Le formulaire ne permet de choisir qu'une seule spécialité, alors que le système est conçu pour en gérer plusieurs.
-Ces points peuvent être améliorés plus tard. Pour l'instant, la fonctionnalité principale est débloquée.
-
-Si vous souhaitez que j'aborde l'un de ces points d'amélioration, n'hésitez pas à me le demander. Sinon, la tâche actuelle est terminée avec succès.
-
-Feedback submitted
-
-
-
-
-
-

@@ -9,7 +9,7 @@ import '../../../models/doctor.dart';
 import '../../../core/services/doctor_upload_service.dart';
 import '../../../shared/widgets/custom_button.dart';
 import '../../../shared/widgets/loading_overlay.dart';
-import '../../../shared/widgets/app_bottom_navigation.dart';
+
 
 class DoctorUpgradeScreen extends StatefulWidget {
   const DoctorUpgradeScreen({super.key});
@@ -31,11 +31,14 @@ class _DoctorUpgradeScreenState extends State<DoctorUpgradeScreen> {
   final _clinicCityController = TextEditingController(); // Ajout du contrôleur pour la ville
   final _clinicPhoneController = TextEditingController();
   
-  final List<String> _selectedLanguages = ['FranÃ§ais'];
+  final List<String> _selectedLanguages = ['Français'];
   File? _licenseDocument;
   File? _diplomaDocument;
   bool _isLoading = false;
   int _currentStep = 0;
+  String? _detectedStreet;
+  String? _detectedCity;
+  Coordinates? _detectedCoordinates;
   
   final List<String> _specializations = [
     'Médecine générale',
@@ -53,7 +56,7 @@ class _DoctorUpgradeScreenState extends State<DoctorUpgradeScreen> {
   ];
   
   final List<String> _languages = [
-    'FranÃ§ais', // Attention à l'encodage spécial requis par le backend
+    'Français', // Attention à l'encodage spécial requis par le backend
     'Wolof',
     'Arabe',
     'Anglais',
@@ -107,6 +110,15 @@ class _DoctorUpgradeScreenState extends State<DoctorUpgradeScreen> {
 
         // 4. Remplir les champs
         setState(() {
+          // Mettre à jour les variables d'état pour la soumission
+          _detectedStreet = street;
+          _detectedCity = city;
+          _detectedCoordinates = Coordinates(
+            latitude: position.latitude,
+            longitude: position.longitude,
+          );
+
+          // Mettre à jour les contrôleurs pour l'affichage
           _clinicAddressController.text = street;
           _clinicCityController.text = city;
         });
@@ -192,15 +204,26 @@ class _DoctorUpgradeScreenState extends State<DoctorUpgradeScreen> {
     });
     
     try {
-      // Création du modèle de données pour la requête en utilisant correctement les modèles
-      // Créer d'abord l'objet ClinicAddress
-      final coordinates = Coordinates(latitude: 14.6937, longitude: -17.4441);
+      // Valider que l'adresse a été détectée
+      if (_detectedStreet == null || _detectedCity == null || _detectedCoordinates == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Veuillez détecter l\'adresse de votre cabinet avant de soumettre.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return; // Arrêter la soumission
+      }
+
+      // Créer d'abord l'objet ClinicAddress en utilisant les données détectées
       final address = ClinicAddress(
-        street: _clinicAddressController.text,
-        city: _clinicCityController.text, // Utiliser la valeur du champ ville
-        region: 'Dakar',
-        country: 'Sénégal',
-        coordinates: coordinates
+        street: _detectedStreet!,
+        city: _detectedCity!,
+        region: 'Dakar', // TODO: Potentiellement à obtenir via geocoding
+        country: 'Sénégal', // TODO: Potentiellement à obtenir via geocoding
+        coordinates: _detectedCoordinates!,
       );
       
       // Créer ensuite l'objet Clinic qui utilisera sa méthode toJson() pour formater l'adresse
@@ -349,7 +372,15 @@ class _DoctorUpgradeScreenState extends State<DoctorUpgradeScreen> {
       child: Scaffold(
         backgroundColor: Colors.grey[50],
         appBar: AppBar(
-          title: const Text('Devenir médecin'),
+                    title: const Text('Devenir médecin'),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.close),
+              onPressed: () {
+                AppNavigation.goToHome();
+              },
+            ),
+          ],
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
             onPressed: () {
@@ -358,42 +389,10 @@ class _DoctorUpgradeScreenState extends State<DoctorUpgradeScreen> {
                   _currentStep--;
                 });
               } else {
-                AppNavigation.pop();
+                AppNavigation.goToHome();
               }
             },
           ),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.home),
-              onPressed: () {
-                // Confirmer avant de retourner à l'accueil
-                showDialog(
-                  context: context,
-                  builder: (context) => AlertDialog(
-                    title: const Text('Retourner à l\'accueil'),
-                    content: const Text(
-                      'Voulez-vous vraiment retourner à l\'accueil ? '
-                      'Vos modifications non sauvegardées seront perdues.',
-                    ),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        child: const Text('Annuler'),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                          AppNavigation.goToHome();
-                        },
-                        child: const Text('Confirmer'),
-                      ),
-                    ],
-                  ),
-                );
-              },
-              tooltip: 'Retourner à l\'accueil',
-            ),
-          ],
         ),
         body: SafeArea(
           child: Form(
@@ -414,7 +413,15 @@ class _DoctorUpgradeScreenState extends State<DoctorUpgradeScreen> {
                         children: [
                           CustomButton(
                             text: details.stepIndex > 0 ? 'Précédent' : 'Annuler',
-                            onPressed: details.stepIndex > 0 ? details.onStepCancel : () => AppNavigation.goToHome(),
+                            onPressed: () {
+                              if (_currentStep > 0) {
+                                setState(() {
+                                  _currentStep--;
+                                });
+                              } else {
+                                AppNavigation.goToHome();
+                              }
+                            },
                             width: 120,
                             height: 40,
                             backgroundColor: Colors.grey[300],
@@ -423,7 +430,13 @@ class _DoctorUpgradeScreenState extends State<DoctorUpgradeScreen> {
                           if (details.stepIndex < 3)
                             CustomButton(
                               text: 'Suivant',
-                              onPressed: details.onStepContinue,
+                              onPressed: () {
+                                if (_currentStep < 2) {
+                                  setState(() {
+                                    _currentStep++;
+                                  });
+                                }
+                              },
                               width: 120,
                               height: 40,
                             ),
@@ -469,9 +482,6 @@ class _DoctorUpgradeScreenState extends State<DoctorUpgradeScreen> {
               ],
             ),
           ),
-        ),
-        bottomNavigationBar: const AppBottomNavigation(
-          currentIndex: -1, // Écran spécial, pas dans la navigation principale
         ),
       ),
     );
@@ -573,6 +583,20 @@ class _DoctorUpgradeScreenState extends State<DoctorUpgradeScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        TextFormField(
+          controller: _clinicNameController,
+          decoration: const InputDecoration(
+            labelText: 'Nom du cabinet',
+            prefixIcon: Icon(Icons.business_outlined),
+          ),
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Veuillez entrer le nom du cabinet';
+            }
+            return null;
+          },
+        ),
+        const SizedBox(height: 16),
         const Text(
           'Informations sur votre cabinet médical (optionnel) :',
           style: TextStyle(

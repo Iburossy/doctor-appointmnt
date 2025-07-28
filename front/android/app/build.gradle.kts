@@ -1,5 +1,18 @@
+import java.util.Properties
+import java.io.FileInputStream
+
+// Read the API key from the .env file
+val envFile = rootProject.file("../.env")
+val properties = Properties()
+if (envFile.exists()) {
+    properties.load(FileInputStream(envFile))
+}
+
 plugins {
     id("com.android.application")
+    // START: FlutterFire Configuration
+    id("com.google.gms.google-services")
+    // END: FlutterFire Configuration
     id("kotlin-android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
@@ -29,6 +42,7 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        manifestPlaceholders["GOOGLE_MAPS_API_KEY"] = properties.getProperty("GOOGLE_MAPS_API_KEY") ?: ""
     }
 
     buildTypes {

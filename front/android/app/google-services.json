@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "791080158746",
+    "project_id": "iburossy-doctors-app",
+    "storage_bucket": "iburossy-doctors-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:791080158746:android:912502f2295fcf501cb3a3",
+        "android_client_info": {
+          "package_name": "com.example.samarv"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCghiEDCXf3fgnRU4o437TfHgZJ3AyyZeI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

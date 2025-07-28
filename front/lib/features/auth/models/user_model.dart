@@ -7,7 +7,7 @@ class UserModel {
   final String role; // 'patient' or 'doctor'
   final bool isPhoneVerified;
   final bool isEmailVerified;
-  final String? avatar;
+  final String? profilePicture;
   final DateTime? dateOfBirth;
   final String? gender;
   final dynamic address; // Peut être String ou Map<String, dynamic>
@@ -26,7 +26,7 @@ class UserModel {
     required this.role,
     required this.isPhoneVerified,
     required this.isEmailVerified,
-    this.avatar,
+    this.profilePicture,
     this.dateOfBirth,
     this.gender,
     this.address,
@@ -80,7 +80,7 @@ class UserModel {
       role: json['role'] ?? 'patient',
       isPhoneVerified: json['isPhoneVerified'] ?? false,
       isEmailVerified: json['isEmailVerified'] ?? false,
-      avatar: json['avatar'],
+      profilePicture: json['profilePicture'],
       dateOfBirth: json['dateOfBirth'] != null
           ? DateTime.parse(json['dateOfBirth'])
           : null,
@@ -115,7 +115,7 @@ class UserModel {
       'role': role,
       'isPhoneVerified': isPhoneVerified,
       'isEmailVerified': isEmailVerified,
-      'avatar': avatar,
+      'profilePicture': profilePicture,
       'dateOfBirth': dateOfBirth?.toIso8601String(),
       'gender': gender,
       'address': address,
@@ -137,7 +137,7 @@ class UserModel {
     String? role,
     bool? isPhoneVerified,
     bool? isEmailVerified,
-    String? avatar,
+    String? profilePicture,
     DateTime? dateOfBirth,
     String? gender,
     String? address,
@@ -156,7 +156,7 @@ class UserModel {
       role: role ?? this.role,
       isPhoneVerified: isPhoneVerified ?? this.isPhoneVerified,
       isEmailVerified: isEmailVerified ?? this.isEmailVerified,
-      avatar: avatar ?? this.avatar,
+      profilePicture: profilePicture ?? this.profilePicture,
       dateOfBirth: dateOfBirth ?? this.dateOfBirth,
       gender: gender ?? this.gender,
       address: address ?? this.address,

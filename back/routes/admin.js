@@ -5,6 +5,7 @@ const Doctor = require('../models/Doctor');
 const DoctorRequest = require('../models/doctorRequest');
 const Appointment = require('../models/Appointment');
 const { authenticate, authorize } = require('../middleware/auth');
+const { sendPushNotification } = require('../services/pushNotification.service');
 
 const router = express.Router();
 
@@ -1027,8 +1028,14 @@ router.post('/doctor-requests/:id/approve', authenticate, authorize('admin'), [
     // Log de l'action admin
     console.log(`✅ Admin ${req.user.firstName} ${req.user.lastName} a approuvé la demande médecin de ${user.firstName} ${user.lastName}`);
 
-    // TODO: Envoyer une notification SMS/Email à l'utilisateur
-    // await notificationService.sendApprovalNotification(user.phone, user.firstName);
+    // Envoyer une notification push à l'utilisateur
+    if (user.fcmTokens && user.fcmTokens.length > 0) {
+      const title = 'Félicitations ! Votre demande a été approuvée.';
+      const body = 'Vous pouvez maintenant vous connecter en tant que médecin et commencer à gérer vos rendez-vous.';
+      sendPushNotification(user.fcmTokens, title, body)
+        .then(() => console.log(`🚀 Notification d'approbation envoyée à ${user.firstName}`))
+        .catch(err => console.error(`Erreur d'envoi de notification d'approbation à ${user.firstName}:`, err));
+    }
 
     res.json({
       success: true,
@@ -1105,8 +1112,14 @@ router.post('/doctor-requests/:id/reject', authenticate, authorize('admin'), [
     const user = doctorRequest.userId;
     console.log(`❌ Admin ${req.user.firstName} ${req.user.lastName} a rejeté la demande médecin de ${user.firstName} ${user.lastName} - Raison: ${reason}`);
 
-    // TODO: Envoyer une notification SMS/Email à l'utilisateur
-    // await notificationService.sendRejectionNotification(user.phone, user.firstName, reason);
+    // Envoyer une notification push à l'utilisateur
+    if (user.fcmTokens && user.fcmTokens.length > 0) {
+      const title = 'Mise à jour de votre demande de mise à niveau';
+      const body = `Votre demande a été rejetée. Raison : ${reason}`;
+      sendPushNotification(user.fcmTokens, title, body)
+        .then(() => console.log(`🚀 Notification de rejet envoyée à ${user.firstName}`))
+        .catch(err => console.error(`Erreur d'envoi de notification de rejet à ${user.firstName}:`, err));
+    }
 
     res.json({
       success: true,
