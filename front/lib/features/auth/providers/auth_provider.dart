@@ -1,19 +1,21 @@
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import '../../../core/services/api_service.dart';
 import '../../../core/services/storage_service.dart';
 import '../../../core/services/notification_service.dart';
 import '../models/user_model.dart';
 
 class AuthProvider with ChangeNotifier {
-  final ApiService _apiService = ApiService();
+  late final ApiService _apiService;
   
   UserModel? _user;
   bool _isLoading = false;
   String? _error;
   bool _isAuthenticated = false;
   bool _isOnboarded = false;
+  bool _isInitialized = false;
   
   // Getters
   UserModel? get user => _user;
@@ -21,28 +23,59 @@ class AuthProvider with ChangeNotifier {
   String? get error => _error;
   bool get isAuthenticated => _isAuthenticated;
   bool get isOnboarded => _isOnboarded;
+  bool get isInitialized => _isInitialized;
   bool get isDoctor => _user?.role == 'doctor';
   bool get isPatient => _user?.role == 'patient';
   
+  // Constructor
+  AuthProvider() {
+    print('DEBUG: AuthProvider constructor called');
+    _apiService = ApiService(onUnauthorized: logout);
+    // Auto-initialisation sans splash screen
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      initialize();
+    });
+  }
+  
+  // Méthode publique pour déclencher la notification
+  void triggerNotification() {
+    notifyListeners();
+  }
+  
   // Initialize auth state
   Future<void> initialize() async {
-    _setLoading(true);
+    if (_isInitialized) return; // Empêcher les initialisations multiples
+    print('DEBUG: Starting AuthProvider initialization...');
+    
+    // Démarrer le loading sans notifier immédiatement
+    _isLoading = true;
     
     try {
       // Check if user is onboarded
       _isOnboarded = StorageService.getBool('onboarded') ?? false;
+      print('DEBUG: User onboarded: $_isOnboarded');
       
       // Check if user has valid token
       final token = StorageService.getString('auth_token');
+      print('DEBUG: Token exists: ${token != null && token.isNotEmpty}');
+      
       if (token != null && token.isNotEmpty) {
         // Verify token and get user data
         await _getCurrentUser();
+      } else {
+        print('DEBUG: No valid token found, user not authenticated');
+        _isAuthenticated = false;
       }
     } catch (e) {
-      _setError('Erreur d\'initialisation: $e');
+      print('DEBUG: Error during initialization: $e');
+      _error = 'Erreur d\'initialisation: $e';
       await logout(); // Clear invalid session
     } finally {
-      _setLoading(false);
+      _isLoading = false;
+      _isInitialized = true; // Marquer comme initialisé pour éviter les boucles
+      print('DEBUG: AuthProvider initialization completed. Initialized flag set to true.');
+      // Notifier les listeners pour que GoRouter puisse réévaluer la redirection
+      notifyListeners();
     }
   }
   
@@ -219,50 +252,140 @@ class AuthProvider with ChangeNotifier {
   }
   
   // Get current user data
-  Future<void> _getCurrentUser() async {
+  
+  Future<void> _getCurrentUser({bool forceFullRefresh = false}) async {
     try {
       print('DEBUG: Calling /auth/me API...');
-      final response = await _apiService.get('/auth/me');
+      // Ajouter un paramètre pour ignorer le cache lors d'une actualisation forcée
+      final response = await _apiService.get(
+        '/auth/me', 
+        queryParameters: forceFullRefresh ? {'_nocache': DateTime.now().millisecondsSinceEpoch.toString()} : null
+      );
       
       print('DEBUG: API Response success: ${response.isSuccess}');
       print('DEBUG: API Response data: ${response.data}');
       
-      if (response.isSuccess && response.data != null && response.data['user'] != null) {
+      // Protection supplémentaire contre les erreurs de parsing JSON
+      if (response.isSuccess && response.data != null) {
+        print('DEBUG: Attempting to parse user data');
         final userData = response.data['user'] as Map<String, dynamic>;
-        print('DEBUG: Creating UserModel from JSON with data: $userData');
-        
-        _user = UserModel.fromJson(userData);
-        print('DEBUG: UserModel created successfully');
-        print('DEBUG: Parsed user data:');
-        print('  - Phone: ${_user?.phone}');
-        print('  - Email: ${_user?.email}');
-        print('  - DateOfBirth: ${_user?.dateOfBirth}');
-        print('  - Gender: ${_user?.gender}');
-        print('  - Address: ${_user?.address}');
-        print('  - Avatar: ${_user?.profilePicture}');
-        _isAuthenticated = true;
-        notifyListeners();
+        try {
+          print('DEBUG: Creating UserModel from JSON with data: $userData');
+          
+          // Gestion spéciale pour les profils médecin avec structure différente
+          if (userData['role'] == 'doctor' && userData.containsKey('doctorProfile')) {
+            print('DEBUG: Processing doctor profile with backend structure adaptation');
+            // Le backend peut renvoyer une structure différente pour doctorProfile
+            // On laisse UserModel.fromJson gérer la conversion avec gestion d'erreur
+          }
+          
+          _user = UserModel.fromJson(userData);
+          print('DEBUG: UserModel created successfully');
+          print('DEBUG: Parsed user data:');
+          print('  - Phone: ${_user?.phone}');
+          print('  - Email: ${_user?.email}');
+          print('  - Role: ${_user?.role}');
+          print('  - DateOfBirth: ${_user?.dateOfBirth}');
+          print('  - Gender: ${_user?.gender}');
+          print('  - Address: ${_user?.address}');
+          print('  - Avatar: ${_user?.profilePicture}');
+          if (_user?.role == 'doctor') {
+            print('  - Doctor verified: ${_user?.doctorProfile?.isVerified}');
+          }
+          _isAuthenticated = true;
+          // Ne pas notifier ici, sera fait par la méthode appelante
+        } catch (e) {
+          print('DEBUG: Error parsing user data: $e');
+          print('DEBUG: Raw user data that failed to parse: $userData');
+          
+          // Pour les erreurs de parsing des profils médecin, on essaie de continuer
+          // avec les données de base si possible
+          if (userData['role'] == 'doctor') {
+            print('DEBUG: Doctor profile parsing failed, attempting basic user data only');
+            try {
+              // Créer un utilisateur de base sans le profil médecin problématique
+              final basicUserData = Map<String, dynamic>.from(userData);
+              basicUserData.remove('doctorProfile'); // Supprimer le profil problématique
+              _user = UserModel.fromJson(basicUserData);
+              _isAuthenticated = true;
+              // Ne pas notifier ici, sera fait par la méthode appelante
+              print('DEBUG: Successfully created basic user without doctor profile');
+              return; // Sortir de la méthode avec succès partiel
+            } catch (e2) {
+              print('DEBUG: Even basic user parsing failed: $e2');
+            }
+          }
+          
+          throw Exception('Erreur de parsing des données utilisateur: $e');
+        }
       } else {
         print('DEBUG: Invalid user data received');
         throw Exception('Invalid user data');
       }
     } catch (e) {
       print('DEBUG: Error in _getCurrentUser: $e');
-      await logout();
-      rethrow;
+      // Au lieu de déconnecter l'utilisateur, on garde les données de base
+      // et on définit juste _isAuthenticated à true si l'utilisateur a déjà un token
+      if (_user == null && StorageService.getString('auth_token') != null) {
+        _isAuthenticated = true;
+        // Ne pas notifier ici, sera fait par la méthode appelante
+      }
+      // On ne propage pas l'erreur pour éviter d'autres problèmes
+      print('DEBUG: Continuing despite error in profile loading');
     }
   }
   
-  // Refresh user data
+  // Refresh user data with improved role synchronization
   Future<void> refreshUser() async {
     if (_isAuthenticated) {
+      _setLoading(true);
+      
       try {
+        // Vérifier d'abord explicitement le rôle actuel via l'endpoint dédié
+        final roleCheck = await _apiService.checkCurrentRole();
+        if (roleCheck.isSuccess && roleCheck.data != null) {
+          final serverRole = roleCheck.data['role'];
+          final localRole = _user?.role;
+          
+          if (kDebugMode) {
+            print('Role check - Server: $serverRole, Local: $localRole');
+          }
+          
+          // Si le rôle a changé, force une récupération complète du profil
+          if (serverRole != localRole) {
+            if (kDebugMode) {
+              print('Role mismatch detected! Forcing complete profile refresh');
+            }
+            await _getCurrentUser(forceFullRefresh: true);
+            return;
+          }
+        }
+        
+        // Récupération normale des données utilisateur
         await _getCurrentUser();
       } catch (e) {
         if (kDebugMode) {
           print('Error refreshing user: $e');
         }
+      } finally {
+        _setLoading(false);
       }
+    }
+  }
+  
+  // Vérifier explicitement le rôle utilisateur depuis le serveur
+  Future<String?> checkCurrentRole() async {
+    try {
+      final response = await _apiService.checkCurrentRole();
+      if (response.isSuccess && response.data != null) {
+        return response.data['role'];
+      }
+      return null;
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error checking role: $e');
+      }
+      return null;
     }
   }
   
@@ -381,30 +504,37 @@ class AuthProvider with ChangeNotifier {
   
   // Logout user
   Future<void> logout() async {
+    print('DEBUG: Starting logout process...');
     _setLoading(true);
     
+    // Avec JWT, pas besoin d'appel API pour la déconnexion
+    // Il suffit de supprimer le token côté client
+    
     try {
-      // Call logout endpoint if authenticated
-      if (_isAuthenticated) {
-        await _apiService.post('/auth/logout', data: {});
-      }
+      print('DEBUG: Clearing local data...');
+      // Clear local data
+      await StorageService.clearToken();
+      await StorageService.clearUser();
+      await NotificationService.cancelAllNotifications();
+      
+      print('DEBUG: Setting user state to null...');
+      _user = null;
+      _isAuthenticated = false;
+      _clearError();
+      
+      print('DEBUG: User logged out successfully');
+      print('DEBUG: isAuthenticated = $_isAuthenticated');
+      print('DEBUG: user = $_user');
     } catch (e) {
       if (kDebugMode) {
-        print('Error during logout: $e');
+        print('Error during logout cleanup: $e');
       }
+    } finally {
+      _setLoading(false);
+      print('DEBUG: Calling notifyListeners()...');
+      notifyListeners();
+      print('DEBUG: Logout process completed');
     }
-    
-    // Clear local data
-    await StorageService.clearToken();
-    await StorageService.clearUser();
-    await NotificationService.cancelAllNotifications();
-    
-    _user = null;
-    _isAuthenticated = false;
-    _clearError();
-    _setLoading(false);
-    
-    notifyListeners();
   }
   
   // Delete account
@@ -439,23 +569,74 @@ class AuthProvider with ChangeNotifier {
   
   // Save authentication data
   Future<void> _saveAuthData(Map<String, dynamic> data) async {
-    final token = data['token'];
-    final userData = data['user'];
-    
-    if (token != null && userData != null) {
+    try {
+      _isLoading = true;
+      notifyListeners(); // Informe l'UI qu'un chargement est en cours
+
+      final String token = data['token'];
+      final Map<String, dynamic> userJson = data['user'];
+
+      // 1. Sauvegarde du token et des données utilisateur
       await StorageService.saveToken(token.toString());
-      await StorageService.saveUser(userData);
-      
-      _user = UserModel.fromJson(userData);
+      await StorageService.saveUser(userJson);
+      // Le token est déjà sauvegardé et sera utilisé automatiquement par les intercepteurs de Dio
+
+      // 2. Création de l'objet User de base
+      _user = UserModel.fromJson(userJson);
       _isAuthenticated = true;
+
+      // 3. Attendre le chargement du profil spécifique (médecin ou patient)
+      // Cela garantit que le rôle et les données associées sont entièrement chargés.
+      // Chargement du profil spécifique en fonction du rôle
+      if (_user!.role == 'doctor') {
+        print('[AuthProvider] Utilisateur est médecin, chargement du profil médecin...');
+        try {
+          // Attendre explicitement le chargement du profil médecin
+          // Cette requête doit être complétée avant de notifier les écouteurs
+          final response = await _apiService.get('/doctors/profile');
+          if (response.isSuccess && response.data != null) {
+            print('[AuthProvider] Profil médecin chargé avec succès');
+            // Le profil médecin est maintenant disponible
+          } else {
+            print('[AuthProvider] Erreur lors du chargement du profil médecin: ${response.message}');
+          }
+        } catch (e) {
+          print('[AuthProvider] Exception lors du chargement du profil médecin: $e');
+          // Ne pas échouer complètement si le profil ne peut pas être chargé
+        }
+      } else if (_user!.role == 'patient') {
+        print('[AuthProvider] Utilisateur est patient, chargement du profil patient...');
+        try {
+          // Attendre explicitement le chargement du profil patient
+          final response = await _apiService.get('/patients/profile');
+          if (response.isSuccess && response.data != null) {
+            print('[AuthProvider] Profil patient chargé avec succès');
+            // Le profil patient est maintenant disponible
+          } else {
+            print('[AuthProvider] Erreur lors du chargement du profil patient: ${response.message}');
+          }
+        } catch (e) {
+          print('[AuthProvider] Exception lors du chargement du profil patient: $e');
+          // Ne pas échouer complètement si le profil ne peut pas être chargé
+        }
+      }
       
-      // Initialize notifications
+      // 4. Initialisation des services post-authentification
       await NotificationService.init();
       await NotificationService.requestPermissions();
-      
+
+      // 5. Log de débogage pour vérifier le rôle final
+      print('[AuthProvider] Redirection imminente. Rôle final: ${_user?.role}');
+
+    } catch (e) {
+      print('[AuthProvider] Erreur dans _saveAuthData: $e');
+      _setError('Erreur lors de la sauvegarde des données: $e');
+      await logout(); // En cas d'erreur, déconnecter pour éviter un état incohérent
+    } finally {
+      _isLoading = false;
+      // 6. Notifier les listeners SEULEMENT à la fin de tout le processus.
+      // GoRouter va maintenant se déclencher avec l'état complet et correct.
       notifyListeners();
-    } else {
-      _setError('Données d\'authentification incomplètes');
     }
   }
   
@@ -467,7 +648,7 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
   }
   
-  void _setError(String error) {
+  void _setError(String? error) {
     _error = error;
     notifyListeners();
   }

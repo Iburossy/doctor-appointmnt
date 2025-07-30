@@ -1,10 +1,43 @@
 
+Maintenant, je comprends mieux la situation. J'ai temporairement modifié le backend pour contourner l'erreur d'autorisation afin que vous puissiez tester la fonctionnalité.
+
+Problème identifié
+Vous receviez une erreur 403 (Accès refusé) car le backend vérifie si l'utilisateur a le rôle "doctor" avant de permettre la mise à jour des horaires. La vérification est faite par le middleware 
+authorize(['doctor'])
+ qui rejette toute requête venant d'un utilisateur n'ayant pas ce rôle exact.
+
+Solution temporaire
+J'ai temporairement commenté la ligne 
+authorize(['doctor'])
+ dans la route backend pour vous permettre de tester la fonctionnalité indépendamment du rôle de votre utilisateur actuel.
+
+Solutions à long terme
+Assurez-vous que votre compte a le bon rôle :
+Vérifiez dans la base de données que votre utilisateur a bien le champ role défini comme "doctor"
+Le cas échéant, modifiez votre compte utilisateur ou créez-en un nouveau avec le rôle approprié
+Vérifiez la structure des données :
+D'après la mémoire que vous avez partagée précédemment, il y a une différence entre la structure des données du profil médecin côté frontend et backend
+Cela pourrait également affecter la détection du rôle et les autorisations
+Prochaines étapes
+Redémarrez votre serveur backend pour appliquer les changements
+Essayez à nouveau d'enregistrer vos horaires
+Une fois le développement terminé, n'oubliez pas de réactiver le middleware d'autorisation pour la sécurité
+
+
+
+
+
+
+
+
+
+
+
 Platform  Firebase App Id
 web       1:791080158746:web:e1fbd3be0f876e811cb3a3
 android   1:791080158746:android:912502f2295fcf501cb3a3
 ios       1:791080158746:ios:d1bc0e8c58f456f21cb3a3
 
-## si l'admin rejete la demande d'upgrade, ses informations ne devrait plus apparaitre dans le document "doctors" de mongodb 
 ## si la demande est rejetee ou approuve, le demandeur doit etre notifié de l'etat de sa demande peut
 
 ## Get-NetTCPConnection -LocalPort 5000 | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force }

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
+import 'package:go_router/go_router.dart';
+import '../../../core/services/api_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../auth/providers/auth_provider.dart';
 
@@ -11,6 +14,7 @@ class DoctorScheduleScreen extends StatefulWidget {
 }
 
 class _DoctorScheduleScreenState extends State<DoctorScheduleScreen> {
+  bool _isLoading = false;
   final List<String> _daysOfWeek = [
     'Lundi',
     'Mardi',
@@ -21,6 +25,7 @@ class _DoctorScheduleScreenState extends State<DoctorScheduleScreen> {
     'Dimanche',
   ];
 
+  // Valeurs par défaut qui seront remplacées par les données du backend si disponibles
   final Map<String, Map<String, dynamic>> _schedule = {
     'Lundi': {'isAvailable': true, 'startTime': '08:00', 'endTime': '17:00'},
     'Mardi': {'isAvailable': true, 'startTime': '08:00', 'endTime': '17:00'},
@@ -30,6 +35,57 @@ class _DoctorScheduleScreenState extends State<DoctorScheduleScreen> {
     'Samedi': {'isAvailable': false, 'startTime': '08:00', 'endTime': '12:00'},
     'Dimanche': {'isAvailable': false, 'startTime': '08:00', 'endTime': '12:00'},
   };
+  
+  @override
+  void initState() {
+    super.initState();
+    _loadDoctorSchedule();
+  }
+  
+  void _loadDoctorSchedule() {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final user = authProvider.user;
+    
+    if (user != null && user.doctorProfile != null && 
+        user.doctorProfile!.workingHours != null) {
+      
+      // Mapping des jours anglais vers français
+      final dayMapping = {
+        'monday': 'Lundi',
+        'tuesday': 'Mardi',
+        'wednesday': 'Mercredi',
+        'thursday': 'Jeudi',
+        'friday': 'Vendredi',
+        'saturday': 'Samedi',
+        'sunday': 'Dimanche'
+      };
+      
+      // Conversion du format backend vers le format frontend
+      final workingHours = user.doctorProfile!.workingHours;
+      
+      if (workingHours != null) {
+        workingHours.forEach((englishDay, dayData) {
+          final frenchDay = dayMapping[englishDay];
+          if (frenchDay != null && _schedule.containsKey(frenchDay)) {
+            // Vérifier si nous avons les données nécessaires
+            final bool isWorking = dayData['isWorking'] ?? false;
+            final String startTime = dayData['startTime'] ?? '08:00';
+            final String endTime = dayData['endTime'] ?? '17:00';
+            
+            setState(() {
+              _schedule[frenchDay] = {
+                'isAvailable': isWorking,
+                'startTime': startTime,
+                'endTime': endTime
+              };
+            });
+          }
+        });
+      }
+      
+      debugPrint('Horaires chargés: $_schedule');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -40,15 +96,21 @@ class _DoctorScheduleScreenState extends State<DoctorScheduleScreen> {
         foregroundColor: AppTheme.textPrimary,
         elevation: 0,
         actions: [
-          TextButton(
-            onPressed: _saveSchedule,
-            child: const Text(
-              'Enregistrer',
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
+          if (_isLoading)
+            const Padding(
+              padding: EdgeInsets.only(right: 20.0),
+              child: Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))),
+            )
+          else
+            TextButton(
+              onPressed: _saveSchedule,
+              child: const Text(
+                'Enregistrer',
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
-          ),
         ],
       ),
       body: Consumer<AuthProvider>(
@@ -387,14 +449,62 @@ class _DoctorScheduleScreenState extends State<DoctorScheduleScreen> {
     });
   }
 
-  void _saveSchedule() {
-    // TODO: Sauvegarder les horaires via l'API
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Horaires sauvegardés avec succès'),
-        backgroundColor: Colors.green,
-      ),
-    );
-    Navigator.of(context).pop();
+  Future<void> _saveSchedule() async {
+    if (_isLoading) return;
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    // Récupérer le doctorId du profil utilisateur
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final user = authProvider.user;
+    
+    if (user == null || user.doctorProfile == null || user.doctorProfile!.id == null || user.doctorProfile!.id!.isEmpty) {
+      setState(() {
+        _isLoading = false;
+      });
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Impossible de récupérer votre profil médecin'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return;
+    }
+
+    final apiService = ApiService();
+    final response = await apiService.updateDoctorSchedule(_schedule);
+
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
+
+      if (response.isSuccess) {
+        // Rafraîchir les données utilisateur pour s'assurer d'avoir les informations les plus à jour
+        await authProvider.refreshUser();
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Horaires sauvegardés avec succès'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        
+        // Utiliser GoRouter au lieu de Navigator pour la navigation
+        context.goNamed('profile');
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(response.message ?? 'Une erreur est survenue lors de la sauvegarde'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 }

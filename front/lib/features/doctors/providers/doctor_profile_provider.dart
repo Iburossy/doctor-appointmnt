@@ -294,11 +294,11 @@ class DoctorProfileProvider with ChangeNotifier {
     if (_doctorProfile == null) return false;
     
     return _doctorProfile!.specialization != null &&
-           _doctorProfile!.licenseNumber != null &&
-           _doctorProfile!.experienceYears != null &&
+           _doctorProfile!.medicalLicenseNumber != null &&
+           _doctorProfile!.yearsOfExperience != null &&
            _doctorProfile!.education != null &&
-           _doctorProfile!.clinicInfo != null &&
-           _doctorProfile!.workingHours.isNotEmpty;
+           _doctorProfile!.clinic != null &&
+           _doctorProfile!.workingHours != null;
   }
 
   // Get completion percentage
@@ -309,13 +309,13 @@ class DoctorProfileProvider with ChangeNotifier {
     int totalFields = 8;
     
     if (_doctorProfile!.specialization != null) completedFields++;
-    if (_doctorProfile!.licenseNumber != null) completedFields++;
-    if (_doctorProfile!.experienceYears != null) completedFields++;
-    if (_doctorProfile!.education != null) completedFields++;
-    if (_doctorProfile!.bio != null && _doctorProfile!.bio!.isNotEmpty) completedFields++;
-    if (_doctorProfile!.languages.isNotEmpty) completedFields++;
-    if (_doctorProfile!.clinicInfo != null) completedFields++;
-    if (_doctorProfile!.workingHours.isNotEmpty) completedFields++;
+    if (_doctorProfile!.medicalLicenseNumber != null) completedFields++;
+    if (_doctorProfile!.yearsOfExperience != null) completedFields++;
+    if (_doctorProfile!.education != null && _doctorProfile!.education!.isNotEmpty) completedFields++;
+    if (_doctorProfile!.clinicDescription != null && _doctorProfile!.clinicDescription!.isNotEmpty) completedFields++;
+    if (_doctorProfile!.languages != null && _doctorProfile!.languages!.isNotEmpty) completedFields++;
+    if (_doctorProfile!.clinic != null) completedFields++;
+    if (_doctorProfile!.workingHours != null) completedFields++;
     
     return completedFields / totalFields;
   }

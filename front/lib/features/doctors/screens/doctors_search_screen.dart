@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/routes/app_router.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../location/providers/location_provider.dart';
 import '../providers/doctors_provider.dart';
@@ -409,7 +409,7 @@ class _DoctorsSearchScreenState extends State<DoctorsSearchScreen> {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
-          onTap: () => AppNavigation.goToDoctorDetail(doctor.id),
+          onTap: () => context.goNamed('doctor-details', pathParameters: {'id': doctor.id}),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Row(

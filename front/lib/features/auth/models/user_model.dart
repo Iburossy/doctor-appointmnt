@@ -93,8 +93,21 @@ class UserModel {
           ? NotificationSettings.fromJson(json['notificationSettings'])
           : NotificationSettings.defaultSettings(),
       doctorProfile: json['doctorProfile'] != null
-          ? DoctorProfile.fromJson(json['doctorProfile'])
-          : null,
+          ? (() {
+              try {
+                print('DEBUG: Parsing doctorProfile with data: ${json['doctorProfile']}');
+                return DoctorProfile.fromJson(json['doctorProfile']);
+              } catch (e) {
+                print('DEBUG: Error parsing doctorProfile: $e');
+                // Retourne un objet minimal au lieu de null pour éviter les problèmes d'affichage
+                return DoctorProfile(
+                  id: json['doctorProfile']['_id']?.toString() ?? json['doctorProfile']['id']?.toString(),
+                  userId: json['doctorProfile']['userId']?.toString(),
+                  specialization: [],
+                );
+              }
+            })()
+          : (json['role'] == 'doctor' ? DoctorProfile(id: '', userId: json['_id'] ?? json['id'], specialization: []) : null),  // Crée un profil vide pour les doctors
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'])
           : DateTime.now(),
@@ -256,84 +269,141 @@ class NotificationSettings {
 }
 
 class DoctorProfile {
-  final String? specialization;
-  final String? licenseNumber;
-  final int? experienceYears;
-  final String? education;
-  final String? bio;
-  final List<String> languages;
-  final ClinicInfo? clinicInfo;
-  final List<WorkingHours> workingHours;
+  final String? id;
+  final String? userId;
+  final List<dynamic>? specialization;
+  final String? medicalLicenseNumber;
+  final int? yearsOfExperience;
+  final List<dynamic>? education;
+  final List<dynamic>? certifications;
+  final Map<String, dynamic>? clinic;
+  final Map<String, dynamic>? workingHours;
   final double? consultationFee;
-  final bool isVerified;
-  final bool isAvailable;
-  final double rating;
-  final int reviewCount;
-  final DateTime? verifiedAt;
+  final String? currency;
+  final List<dynamic>? languages;
+  final String? verificationStatus;
+  final DateTime? verificationDate;
   final String? verificationNotes;
+  final String? verifiedBy;
+  final Map<String, dynamic>? profilePhoto;
+  final Map<String, dynamic>? documents;
+  final Map<String, dynamic>? stats;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
 
   DoctorProfile({
+    this.id,
+    this.userId,
     this.specialization,
-    this.licenseNumber,
-    this.experienceYears,
+    this.medicalLicenseNumber,
+    this.yearsOfExperience,
     this.education,
-    this.bio,
-    required this.languages,
-    this.clinicInfo,
-    required this.workingHours,
+    this.certifications,
+    this.clinic,
+    this.workingHours,
     this.consultationFee,
-    required this.isVerified,
-    required this.isAvailable,
-    required this.rating,
-    required this.reviewCount,
-    this.verifiedAt,
+    this.currency,
+    this.languages,
+    this.verificationStatus,
+    this.verificationDate,
     this.verificationNotes,
+    this.verifiedBy,
+    this.profilePhoto,
+    this.documents,
+    this.stats,
+    this.createdAt,
+    this.updatedAt,
   });
 
+  // Computed properties
+  bool get isVerified => verificationStatus == 'approved';
+  String get clinicName => clinic?['name'] as String? ?? '';
+  String get clinicAddress => _getClinicAddress();
+  String? get clinicPhone => clinic?['phone'] as String?;
+  String? get clinicDescription => clinic?['description'] as String?;
+  
+  String _getClinicAddress() {
+    if (clinic == null || clinic!['address'] == null) return '';
+    
+    final address = clinic!['address'] as Map<String, dynamic>;
+    final parts = <String>[];
+    
+    if (address['street'] != null) parts.add(address['street'] as String);
+    if (address['city'] != null) parts.add(address['city'] as String);
+    if (address['country'] != null) parts.add(address['country'] as String);
+    
+    return parts.join(', ');
+  }
+
   factory DoctorProfile.fromJson(Map<String, dynamic> json) {
-    return DoctorProfile(
-      specialization: json['specialization'],
-      licenseNumber: json['licenseNumber'],
-      experienceYears: json['experienceYears'],
-      education: json['education'],
-      bio: json['bio'],
-      languages: List<String>.from(json['languages'] ?? []),
-      clinicInfo: json['clinicInfo'] != null
-          ? ClinicInfo.fromJson(json['clinicInfo'])
-          : null,
-      workingHours: (json['workingHours'] as List?)
-              ?.map((e) => WorkingHours.fromJson(e))
-              .toList() ??
-          [],
-      consultationFee: json['consultationFee']?.toDouble(),
-      isVerified: json['isVerified'] ?? false,
-      isAvailable: json['isAvailable'] ?? true,
-      rating: (json['rating'] ?? 0).toDouble(),
-      reviewCount: json['reviewCount'] ?? 0,
-      verifiedAt: json['verifiedAt'] != null
-          ? DateTime.parse(json['verifiedAt'])
-          : null,
-      verificationNotes: json['verificationNotes'],
-    );
+    try {
+      return DoctorProfile(
+        id: json['_id']?.toString() ?? json['id']?.toString(),
+        userId: json['userId']?.toString(),
+        specialization: json['specialties'] as List<dynamic>? ?? json['specialization'] as List<dynamic>?,
+        medicalLicenseNumber: json['medicalLicenseNumber']?.toString(),
+        yearsOfExperience: json['yearsOfExperience'] as int?,
+        education: json['education'] as List<dynamic>?,
+        certifications: json['certifications'] as List<dynamic>?,
+        clinic: json['clinic'] as Map<String, dynamic>?,
+        workingHours: json['workingHours'] as Map<String, dynamic>?,
+        consultationFee: json['consultationFee'] != null ? 
+            (json['consultationFee'] is int ? 
+                (json['consultationFee'] as int).toDouble() : 
+                json['consultationFee'] as double) : 
+            null,
+        currency: json['currency'],
+        languages: json['languages'] as List<dynamic>?,
+        verificationStatus: json['verificationStatus'],
+        verificationDate: json['verificationDate'] != null ? 
+            DateTime.parse(json['verificationDate']) : null,
+        verificationNotes: json['verificationNotes'],
+        verifiedBy: json['verifiedBy'],
+        profilePhoto: json['profilePhoto'] as Map<String, dynamic>?,
+        documents: json['documents'] as Map<String, dynamic>?,
+        stats: json['stats'] as Map<String, dynamic>?,
+        createdAt: json['createdAt'] != null ? 
+            DateTime.parse(json['createdAt']) : null,
+        updatedAt: json['updatedAt'] != null ? 
+            DateTime.parse(json['updatedAt']) : null,
+      );
+    } catch (e) {
+      print('Error parsing DoctorProfile: $e');
+      print('JSON data: $json');
+      // Au lieu de propager l'erreur, on crée un objet DoctorProfile minimal
+      // pour éviter que toute la chaîne de parsing échoue
+      return DoctorProfile(
+        id: json['_id']?.toString() ?? json['id']?.toString(),
+        userId: json['userId']?.toString(),
+        specialization: [], // Liste vide par défaut
+        // Les autres champs restent null
+      );
+    }
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'specialization': specialization,
-      'licenseNumber': licenseNumber,
-      'experienceYears': experienceYears,
+      'id': id,
+      'userId': userId,
+      'specialties': specialization,
+      'medicalLicenseNumber': medicalLicenseNumber,
+      'yearsOfExperience': yearsOfExperience,
       'education': education,
-      'bio': bio,
-      'languages': languages,
-      'clinicInfo': clinicInfo?.toJson(),
-      'workingHours': workingHours.map((e) => e.toJson()).toList(),
+      'certifications': certifications,
+      'clinic': clinic,
+      'workingHours': workingHours,
       'consultationFee': consultationFee,
-      'isVerified': isVerified,
-      'isAvailable': isAvailable,
-      'rating': rating,
-      'reviewCount': reviewCount,
-      'verifiedAt': verifiedAt?.toIso8601String(),
+      'currency': currency,
+      'languages': languages,
+      'verificationStatus': verificationStatus,
+      'verificationDate': verificationDate?.toIso8601String(),
       'verificationNotes': verificationNotes,
+      'verifiedBy': verifiedBy,
+      'profilePhoto': profilePhoto,
+      'documents': documents,
+      'stats': stats,
+      'createdAt': createdAt?.toIso8601String(),
+      'updatedAt': updatedAt?.toIso8601String(),
     };
   }
 }

@@ -396,46 +396,19 @@ router.get('/search', [
     } else {
       // Recherche sans géolocalisation
       const skip = (page - 1) * limit;
-      
+
       // Déterminer l'ordre de tri
       let sortOptions = {};
-      switch (sortBy) {
-        case 'rating':
-          sortOptions = { 'stats.averageRating': -1, createdAt: -1 };
-          break;
-        case 'experience':
-          sortOptions = { yearsOfExperience: -1, 'stats.averageRating': -1 };
-          break;
-        case 'fee':
-          sortOptions = { consultationFee: 1, 'stats.averageRating': -1 };
-          break;
-        default:
-          sortOptions = { 'stats.averageRating': -1, createdAt: -1 };
-      }
-      
+      if (sortBy === 'rating') sortOptions = { 'stats.averageRating': -1 };
+      else if (sortBy === 'experience') sortOptions = { yearsOfExperience: -1 };
+      else if (sortBy === 'fee') sortOptions = { consultationFee: 1 };
+      else sortOptions = { 'stats.averageRating': -1 }; // Tri par défaut
+
       doctors = await Doctor.find(query)
         .populate('userId', 'firstName lastName profilePicture')
-        .select('specialties yearsOfExperience clinic consultationFee languages stats')
         .sort(sortOptions)
         .skip(skip)
         .limit(parseInt(limit));
-
-      // Formater la réponse pour correspondre au format géographique
-      doctors = doctors.map(doctor => ({
-        _id: doctor._id,
-        specialties: doctor.specialties,
-        yearsOfExperience: doctor.yearsOfExperience,
-        clinic: doctor.clinic,
-        consultationFee: doctor.consultationFee,
-        languages: doctor.languages,
-        stats: doctor.stats,
-        distance: null,
-        doctor: {
-          firstName: doctor.userId.firstName,
-          lastName: doctor.userId.lastName,
-          profilePicture: doctor.userId.profilePicture
-        }
-      }));
     }
 
     // Compter le total pour la pagination
@@ -469,113 +442,111 @@ router.get('/search', [
   }
 });
 
+// @route   GET /api/doctors/me
+// @desc    Obtenir le profil du médecin connecté
+// @access  Private (Doctor)
+router.get('/me', authenticate, authorize('doctor'), async (req, res) => {
+  try {
+    const doctor = await Doctor.findOne({ userId: req.user._id })
+      .populate('userId', 'firstName lastName email phone profilePicture');
+
+    if (!doctor) {
+      return res.status(404).json({ error: 'Profil médecin non trouvé' });
+    }
+
+    res.json(doctor);
+
+  } catch (error) {
+    console.error('Erreur profil médecin:', error);
+    res.status(500).json({ error: 'Erreur lors de la récupération du profil' });
+  }
+});
+
+// @route   GET /api/doctors/profile
+// @desc    Obtenir le profil du médecin connecté (alias de /me pour compatibilité frontend)
+// @access  Private (Doctor)
+router.get('/profile', authenticate, authorize('doctor'), async (req, res) => {
+  try {
+    const doctor = await Doctor.findOne({ userId: req.user._id })
+      .populate('userId', 'firstName lastName email phone profilePicture');
+
+    if (!doctor) {
+      return res.status(404).json({ error: 'Profil médecin non trouvé' });
+    }
+
+    res.json(doctor);
+
+  } catch (error) {
+    console.error('Erreur profil médecin:', error);
+    res.status(500).json({ error: 'Erreur lors de la récupération du profil' });
+  }
+});
+
+// @route   GET /api/doctors/check-role
+// @desc    Vérifier le rôle actuel de l'utilisateur
+// @access  Private
+router.get('/check-role', authenticate, async (req, res) => {
+  try {
+    // L'utilisateur est déjà disponible grâce au middleware authenticate
+    return res.status(200).json({
+      success: true,
+      role: req.user.role,
+      isDoctor: req.user.role === 'doctor'
+    });
+  } catch (error) {
+    console.error('Erreur lors de la vérification du rôle:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Erreur serveur lors de la vérification du rôle'
+    });
+  }
+});
+
 // @route   GET /api/doctors/:id
 // @desc    Obtenir les détails d'un médecin
 // @access  Public
 router.get('/:id', async (req, res) => {
   try {
-    // Vérifier si l'ID est un ObjectId valide
-    const mongoose = require('mongoose');
-    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-      return res.status(400).json({
-        error: 'ID de médecin invalide'
-      });
-    }
-    
     const doctor = await Doctor.findById(req.params.id)
-      .populate('userId', 'firstName lastName phone email profilePicture')
-      .select('-documents -verificationNotes');
+      .populate('userId', 'firstName lastName profilePicture')
+      .select('-documents'); // Exclure les documents sensibles
 
     if (!doctor) {
-      return res.status(404).json({
-        error: 'Médecin non trouvé'
-      });
+      return res.status(404).json({ error: 'Médecin non trouvé' });
     }
 
-    if (doctor.verificationStatus !== 'approved' || !doctor.isActive) {
-      return res.status(404).json({
-        error: 'Médecin non disponible'
-      });
-    }
-
-    res.json({ doctor });
+    res.json(doctor);
 
   } catch (error) {
-    console.error('Erreur récupération médecin:', error);
-    res.status(500).json({
-      error: 'Erreur lors de la récupération des informations du médecin'
-    });
+    console.error('Erreur détails médecin:', error);
+    if (error.kind === 'ObjectId') {
+      return res.status(404).json({ error: 'Médecin non trouvé (ID invalide)' });
+    }
+    res.status(500).json({ error: 'Erreur serveur' });
   }
 });
 
-// @route   GET /api/doctors/:id/availability
-// @desc    Obtenir les créneaux disponibles d'un médecin
-// @access  Public
-router.get('/:id/availability', [
-  query('date')
-    .isISO8601()
-    .withMessage('Format de date invalide (YYYY-MM-DD)'),
-  query('days')
-    .optional()
-    .isInt({ min: 1, max: 30 })
-    .withMessage('Nombre de jours invalide (1-30)')
-], async (req, res) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({
-        error: 'Paramètres invalides',
-        details: errors.array()
-      });
-    }
-
-    const { date, days = 7 } = req.query;
-    const doctorId = req.params.id;
-
-    const doctor = await Doctor.findById(doctorId);
-    if (!doctor || doctor.verificationStatus !== 'approved' || !doctor.isActive) {
-      return res.status(404).json({
-        error: 'Médecin non trouvé ou non disponible'
-      });
-    }
-
-    // TODO: Implémenter la logique de calcul des créneaux disponibles
-    // Cela nécessitera de croiser les horaires de travail avec les RDV existants
-
-    const availability = {
-      doctorId,
-      startDate: date,
-      days: parseInt(days),
-      slots: [] // À implémenter
-    };
-
-    res.json({ availability });
-
-  } catch (error) {
-    console.error('Erreur disponibilités médecin:', error);
-    res.status(500).json({
-      error: 'Erreur lors de la récupération des disponibilités'
-    });
-  }
-});
-
-// @route   PUT /api/doctors/profile
-// @desc    Mettre à jour le profil médecin
+// @route   PUT /api/doctors/me
+// @desc    Mettre à jour le profil du médecin connecté
 // @access  Private (Doctor)
-router.put('/profile', authenticate, authorize('doctor'), async (req, res) => {
+router.put('/me', authenticate, authorize('doctor'), async (req, res) => {
   try {
     const doctor = await Doctor.findOne({ userId: req.user._id });
-    
+
     if (!doctor) {
-      return res.status(404).json({
-        error: 'Profil médecin non trouvé'
-      });
+      return res.status(404).json({ error: 'Profil médecin non trouvé' });
     }
 
-    // Champs modifiables
+    // Mettre à jour les champs autorisés
     const allowedUpdates = [
-      'specialties', 'yearsOfExperience', 'clinic', 'consultationFee',
-      'languages', 'workingHours', 'education', 'isAvailable'
+      'specialties',
+      'yearsOfExperience',
+      'clinic',
+      'consultationFee',
+      'languages',
+      'education',
+      'workingHours',
+      'isAvailable'
     ];
 
     const updates = {};
@@ -610,9 +581,7 @@ router.get('/me/stats', authenticate, authorize('doctor'), async (req, res) => {
       .select('stats verificationStatus');
 
     if (!doctor) {
-      return res.status(404).json({
-        error: 'Profil médecin non trouvé'
-      });
+      return res.status(404).json({ error: 'Profil médecin non trouvé' });
     }
 
     res.json({
@@ -627,5 +596,116 @@ router.get('/me/stats', authenticate, authorize('doctor'), async (req, res) => {
     });
   }
 });
+
+// @route   PUT /api/doctors/schedule
+// @desc    Mettre à jour les horaires d'un médecin
+// @access  Private (Médecin)
+
+router.put('/schedule',
+  authenticate,
+  // Réactiver l'autorisation - elle est nécessaire pour la sécurité
+  authorize('doctor'),
+  [
+    body('workingHours').isObject().withMessage('Les horaires de travail doivent être un objet.'),
+    body('workingHours.*.isAvailable').isBoolean().withMessage('La disponibilité doit être un booléen.'),
+    body('workingHours.*.startTime').matches(/^([01][0-9]|2[0-3]):[0-5][0-9]$/).withMessage('Heure de début invalide (HH:MM).'),
+    body('workingHours.*.endTime').matches(/^([01][0-9]|2[0-3]):[0-5][0-9]$/).withMessage('Heure de fin invalide (HH:MM).'),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    try {
+      const doctor = await Doctor.findOne({ userId: req.user._id });
+
+      if (!doctor) {
+        return res.status(404).json({ msg: 'Profil de médecin non trouvé' });
+      }
+      
+      // Conversion du format frontend vers le format backend
+      const frontendWorkingHours = req.body.workingHours;
+      const backendWorkingHours = {};
+      
+      // Mapping des jours français vers anglais
+      const dayMapping = {
+        'Lundi': 'monday',
+        'Mardi': 'tuesday',
+        'Mercredi': 'wednesday',
+        'Jeudi': 'thursday',
+        'Vendredi': 'friday',
+        'Samedi': 'saturday',
+        'Dimanche': 'sunday'
+      };
+      
+      // Conversion du format
+      Object.keys(frontendWorkingHours).forEach(frenchDay => {
+        const englishDay = dayMapping[frenchDay];
+        if (englishDay) {
+          const dayData = frontendWorkingHours[frenchDay];
+          backendWorkingHours[englishDay] = {
+            isWorking: dayData.isAvailable,
+            startTime: dayData.startTime,
+            endTime: dayData.endTime
+          };
+        }
+      });
+      
+      // Mise à jour des horaires
+      doctor.workingHours = backendWorkingHours;
+      await doctor.save();
+      
+      // Récupérer le document mis à jour pour s'assurer d'avoir toutes les données
+      const updatedDoctor = await Doctor.findById(doctor._id);
+      
+      console.log('Horaires mis à jour:', backendWorkingHours);
+      // Renvoyer explicitement les données complètes
+      res.json({ 
+        msg: 'Horaires mis à jour avec succès', 
+        workingHours: {
+          monday: {
+            isWorking: updatedDoctor.workingHours.monday.isWorking,
+            startTime: updatedDoctor.workingHours.monday.startTime,
+            endTime: updatedDoctor.workingHours.monday.endTime
+          },
+          tuesday: {
+            isWorking: updatedDoctor.workingHours.tuesday.isWorking,
+            startTime: updatedDoctor.workingHours.tuesday.startTime,
+            endTime: updatedDoctor.workingHours.tuesday.endTime
+          },
+          wednesday: {
+            isWorking: updatedDoctor.workingHours.wednesday.isWorking,
+            startTime: updatedDoctor.workingHours.wednesday.startTime,
+            endTime: updatedDoctor.workingHours.wednesday.endTime
+          },
+          thursday: {
+            isWorking: updatedDoctor.workingHours.thursday.isWorking,
+            startTime: updatedDoctor.workingHours.thursday.startTime,
+            endTime: updatedDoctor.workingHours.thursday.endTime
+          },
+          friday: {
+            isWorking: updatedDoctor.workingHours.friday.isWorking,
+            startTime: updatedDoctor.workingHours.friday.startTime,
+            endTime: updatedDoctor.workingHours.friday.endTime
+          },
+          saturday: {
+            isWorking: updatedDoctor.workingHours.saturday.isWorking,
+            startTime: updatedDoctor.workingHours.saturday.startTime,
+            endTime: updatedDoctor.workingHours.saturday.endTime
+          },
+          sunday: {
+            isWorking: updatedDoctor.workingHours.sunday.isWorking,
+            startTime: updatedDoctor.workingHours.sunday.startTime,
+            endTime: updatedDoctor.workingHours.sunday.endTime
+          }
+        }
+      });
+    } catch (err) {
+      console.error(err.message);
+      res.status(500).send('Erreur du serveur');
+    }
+  }
+);
 
 module.exports = router;

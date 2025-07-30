@@ -674,7 +674,6 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
   void _bookAppointment(DoctorModel doctor) {
     // Navigate to appointment booking screen
     // TODO: Navigate to appointment booking screen
-    // AppNavigation.goToAppointmentBooking(doctor.id);
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Réservation de rendez-vous - À implémenter'),

@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:pinput/pinput.dart';
 import 'dart:async';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/routes/app_router.dart';
+import 'package:go_router/go_router.dart';
 import '../providers/auth_provider.dart';
 import '../../../shared/widgets/custom_button.dart';
 import '../../../shared/widgets/loading_overlay.dart';
@@ -83,7 +83,7 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
       // Small delay to show success message
       await Future.delayed(const Duration(milliseconds: 1500));
       if (mounted) {
-        AppNavigation.goNamed('home');
+        context.goNamed('home');
       }
     } else if (mounted) {
       _showErrorSnackBar(authProvider.error ?? 'Code de vérification invalide');
@@ -145,7 +145,7 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppTheme.textPrimaryColor),
-          onPressed: () => AppNavigation.pop(),
+          onPressed: () => context.pop(),
         ),
       ),
       body: Consumer<AuthProvider>(

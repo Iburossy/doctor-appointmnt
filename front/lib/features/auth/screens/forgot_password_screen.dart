@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:country_code_picker/country_code_picker.dart';
 import 'package:pinput/pinput.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/routes/app_router.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/config/app_config.dart';
 import '../providers/auth_provider.dart';
 import '../../../shared/widgets/custom_button.dart';
@@ -30,6 +30,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   int _currentStep = 0;
+  bool _isNavigating = false;
   
   Timer? _timer;
   int _resendCountdown = 60;
@@ -123,7 +124,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       // Small delay to show success message
       await Future.delayed(const Duration(milliseconds: 1500));
       if (mounted) {
-        AppNavigation.goNamed('login');
+        context.goNamed('login');
       }
     } else if (mounted) {
       _showErrorSnackBar(authProvider.error ?? 'Erreur lors de la réinitialisation');
@@ -175,7 +176,16 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppTheme.textPrimaryColor),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            if (_isNavigating) return;
+            setState(() => _isNavigating = true);
+            Navigator.pop(context);
+            Future.delayed(const Duration(seconds: 1), () {
+              if (mounted) {
+                setState(() => _isNavigating = false);
+              }
+            });
+          },
         ),
         title: Text(
           'Mot de passe oublié',

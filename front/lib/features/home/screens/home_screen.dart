@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/routes/app_router.dart';
+import 'package:go_router/go_router.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../doctors/screens/doctors_search_screen.dart';
 import '../../profile/screens/profile_screen.dart';
@@ -201,7 +201,7 @@ class _HomeTab extends StatelessWidget {
                 title: 'Trouver un médecin',
                 subtitle: 'Rechercher près de vous',
                 color: AppTheme.primaryColor,
-                onTap: () => AppNavigation.goNamed('doctors'),
+                onTap: () => context.goNamed('doctors'),
               ),
             ),
             
@@ -213,7 +213,7 @@ class _HomeTab extends StatelessWidget {
                 title: 'Mes rendez-vous',
                 subtitle: 'Voir vos consultations',
                 color: AppTheme.secondaryColor,
-                onTap: () => AppNavigation.goNamed('appointments'),
+                onTap: () => context.goNamed('appointments'),
               ),
             ),
           ],
@@ -341,7 +341,7 @@ class _HomeTab extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: () => AppNavigation.goNamed('doctor-upgrade'),
+              onPressed: () => context.goNamed('doctor-upgrade'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white,
                 foregroundColor: AppTheme.primaryColor,

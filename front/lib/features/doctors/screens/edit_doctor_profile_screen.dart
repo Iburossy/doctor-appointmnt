@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/routes/app_router.dart';
+import 'package:go_router/go_router.dart';
 import '../providers/doctor_profile_provider.dart';
 import '../../auth/models/user_model.dart';
 
@@ -88,18 +88,29 @@ class _EditDoctorProfileScreenState extends State<EditDoctorProfileScreen> {
     final profile = provider.doctorProfile;
     if (profile != null) {
       setState(() {
-        _specializationController.text = profile.specialization ?? '';
-        _licenseController.text = profile.licenseNumber ?? '';
-        _experienceController.text = profile.experienceYears?.toString() ?? '';
-        _educationController.text = profile.education ?? '';
-        _bioController.text = profile.bio ?? '';
-        _consultationFeeController.text = profile.consultationFee?.toString() ?? '';
-        _selectedLanguages = List.from(profile.languages);
+        _specializationController.text = (profile.specialization?.join(', ') ?? '');
+        _licenseController.text = profile.medicalLicenseNumber ?? '';
+        _experienceController.text = profile.yearsOfExperience?.toString() ?? '';
         
-        if (profile.clinicInfo != null) {
-          _clinicNameController.text = profile.clinicInfo!.name;
-          _clinicAddressController.text = profile.clinicInfo!.address;
-          _clinicPhoneController.text = profile.clinicInfo!.phone ?? '';
+        // Handle education which is now a List<dynamic>?
+        if (profile.education != null && profile.education!.isNotEmpty) {
+          _educationController.text = profile.education!.first.toString();
+        }
+        
+        // Use clinic description instead of bio
+        _bioController.text = profile.clinicDescription ?? '';
+        _consultationFeeController.text = profile.consultationFee?.toString() ?? '';
+        
+        // Handle languages which is now a List<dynamic>?
+        if (profile.languages != null) {
+          _selectedLanguages = profile.languages!.map((lang) => lang.toString()).toList();
+        }
+        
+        // Handle clinic info which is now a Map<String, dynamic>?
+        if (profile.clinic != null) {
+          _clinicNameController.text = profile.clinicName;
+          _clinicAddressController.text = profile.clinicAddress;
+          _clinicPhoneController.text = profile.clinicPhone ?? '';
         }
       });
     }
@@ -144,7 +155,7 @@ class _EditDoctorProfileScreenState extends State<EditDoctorProfileScreen> {
             backgroundColor: Colors.green,
           ),
         );
-        AppNavigation.pop();
+        context.pop();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

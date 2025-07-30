@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 import 'package:country_code_picker/country_code_picker.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/routes/app_router.dart';
+
 import '../../../core/config/app_config.dart';
 import '../providers/auth_provider.dart';
 import '../../../shared/widgets/custom_button.dart';
@@ -44,9 +45,7 @@ class _LoginScreenState extends State<LoginScreen> {
       password: _passwordController.text,
     );
 
-    if (success && mounted) {
-      AppNavigation.goNamed('home');
-    } else if (mounted) {
+    if (!success && mounted) {
       _showErrorSnackBar(authProvider.error ?? 'Erreur de connexion');
     }
   }
@@ -303,7 +302,7 @@ class _LoginScreenState extends State<LoginScreen> {
         
         // Forgot Password Link
         TextButton(
-          onPressed: () => AppNavigation.goNamed('forgot-password'),
+          onPressed: () => context.goNamed('forgot-password'),
           child: const Text(
             'Mot de passe oublié ?',
             style: TextStyle(
@@ -352,7 +351,7 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
         TextButton(
-          onPressed: () => AppNavigation.goNamed('register'),
+          onPressed: () => context.goNamed('register'),
           child: const Text(
             'S\'inscrire',
             style: TextStyle(

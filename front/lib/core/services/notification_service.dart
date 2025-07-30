@@ -1,8 +1,9 @@
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'dart:io';
-import 'package:firebase_messaging/firebase_messaging.dart';
+
 import 'api_service.dart';
 import 'storage_service.dart';
 
@@ -25,11 +26,9 @@ class NotificationService {
   static Future<void> init() async {
     if (_initialized) return;
 
-    // Android initialization settings
     const AndroidInitializationSettings androidSettings =
         AndroidInitializationSettings('@mipmap/ic_launcher');
 
-    // iOS initialization settings
     const DarwinInitializationSettings iosSettings =
         DarwinInitializationSettings(
       requestAlertPermission: true,
@@ -37,13 +36,11 @@ class NotificationService {
       requestSoundPermission: true,
     );
 
-    // Combined initialization settings
     const InitializationSettings initSettings = InitializationSettings(
       android: androidSettings,
       iOS: iosSettings,
     );
 
-    // Initialize
     await _notifications.initialize(
       initSettings,
       onDidReceiveNotificationResponse: _onNotificationTapped,
@@ -55,13 +52,11 @@ class NotificationService {
       print('✅ Notification service initialized');
     }
 
-    // Initialize push notifications
     await initPushNotifications();
   }
 
   // Initialize Push Notifications
   static Future<void> initPushNotifications() async {
-    // Request permission
     await _firebaseMessaging.requestPermission(
       alert: true,
       announcement: false,
@@ -72,23 +67,58 @@ class NotificationService {
       sound: true,
     );
 
-    // Get the FCM token
     final String? fcmToken = await _firebaseMessaging.getToken();
     if (kDebugMode) {
       print('📱 FCM Token: $fcmToken');
     }
 
-    // Send this token to your backend server
     if (fcmToken != null) {
       await _sendFcmTokenToBackend(fcmToken);
     }
 
-    // Handle incoming messages
     _handleIncomingNotifications();
   }
 
+  // Send FCM token to backend
+  static Future<void> _sendFcmTokenToBackend(String token) async {
+    try {
+      // User must be logged in to send a token
+      final userToken = await StorageService.getToken();
+      if (userToken == null || userToken.isEmpty) {
+        if (kDebugMode) {
+          print('🔔 User not authenticated. Skipping FCM token send.');
+        }
+        return;
+      }
+
+      if (kDebugMode) {
+        print('🚀 Sending FCM token to backend...');
+      }
+
+      final api = ApiService();
+      final response = await api.put(
+        '/users/fcm-token',
+        data: {'fcmToken': token},
+      );
+
+      if (response.isSuccess) {
+        if (kDebugMode) {
+          print('✅ FCM token successfully sent to backend.');
+        }
+      } else {
+        if (kDebugMode) {
+          print(
+              '❌ Failed to send FCM token. Message: ${response.message}');
+        }
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('❌ Exception when sending FCM token: $e');
+      }
+    }
+  }
+
   static void _handleIncomingNotifications() {
-    // 1. App is in the foreground
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       if (kDebugMode) {
         print('📱 Got a message whilst in the foreground!');
@@ -108,7 +138,6 @@ class NotificationService {
       }
     });
 
-    // 2. App is in the background and user taps on the notification
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
       if (kDebugMode) {
         print('📱 Notification caused app to open from background: ${message.data}');
@@ -116,7 +145,6 @@ class NotificationService {
       // TODO: Handle navigation based on payload
     });
 
-    // 3. App is terminated and user taps on the notification
     FirebaseMessaging.instance.getInitialMessage().then((RemoteMessage? message) {
       if (message != null) {
         if (kDebugMode) {
@@ -127,17 +155,13 @@ class NotificationService {
     });
   }
 
-  // Handle notification tap
   static void _onNotificationTapped(NotificationResponse response) {
     if (kDebugMode) {
       print('📱 Notification tapped: ${response.payload}');
     }
-
     // TODO: Handle navigation based on payload
-    // This will be implemented when we add navigation
   }
 
-  // Request permissions (mainly for iOS)
   static Future<bool> requestPermissions() async {
     if (Platform.isAndroid) {
       final AndroidFlutterLocalNotificationsPlugin? androidImplementation =
@@ -164,7 +188,6 @@ class NotificationService {
     return true;
   }
 
-  // Show immediate notification
   static Future<void> showNotification({
     required int id,
     required String title,
@@ -205,7 +228,6 @@ class NotificationService {
     );
   }
 
-  // Schedule notification
   static Future<void> scheduleNotification({
     required int id,
     required String title,
@@ -251,23 +273,19 @@ class NotificationService {
     );
   }
 
-  // Cancel notification
   static Future<void> cancelNotification(int id) async {
     await _notifications.cancel(id);
   }
 
-  // Cancel all notifications
   static Future<void> cancelAllNotifications() async {
     await _notifications.cancelAll();
   }
 
-  // Get pending notifications
   static Future<List<PendingNotificationRequest>>
       getPendingNotifications() async {
     return await _notifications.pendingNotificationRequests();
   }
 
-  // Appointment reminder notification
   static Future<void> scheduleAppointmentReminder({
     required String appointmentId,
     required String doctorName,
@@ -276,7 +294,6 @@ class NotificationService {
   }) async {
     final reminderDate = appointmentDate.subtract(const Duration(hours: 24));
 
-    // Only schedule if reminder is in the future
     if (reminderDate.isAfter(DateTime.now())) {
       await scheduleNotification(
         id: appointmentId.hashCode,
@@ -289,7 +306,6 @@ class NotificationService {
     }
   }
 
-  // Appointment confirmation notification
   static Future<void> showAppointmentConfirmation({
     required String doctorName,
     required DateTime appointmentDate,
@@ -304,7 +320,6 @@ class NotificationService {
     );
   }
 
-  // Appointment cancellation notification
   static Future<void> showAppointmentCancellation({
     required String doctorName,
     required DateTime appointmentDate,
@@ -325,7 +340,6 @@ class NotificationService {
     );
   }
 
-  // New message notification
   static Future<void> showNewMessage({
     required String senderName,
     required String message,
@@ -339,7 +353,6 @@ class NotificationService {
     );
   }
 
-  // Doctor verification notification
   static Future<void> showDoctorVerificationUpdate({
     required bool approved,
     String? notes,
@@ -362,7 +375,6 @@ class NotificationService {
     );
   }
 
-  // General app notification
   static Future<void> showGeneralNotification({
     required String title,
     required String message,
@@ -376,7 +388,6 @@ class NotificationService {
     );
   }
 
-  // Format date for display
   static String _formatDate(DateTime date) {
     const months = [
       'janvier',
@@ -392,61 +403,11 @@ class NotificationService {
       'novembre',
       'décembre'
     ];
-
     return '${date.day} ${months[date.month - 1]} ${date.year}';
   }
 
   // Format time for display
   static String _formatTime(DateTime time) {
     return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
-  }
-
-  // Send FCM token to the backend
-  static Future<void> _sendFcmTokenToBackend(String fcmToken) async {
-    // First, check if a user is logged in
-    final bool isLoggedIn = await StorageService.hasToken();
-    if (!isLoggedIn) {
-      if (kDebugMode) {
-        print('User not logged in. Skipping FCM token sync.');
-      }
-      return;
-    }
-
-    try {
-      final ApiService apiService = ApiService();
-      final response = await apiService.put(
-        'users/fcm-token',
-        data: {'fcmToken': fcmToken},
-      );
-
-      if (response.isSuccess) {
-        if (kDebugMode) {
-          print('✅ FCM token successfully sent to backend.');
-        }
-      } else {
-        if (kDebugMode) {
-          print('❌ Failed to send FCM token to backend: ${response.message}');
-        }
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        print('❌ Exception when sending FCM token: $e');
-      }
-    }
-  }
-
-  // Check if notifications are enabled
-  static Future<bool> areNotificationsEnabled() async {
-    if (Platform.isAndroid) {
-      final AndroidFlutterLocalNotificationsPlugin? androidImplementation =
-          _notifications.resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin>();
-
-      if (androidImplementation != null) {
-        return await androidImplementation.areNotificationsEnabled() ?? false;
-      }
-    }
-
-    return true; // Assume enabled for iOS and other platforms
   }
 }

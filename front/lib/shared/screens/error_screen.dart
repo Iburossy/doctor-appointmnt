@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../core/routes/app_router.dart';
+import 'package:go_router/go_router.dart';
 import '../../core/theme/app_theme.dart';
 
 class ErrorScreen extends StatelessWidget {
@@ -98,7 +98,7 @@ class ErrorScreen extends StatelessWidget {
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton(
-                      onPressed: () => AppNavigation.goNamed('home'),
+                      onPressed: () => context.goNamed('home'),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppTheme.primaryColor,
                         side: const BorderSide(color: AppTheme.primaryColor),

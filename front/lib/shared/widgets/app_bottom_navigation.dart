@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
-import '../../core/routes/app_router.dart';
+import 'package:go_router/go_router.dart';
 
 class AppBottomNavigation extends StatelessWidget {
   final int currentIndex;
@@ -18,16 +18,16 @@ class AppBottomNavigation extends StatelessWidget {
         // Navigation vers les différents écrans
         switch (index) {
           case 0:
-            AppNavigation.goToHome();
+            context.goNamed('home');
             break;
           case 1:
-            AppNavigation.goToDoctors();
+            context.goNamed('doctors');
             break;
           case 2:
-            AppNavigation.goToAppointments();
+            context.goNamed('appointments');
             break;
           case 3:
-            AppNavigation.goToProfile();
+            context.goNamed('profile');
             break;
         }
       },

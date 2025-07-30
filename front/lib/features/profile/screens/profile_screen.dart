@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/routes/app_router.dart';
+
 import '../../../core/config/app_config.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../../shared/widgets/custom_button.dart';
@@ -25,23 +26,58 @@ class _ProfileScreenState extends State<ProfileScreen> {
           
           // Debug: afficher toutes les données utilisateur
           if (user != null) {
-            print('=== DEBUG USER DATA (ProfileScreen) ===');
-            print('ID: ${user.id}');
-            print('FirstName: ${user.firstName}');
-            print('LastName: ${user.lastName}');
-            print('Phone: ${user.phone}');
-            print('Email: ${user.email}');
-            print('DateOfBirth: ${user.dateOfBirth}');
-            print('Gender: ${user.gender}');
-            print('Address: ${user.address}');
-            print('Address type: ${user.address.runtimeType}');
-            print('ProfilePicture: ${user.profilePicture}');
-            print('Role: ${user.role}');
-            print('==========================================');
+            // Données utilisateur chargées
           } else {
-            print('DEBUG (ProfileScreen): User is null!');
+            // Utilisateur non connecté
           }
           
+          // Si l'utilisateur n'est pas connecté, afficher un écran avec bouton de connexion
+          if (user == null) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.account_circle_outlined,
+                    size: 80,
+                    color: AppTheme.primaryColor.withValues(alpha: 0.6),
+                  ),
+                  const SizedBox(height: 24),
+                  const Text(
+                    'Vous n\'êtes pas connecté',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Connectez-vous pour accéder à votre profil',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey,
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                  ElevatedButton.icon(
+                    onPressed: () => context.go('/auth/login'),
+                    icon: const Icon(Icons.login),
+                    label: const Text('Se connecter'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primaryColor,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+          
+          // Si l'utilisateur est connecté, afficher le profil normal
           return CustomScrollView(
             slivers: [
               // Header avec avatar et infos de base
@@ -56,7 +92,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       color: Colors.white,
                     ),
                     onPressed: () async {
-                      print('DEBUG: Refreshing user data...');
+                      // Actualisation des données utilisateur
                       await authProvider.refreshUser();
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -98,7 +134,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   color: Colors.white,
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.black.withOpacity(0.1),
+                                      color: Colors.black.withValues(alpha: 0.1),
                                       blurRadius: 10,
                                       offset: const Offset(0, 5),
                                     ),
@@ -106,7 +142,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 ),
                                 child: ClipRRect(
                                   borderRadius: BorderRadius.circular(40),
-                                  child: user != null && user.profilePicture != null && user.profilePicture!.isNotEmpty
+                                  child: user.profilePicture != null && user.profilePicture!.isNotEmpty
                                       ? Image.network(
                                           _getFullAvatarUrl(user.profilePicture!),
                                           width: 80,
@@ -141,9 +177,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               const SizedBox(height: 12),
                               // Nom
                               Text(
-                                user?.firstName != null && user?.lastName != null
-                                    ? '${user?.firstName} ${user?.lastName}'
-                                    : 'Utilisateur',
+                                '${user.firstName} ${user.lastName}',
                                 style: const TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.bold,
@@ -155,11 +189,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                                 decoration: BoxDecoration(
-                                  color: user?.role == 'doctor' ? Colors.green : Colors.blue,
+                                  color: user.role == 'doctor' ? Colors.green : Colors.blue,
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(
-                                  user?.role == 'doctor' ? 'Médecin' : 'Patient',
+                                  user.role == 'doctor' ? 'Médecin' : 'Patient',
                                   style: const TextStyle(
                                     fontSize: 12,
                                     color: Colors.white,
@@ -170,10 +204,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               const SizedBox(height: 4),
                               // Téléphone
                               Text(
-                                user?.phone ?? '',
+                                user.phone ?? '',
                                 style: TextStyle(
                                   fontSize: 14,
-                                  color: Colors.white.withOpacity(0.9),
+                                  color: Colors.white.withValues(alpha: 0.9),
                                 ),
                               ),
                             ],
@@ -200,25 +234,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           _buildInfoTile(
                             icon: Icons.phone,
                             title: 'Téléphone',
-                            value: (user?.phone.isNotEmpty == true) ? user!.phone : 'Non renseigné',
+                            value: user.phone.isNotEmpty ? user.phone : 'Non renseigné',
                           ),
                           _buildInfoTile(
                             icon: Icons.email_outlined,
                             title: 'Email',
-                            value: (user?.email?.isNotEmpty == true) ? user!.email! : 'Non renseigné',
+                            value: user.email != null && user.email!.isNotEmpty ? user.email! : 'Non renseigné',
                           ),
                           _buildInfoTile(
                             icon: Icons.cake_outlined,
                             title: 'Date de naissance',
-                            value: user?.dateOfBirth != null 
-                                ? '${user!.dateOfBirth!.day.toString().padLeft(2, '0')}/${user.dateOfBirth!.month.toString().padLeft(2, '0')}/${user.dateOfBirth!.year}'
+                            value: user.dateOfBirth != null 
+                                ? '${user.dateOfBirth!.day.toString().padLeft(2, '0')}/${user.dateOfBirth!.month.toString().padLeft(2, '0')}/${user.dateOfBirth!.year}'
                                 : 'Non renseigné',
                           ),
                           _buildInfoTile(
                             icon: Icons.wc_outlined,
                             title: 'Genre',
-                            value: user?.gender?.isNotEmpty == true 
-                                ? (user!.gender == 'male' ? 'Homme' : (user.gender == 'female' ? 'Femme' : user.gender!))
+                            value: user.gender != null && user.gender!.isNotEmpty 
+                                ? (user.gender == 'male' ? 'Homme' : (user.gender == 'female' ? 'Femme' : user.gender!))
                                 : 'Non renseigné',
                           ),
                           _buildInfoTile(
@@ -241,16 +275,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             title: 'Modifier mon profil',
                             subtitle: 'Mettre à jour mes informations',
                             onTap: () {
-                              AppNavigation.push('/profile/edit');
+                              context.pushNamed('edit-profile');
                             },
                           ),
-                          if (user?.role == 'patient')
+                          if (user.role == 'patient')
                             _buildActionTile(
                               icon: Icons.medical_services_outlined,
                               title: 'Devenir médecin',
                               subtitle: 'Demander un upgrade de compte',
                               onTap: () {
-                                AppNavigation.push('/doctor-upgrade');
+                                context.pushNamed('doctor-upgrade');
                               },
                             ),
                         ],
@@ -296,10 +330,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       CustomButton(
                         text: 'Se déconnecter',
                         onPressed: () async {
+                          // Déconnecter l'utilisateur. La redirection est gérée par GoRouter.
                           await authProvider.logout();
-                          if (context.mounted) {
-                            AppNavigation.goToLogin();
-                          }
                         },
                         isOutlined: true,
                         textColor: Colors.red,

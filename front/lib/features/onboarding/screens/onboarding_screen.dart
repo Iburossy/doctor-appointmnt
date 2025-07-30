@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/routes/app_router.dart';
+import 'package:go_router/go_router.dart';
 import '../../auth/providers/auth_provider.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -64,7 +64,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   void _completeOnboarding() {
     context.read<AuthProvider>().completeOnboarding();
-    AppNavigation.goNamed('login');
+    context.goNamed('login');
   }
 
   @override

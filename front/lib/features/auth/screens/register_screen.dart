@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:country_code_picker/country_code_picker.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/routes/app_router.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/config/app_config.dart';
 import '../providers/auth_provider.dart';
 import '../../../shared/widgets/custom_button.dart';
@@ -63,7 +63,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     if (success && mounted) {
       // Navigate to phone verification
-      AppNavigation.goToPhoneVerification(_fullPhoneNumber);
+      context.goNamed('phone-verification', pathParameters: {'phone': _fullPhoneNumber});
     } else if (mounted) {
       _showErrorSnackBar(authProvider.error ?? 'Erreur lors de l\'inscription');
     }
@@ -88,7 +88,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppTheme.textPrimaryColor),
-          onPressed: () => AppNavigation.pop(),
+          onPressed: () => context.pop(),
         ),
       ),
       body: Consumer<AuthProvider>(
@@ -424,7 +424,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
         ),
         TextButton(
-          onPressed: () => AppNavigation.goNamed('login'),
+          onPressed: () => context.goNamed('login'),
           child: const Text(
             'Se connecter',
             style: TextStyle(

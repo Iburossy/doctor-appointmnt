@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/routes/app_router.dart';
+import 'package:go_router/go_router.dart';
 import '../providers/appointments_provider.dart';
 import '../models/appointment_model.dart';
 import '../../../shared/widgets/loading_overlay.dart';
@@ -101,7 +101,7 @@ class _AppointmentsListScreenState extends State<AppointmentsListScreen>
       
       // Floating Action Button
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => AppNavigation.goNamed('doctors'),
+        onPressed: () => context.goNamed('doctors'),
         backgroundColor: AppTheme.primaryColor,
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add),
@@ -373,7 +373,7 @@ class _AppointmentsListScreenState extends State<AppointmentsListScreen>
             const SizedBox(height: 24),
             CustomButton(
               text: 'Trouver un médecin',
-              onPressed: () => AppNavigation.goNamed('doctors'),
+              onPressed: () => context.goNamed('doctors'),
               backgroundColor: AppTheme.primaryColor,
             ),
           ],
@@ -429,7 +429,7 @@ class _AppointmentsListScreenState extends State<AppointmentsListScreen>
 
   void _viewAppointmentDetails(AppointmentModel appointment) {
     // Navigate to appointment details
-    AppNavigation.goToAppointmentDetail(appointment.id);
+    context.goNamed('appointment-details', pathParameters: {'id': appointment.id});
   }
 
   void _cancelAppointment(AppointmentModel appointment) {

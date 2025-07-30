@@ -52,7 +52,7 @@ class DoctorUploadService {
           // Utiliser le nom de champ mappé pour le backend
           final backendFieldName = fieldMapping[documentType] ?? documentType;
           filesToUpload[backendFieldName] = files.first;
-          processedFiles.add('${backendFieldName}: ${files.first.path}');
+          processedFiles.add('$backendFieldName: ${files.first.path}');
           
           {
             Logger.log('🔄 Préparation fichier $backendFieldName (original: $documentType): ${files.first.path}');

@@ -11,7 +11,7 @@ import 'core/config/app_config.dart';
 import 'core/theme/app_theme.dart';
 import 'core/routes/app_router.dart';
 import 'core/services/storage_service.dart';
-import 'core/services/notification_service.dart';
+
 import 'features/auth/providers/auth_provider.dart';
 import 'features/location/providers/location_provider.dart';
 import 'features/doctors/providers/doctors_provider.dart';
@@ -35,9 +35,9 @@ void main() async {
   // Initialize Hive for local storage
   await Hive.initFlutter();
   
-  // Initialize services
+  // Initialize only essential services
   await StorageService.init();
-  await NotificationService.init();
+  // NotificationService will be initialized after authentication
   
   // Set preferred orientations
   await SystemChrome.setPreferredOrientations([
@@ -48,8 +48,43 @@ void main() async {
   runApp(const DoctorsApp());
 }
 
+// Classe utilitaire pour gérer la vérification périodique du rôle
+class _RoleCheckManager {
+  static bool isSetup = false;
+}
+
 class DoctorsApp extends StatelessWidget {
   const DoctorsApp({super.key});
+  
+  // Méthode pour configurer une vérification périodique du rôle utilisateur
+  void _setupPeriodicRoleCheck(AuthProvider authProvider) {
+    // Vérifier uniquement si ce n'est pas déjà configuré (utiliser un flag static)
+    if (!_RoleCheckManager.isSetup) {
+      _RoleCheckManager.isSetup = true;
+      
+      // Vérifier immédiatement le rôle au démarrage
+      if (authProvider.isAuthenticated) {
+        Future.delayed(const Duration(seconds: 2), () {
+          authProvider.refreshUser();
+        });
+      }
+      
+      // Configurer une vérification périodique (toutes les 5 minutes)
+      Future.delayed(const Duration(seconds: 1), () {
+        Stream.periodic(const Duration(minutes: 5), (_) {
+          if (authProvider.isAuthenticated) {
+            authProvider.checkCurrentRole().then((serverRole) {
+              if (serverRole != null && serverRole != authProvider.user?.role) {
+                print('Role mismatch detected in periodic check! Refreshing user data...');
+                authProvider.refreshUser();
+              }
+            });
+          }
+          return null;
+        }).listen((_) {});
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -63,6 +98,12 @@ class DoctorsApp extends StatelessWidget {
       ],
       child: Consumer<AuthProvider>(
         builder: (context, authProvider, child) {
+          // Ne pas configurer la vérification périodique au moment de la construction
+          // Cela sera fait via un callback post-frame
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _setupPeriodicRoleCheck(authProvider);
+          });
+          
           return MaterialApp.router(
             title: AppConfig.appName,
             debugShowCheckedModeBanner: false,
@@ -84,8 +125,8 @@ class DoctorsApp extends StatelessWidget {
             // Localization
             locale: const Locale('fr', 'SN'), // Français Sénégal
             
-            // Routing
-            routerConfig: AppRouter.router,
+            // Utiliser le routeur réactif qui écoute les changements d'authentification
+            routerConfig: AppRouter.createRouter(authProvider),
             
             // Builder for global configurations
             builder: (context, child) {

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../features/auth/providers/auth_provider.dart';
-import '../../core/routes/app_router.dart';
 import '../../core/theme/app_theme.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -42,32 +41,38 @@ class _SplashScreenState extends State<SplashScreen>
       curve: const Interval(0.2, 0.8, curve: Curves.elasticOut),
     ));
     
-    _initializeApp();
+    // Différer l'initialisation après la phase de build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initializeApp();
+    });
   }
 
   Future<void> _initializeApp() async {
-    // Start animation
-    _animationController.forward();
-    
-    // Initialize auth provider
     final authProvider = context.read<AuthProvider>();
-    await authProvider.initialize();
+
+    // Si l'utilisateur est déjà authentifié et initialisé, pas besoin de réinitialiser
+    // GoRouter va s'occuper de la redirection automatiquement
+    if (authProvider.isInitialized && authProvider.isAuthenticated) {
+      print('DEBUG: Splash - User already authenticated, letting GoRouter handle navigation');
+      // Juste lancer l'animation et laisser GoRouter faire le reste
+      await _animationController.forward().orCancel;
+      return;
+    }
+
+    print('DEBUG: Splash - Starting initialization for non-authenticated user');
     
-    // Wait for animation to complete
-    await _animationController.forward();
-    
-    // Add a small delay for better UX
-    await Future.delayed(const Duration(milliseconds: 500));
-    
-    // Navigate based on auth state
+    // Lancer l'animation et l'initialisation en parallèle
+    final animationFuture = _animationController.forward().orCancel;
+    final authFuture = authProvider.initialize();
+
+    // Attendre que les deux soient terminés
+    await Future.wait([animationFuture, authFuture]);
+
+    // Notifier les listeners pour que GoRouter prenne le relais.
+    // La navigation est désormais gérée automatiquement par app_router.dart
+    // grâce au refreshListenable.
     if (mounted) {
-      if (!authProvider.isOnboarded) {
-        AppNavigation.goNamed('onboarding');
-      } else if (authProvider.isAuthenticated) {
-        AppNavigation.goNamed('home');
-      } else {
-        AppNavigation.goNamed('login');
-      }
+      authProvider.triggerNotification();
     }
   }
 

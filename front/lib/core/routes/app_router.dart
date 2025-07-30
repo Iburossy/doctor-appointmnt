@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+// import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
@@ -19,254 +19,226 @@ import '../../features/appointments/screens/appointment_detail_screen.dart';
 import '../../features/profile/screens/profile_screen.dart';
 import '../../features/profile/screens/edit_profile_screen.dart';
 import '../../features/doctors/screens/doctor_upgrade_screen.dart';
-import '../../shared/screens/splash_screen.dart';
+import '../../features/doctors/screens/doctor_schedule_screen.dart';
+
 import '../../shared/screens/error_screen.dart';
 
 class AppRouter {
-  static final GoRouter router = GoRouter(
-    initialLocation: '/splash',
-    debugLogDiagnostics: true,
-    
-    // Redirect logic based on auth state and user role
-    redirect: (context, state) {
-      final authProvider = context.read<AuthProvider>();
-      final isLoggedIn = authProvider.isAuthenticated;
-      final isOnboarded = authProvider.isOnboarded;
-      final user = authProvider.user;
-      
-      final isGoingToAuth = state.matchedLocation.startsWith('/auth');
-      final isGoingToOnboarding = state.matchedLocation == '/onboarding';
-      final isGoingToSplash = state.matchedLocation == '/splash';
-      final isGoingToHome = state.matchedLocation == '/home';
-      final isGoingToDoctorDashboard = state.matchedLocation == '/doctor-dashboard';
-      
-      // Always allow splash screen
-      if (isGoingToSplash) return null;
-      
-      // If not onboarded, go to onboarding
-      if (!isOnboarded && !isGoingToOnboarding) {
-        return '/onboarding';
-      }
-      
-      // If not logged in and not going to auth, redirect to login
-      if (!isLoggedIn && !isGoingToAuth && !isGoingToOnboarding) {
-        return '/auth/login';
-      }
-      
-      // If logged in and going to auth, redirect based on role
-      if (isLoggedIn && isGoingToAuth) {
-        if (user?.isDoctor == true) {
-          return '/doctor-dashboard';
-        } else {
-          return '/home';
-        }
-      }
-      
-      // If logged in, redirect to appropriate dashboard based on role
-      if (isLoggedIn && user != null) {
-        // If doctor trying to access patient home, redirect to doctor dashboard
-        if (user.isDoctor && isGoingToHome) {
-          return '/doctor-dashboard';
-        }
-        // If patient trying to access doctor dashboard, redirect to patient home
-        if (user.isPatient && isGoingToDoctorDashboard) {
-          return '/home';
-        }
-      }
-      
-      return null; // No redirect needed
-    },
-    
-    routes: [
-      // Splash Screen
-      GoRoute(
-        path: '/splash',
-        name: 'splash',
-        builder: (context, state) => const SplashScreen(),
-      ),
-      
-      // Onboarding
-      GoRoute(
-        path: '/onboarding',
-        name: 'onboarding',
-        builder: (context, state) => const OnboardingScreen(),
-      ),
-      
-      // Authentication Routes
-      GoRoute(
-        path: '/auth',
-        redirect: (context, state) => '/auth/login',
-      ),
-      
-      GoRoute(
-        path: '/auth/login',
-        name: 'login',
-        builder: (context, state) => const LoginScreen(),
-      ),
-      
-      GoRoute(
-        path: '/auth/register',
-        name: 'register',
-        builder: (context, state) => const RegisterScreen(),
-      ),
-      
-      GoRoute(
-        path: '/auth/verify-phone',
-        name: 'verify-phone',
-        builder: (context, state) {
-          final phone = state.extra as String?;
-          return PhoneVerificationScreen(phoneNumber: phone ?? '');
-        },
-      ),
-      
-      GoRoute(
-        path: '/auth/forgot-password',
-        name: 'forgot-password',
-        builder: (context, state) => const ForgotPasswordScreen(),
-      ),
-      
-      // Main App Routes
-      GoRoute(
-        path: '/home',
-        name: 'home',
-        builder: (context, state) => const HomeScreen(),
-      ),
-      
-      // Doctor Dashboard
-      GoRoute(
-        path: '/doctor-dashboard',
-        name: 'doctor-dashboard',
-        builder: (context, state) => const DoctorDashboardScreen(),
-      ),
-      
-      // Doctor Profile Edit
-      GoRoute(
-        path: '/edit-doctor-profile',
-        name: 'edit-doctor-profile',
-        builder: (context, state) => const EditDoctorProfileScreen(),
-      ),
-      
-      // Doctors Routes
-      GoRoute(
-        path: '/doctors',
-        name: 'doctors',
-        builder: (context, state) => const DoctorsSearchScreen(),
-      ),
-      
-      GoRoute(
-        path: '/doctors/:doctorId',
-        name: 'doctor-detail',
-        builder: (context, state) {
-          final doctorId = state.pathParameters['doctorId']!;
-          return DoctorDetailScreen(doctorId: doctorId);
-        },
-      ),
-      
-      GoRoute(
-        path: '/doctor-upgrade',
-        name: 'doctor-upgrade',
-        builder: (context, state) => const DoctorUpgradeScreen(),
-      ),
-      
-      // Appointments Routes
-      GoRoute(
-        path: '/appointments',
-        name: 'appointments',
-        builder: (context, state) => const AppointmentsListScreen(),
-      ),
-      
-      GoRoute(
-        path: '/appointments/book/:doctorId',
-        name: 'book-appointment',
-        builder: (context, state) {
-          final doctorId = state.pathParameters['doctorId']!;
-          return AppointmentBookingScreen(doctorId: doctorId);
-        },
-      ),
-      
-      GoRoute(
-        path: '/appointments/:appointmentId',
-        name: 'appointment-detail',
-        builder: (context, state) {
-          final appointmentId = state.pathParameters['appointmentId']!;
-          return AppointmentDetailScreen(appointmentId: appointmentId);
-        },
-      ),
-      
-      // Profile Routes
-      GoRoute(
-        path: '/profile',
-        name: 'profile',
-        builder: (context, state) => const ProfileScreen(),
-      ),
-      
-      GoRoute(
-        path: '/profile/edit',
-        name: 'edit-profile',
-        builder: (context, state) => const EditProfileScreen(),
-      ),
-    ],
-    
-    // Error handling
-    errorBuilder: (context, state) => ErrorScreen(
-      error: state.error.toString(),
-    ),
-  );
-}
+  // Liste statique des routes pour réutilisation
+  static final List<RouteBase> _routes = [
 
-// Navigation helper class
-class AppNavigation {
-  static final GoRouter _router = AppRouter.router;
+    
+    // Onboarding
+    GoRoute(
+      path: '/onboarding',
+      name: 'onboarding',
+      builder: (context, state) => const OnboardingScreen(),
+    ),
+    
+    // Authentication Routes
+    GoRoute(
+      path: '/auth',
+      redirect: (context, state) => '/auth/login',
+    ),
+    
+    GoRoute(
+      path: '/auth/login',
+      name: 'login',
+      builder: (context, state) => const LoginScreen(),
+    ),
+    
+    GoRoute(
+      path: '/auth/register',
+      name: 'register',
+      builder: (context, state) => const RegisterScreen(),
+    ),
+    
+    GoRoute(
+      path: '/auth/verify-phone',
+      name: 'verify-phone',
+      builder: (context, state) {
+        final phone = state.extra as String?;
+        return PhoneVerificationScreen(phoneNumber: phone ?? '');
+      },
+    ),
+    
+    GoRoute(
+      path: '/auth/forgot-password',
+      name: 'forgot-password',
+      builder: (context, state) => const ForgotPasswordScreen(),
+    ),
+    
+    // Main App Routes
+    GoRoute(
+      path: '/home',
+      name: 'home',
+      builder: (context, state) => const HomeScreen(),
+    ),
+    
+    // Doctor Dashboard
+    GoRoute(
+      path: '/doctor-dashboard',
+      name: 'doctor-dashboard',
+      builder: (context, state) => const DoctorDashboardScreen(),
+    ),
+    
+    // Doctor Profile Edit
+    GoRoute(
+      path: '/edit-doctor-profile',
+      name: 'edit-doctor-profile',
+      builder: (context, state) => const EditDoctorProfileScreen(),
+    ),
+    
+    // Doctors Routes
+    GoRoute(
+      path: '/doctors',
+      name: 'doctors',
+      builder: (context, state) => const DoctorsSearchScreen(),
+    ),
+    
+    GoRoute(
+      path: '/doctors/:doctorId',
+      name: 'doctor-detail',
+      builder: (context, state) {
+        final doctorId = state.pathParameters['doctorId']!;
+        return DoctorDetailScreen(doctorId: doctorId);
+      },
+    ),
+    
+    // Appointments Routes
+    GoRoute(
+      path: '/appointments',
+      name: 'appointments',
+      builder: (context, state) => const AppointmentsListScreen(),
+    ),
+    
+    GoRoute(
+      path: '/appointments/book/:doctorId',
+      name: 'book-appointment',
+      builder: (context, state) {
+        final doctorId = state.pathParameters['doctorId']!;
+        return AppointmentBookingScreen(doctorId: doctorId);
+      },
+    ),
+    
+    GoRoute(
+      path: '/appointments/:appointmentId',
+      name: 'appointment-detail',
+      builder: (context, state) {
+        final appointmentId = state.pathParameters['appointmentId']!;
+        return AppointmentDetailScreen(appointmentId: appointmentId);
+      },
+    ),
+    
+    // Profile Routes
+    GoRoute(
+      path: '/profile',
+      name: 'profile',
+      builder: (context, state) => const ProfileScreen(),
+    ),
+    
+    GoRoute(
+      path: '/profile/edit',
+      name: 'edit-profile',
+      builder: (context, state) => const EditProfileScreen(),
+    ),
+    
+    // Doctor Schedule
+    GoRoute(
+      path: '/doctor-schedule',
+      name: 'doctor-schedule',
+      builder: (context, state) => const DoctorScheduleScreen(),
+    ),
+
+    // Doctor Upgrade
+    GoRoute(
+      path: '/doctor-upgrade',
+      name: 'doctor-upgrade',
+      builder: (context, state) => const DoctorUpgradeScreen(),
+    ),
+  ];
   
-  // Navigation methods
-  static void go(String location) => _router.go(location);
-  static void push(String location) => _router.push(location);
-  static void pop() => _router.pop();
-  static void replace(String location) => _router.pushReplacement(location);
-  
-  // Named route navigation
-  static void goNamed(String name, {Map<String, String>? pathParameters, Object? extra}) {
-    _router.goNamed(name, pathParameters: pathParameters ?? {}, extra: extra);
+  // Méthode pour créer un routeur qui écoute les changements d'AuthProvider
+  static GoRouter createRouter(AuthProvider authProvider) {
+    return GoRouter(
+      initialLocation: '/home',
+      debugLogDiagnostics: true,
+      
+      // Écouter les changements d'état d'authentification
+      refreshListenable: authProvider,
+      
+      // Redirect logic based on auth state and user role
+      redirect: (context, state) {
+        final isLoggedIn = authProvider.isAuthenticated;
+        final isOnboarded = authProvider.isOnboarded;
+        final user = authProvider.user;
+        final isInitialized = authProvider.isInitialized;
+
+        final location = state.matchedLocation;
+
+        // Debug logging
+        print('🔄 REDIRECT DEBUG: location=$location, isInit=$isInitialized, isAuth=$isLoggedIn, isOnboarded=$isOnboarded, role=${user?.role}');
+
+        // Si l'initialisation n'est pas terminée, on attend
+        if (!isInitialized) {
+          print('🔄 REDIRECT: Not initialized - waiting...');
+          return null;
+        }
+
+        // 1. Priorité à l'onboarding
+        if (!isOnboarded) {
+          print('🔄 REDIRECT: Not onboarded → onboarding');
+          return location == '/onboarding' ? null : '/onboarding';
+        }
+
+        // L'utilisateur a terminé l'onboarding, on gère l'authentification
+        final isGoingToAuth = location.startsWith('/auth');
+
+        // 2. Si l'utilisateur est connecté
+        if (isLoggedIn) {
+          final isDoctor = user?.isDoctor == true;
+          final correctHome = isDoctor ? '/doctor-dashboard' : '/home';
+
+          // Si l'utilisateur est sur une page d'authentification, le rediriger
+          if (isGoingToAuth) {
+            print('🔄 REDIRECT: Authenticated user on auth page → $correctHome');
+            return correctHome;
+          }
+
+          // Si un docteur est sur la page d'accueil du patient, le rediriger
+          if (isDoctor && location == '/home') {
+            print('🔄 REDIRECT: Doctor on patient home → $correctHome');
+            return correctHome;
+          }
+
+          // Si un patient est sur le dashboard du docteur, le rediriger
+          if (!isDoctor && location == '/doctor-dashboard') {
+            print('🔄 REDIRECT: Patient on doctor dashboard → $correctHome');
+            return correctHome;
+          }
+
+          print('🔄 REDIRECT: Authenticated user, staying on $location');
+        } else { 
+          // 3. Si l'utilisateur n'est pas connecté et n'essaie pas d'accéder à une page d'auth, on le redirige vers le login
+          if (!isGoingToAuth) {
+            print('🔄 REDIRECT: Not authenticated → login');
+            return '/auth/login';
+          }
+          print('🔄 REDIRECT: Not authenticated, staying on auth page $location');
+        }
+
+        // Pas de redirection nécessaire
+        print('🔄 REDIRECT: No redirect needed for $location');
+        return null;
+      },
+      
+      routes: _routes,
+      
+      // Error handling
+      errorBuilder: (context, state) => ErrorScreen(
+        error: state.error.toString(),
+      ),
+    );
   }
-  
-  static void pushNamed(String name, {Map<String, String>? pathParameters, Object? extra}) {
-    _router.pushNamed(name, pathParameters: pathParameters ?? {}, extra: extra);
-  }
-  
-  // Specific navigation methods
-  static void goToLogin() => goNamed('login');
-  static void goToRegister() => goNamed('register');
-  static void goToHome() => goNamed('home');
-  static void goToDoctorDashboard() => goNamed('doctor-dashboard');
-  static void goToEditDoctorProfile() => goNamed('edit-doctor-profile');
-  static void goToProfile() => goNamed('profile');
-  static void goToDoctors() => goNamed('doctors');
-  static void goToAppointments() => goNamed('appointments');
-  
-  static void goToPhoneVerification(String phoneNumber) {
-    goNamed('verify-phone', extra: phoneNumber);
-  }
-  
-  static void goToDoctorDetail(String doctorId) {
-    goNamed('doctor-detail', pathParameters: {'doctorId': doctorId});
-  }
-  
-  static void goToBookAppointment(String doctorId) {
-    goNamed('book-appointment', pathParameters: {'doctorId': doctorId});
-  }
-  
-  static void goToAppointmentDetail(String appointmentId) {
-    goNamed('appointment-detail', pathParameters: {'appointmentId': appointmentId});
-  }
-  
-  // Auth navigation
-  static void logout() {
-    goNamed('login');
-  }
-  
-  // Can pop check
-  static bool canPop() => _router.canPop();
-  
-  // Get current location
-  static String get currentLocation => _router.routerDelegate.currentConfiguration.uri.toString();
+
 }

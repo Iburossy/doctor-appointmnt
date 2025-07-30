@@ -1020,21 +1020,29 @@ router.post('/doctor-requests/:id/approve', authenticate, authorize('admin'), [
     await newDoctor.save();
     console.log('✅ Nouveau médecin créé avec succès, ID:', newDoctor._id);
 
-    // Mettre à jour le rôle de l'utilisateur
+    // Mettre à jour le rôle de l'utilisateur et récupérer l'objet complet
     const user = await User.findById(doctorRequest.userId._id);
-    user.role = 'doctor';
-    await user.save();
+    if (!user) {
+      console.error('Erreur critique: Utilisateur non trouvé pour la demande d\'approbation.');
+      // Ne pas bloquer la réponse, mais logger l'erreur
+    } else {
+      user.role = 'doctor';
+      await user.save();
 
-    // Log de l'action admin
-    console.log(`✅ Admin ${req.user.firstName} ${req.user.lastName} a approuvé la demande médecin de ${user.firstName} ${user.lastName}`);
+      // Log de l'action admin
+      console.log(`✅ Admin ${req.user.firstName} ${req.user.lastName} a approuvé la demande médecin de ${user.firstName} ${user.lastName}`);
 
-    // Envoyer une notification push à l'utilisateur
-    if (user.fcmTokens && user.fcmTokens.length > 0) {
-      const title = 'Félicitations ! Votre demande a été approuvée.';
-      const body = 'Vous pouvez maintenant vous connecter en tant que médecin et commencer à gérer vos rendez-vous.';
-      sendPushNotification(user.fcmTokens, title, body)
-        .then(() => console.log(`🚀 Notification d'approbation envoyée à ${user.firstName}`))
-        .catch(err => console.error(`Erreur d'envoi de notification d'approbation à ${user.firstName}:`, err));
+      // Envoyer une notification push à l'utilisateur
+      console.log(`Tentative d'envoi de notification à ${user.firstName} avec les tokens:`, user.fcmTokens);
+      if (user.fcmTokens && user.fcmTokens.length > 0) {
+        const title = 'Félicitations ! Votre demande a été approuvée.';
+        const body = 'Vous pouvez maintenant vous connecter en tant que médecin et commencer à gérer vos rendez-vous.';
+        sendPushNotification(user.fcmTokens, title, body)
+          .then(() => console.log(`🚀 Notification d'approbation envoyée avec succès à ${user.firstName}`))
+          .catch(err => console.error(`❌ Erreur lors de l'envoi de la notification d'approbation à ${user.firstName}:`, err));
+      } else {
+        console.log(`ℹ️ L'utilisateur ${user.firstName} n'a pas de token FCM enregistré. Notification non envoyée.`);
+      }
     }
 
     res.json({

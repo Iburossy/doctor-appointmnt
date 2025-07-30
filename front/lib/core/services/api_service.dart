@@ -3,12 +3,15 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http_parser/http_parser.dart';
 import '../config/app_config.dart';
+
 import 'storage_service.dart';
 
+// Service for API calls
 class ApiService {
   late Dio _dio;
-  
-  ApiService() {
+  final VoidCallback? onUnauthorized;
+
+  ApiService({this.onUnauthorized}) {
     _dio = Dio(BaseOptions(
       baseUrl: AppConfig.baseUrl,
       connectTimeout: Duration(milliseconds: AppConfig.connectionTimeout),
@@ -71,7 +74,8 @@ class ApiService {
   void _handleUnauthorized() async {
     await StorageService.clearToken();
     await StorageService.clearUser();
-    // TODO: Navigate to login screen
+    // Rediriger l'utilisateur vers l'écran de connexion
+    onUnauthorized?.call();
   }
   
   // Generic GET request
@@ -216,6 +220,20 @@ class ApiService {
     }
   }
   
+  // Mettre à jour les horaires de travail d'un médecin
+  Future<ApiResponse<Map<String, dynamic>>> updateDoctorSchedule(Map<String, dynamic> schedule) {
+    return put<Map<String, dynamic>>(
+      '/doctors/schedule',
+      data: { 'workingHours': schedule },
+      fromJson: (json) => json as Map<String, dynamic>,
+    );
+  }
+
+  // Vérifier le rôle actuel de l'utilisateur
+  Future<ApiResponse> checkCurrentRole() async {
+    return await get('/doctors/check-role');
+  }
+
   // Error handler
   ApiResponse<T> _handleError<T>(DioException error) {
     String message = 'Une erreur est survenue';

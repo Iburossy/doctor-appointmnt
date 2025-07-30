@@ -4,7 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/routes/app_router.dart';
+import 'package:go_router/go_router.dart';
 import '../../../models/doctor.dart';
 import '../../../core/services/doctor_upload_service.dart';
 import '../../../shared/widgets/custom_button.dart';
@@ -326,8 +326,8 @@ class _DoctorUpgradeScreenState extends State<DoctorUpgradeScreen> {
               actions: [
                 TextButton(
                   onPressed: () {
-                    Navigator.of(context).pop();
-                    AppNavigation.goToHome();
+                    context.pop();
+                    context.goNamed('home');
                   },
                   child: const Text('Compris'),
                 ),
@@ -377,7 +377,7 @@ class _DoctorUpgradeScreenState extends State<DoctorUpgradeScreen> {
             IconButton(
               icon: const Icon(Icons.close),
               onPressed: () {
-                AppNavigation.goToHome();
+                context.goNamed('home');
               },
             ),
           ],
@@ -389,7 +389,7 @@ class _DoctorUpgradeScreenState extends State<DoctorUpgradeScreen> {
                   _currentStep--;
                 });
               } else {
-                AppNavigation.goToHome();
+                context.goNamed('home');
               }
             },
           ),
@@ -419,7 +419,7 @@ class _DoctorUpgradeScreenState extends State<DoctorUpgradeScreen> {
                                   _currentStep--;
                                 });
                               } else {
-                                AppNavigation.goToHome();
+                                context.goNamed('home');
                               }
                             },
                             width: 120,

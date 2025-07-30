@@ -125,38 +125,38 @@ const doctorSchema = new mongoose.Schema({
   workingHours: {
     monday: {
       isWorking: { type: Boolean, default: false },
-      morning: { start: String, end: String },
-      afternoon: { start: String, end: String }
+      startTime: { type: String, default: '08:00' },
+      endTime: { type: String, default: '17:00' }
     },
     tuesday: {
       isWorking: { type: Boolean, default: false },
-      morning: { start: String, end: String },
-      afternoon: { start: String, end: String }
+      startTime: { type: String, default: '08:00' },
+      endTime: { type: String, default: '17:00' }
     },
     wednesday: {
       isWorking: { type: Boolean, default: false },
-      morning: { start: String, end: String },
-      afternoon: { start: String, end: String }
+      startTime: { type: String, default: '08:00' },
+      endTime: { type: String, default: '17:00' }
     },
     thursday: {
       isWorking: { type: Boolean, default: false },
-      morning: { start: String, end: String },
-      afternoon: { start: String, end: String }
+      startTime: { type: String, default: '08:00' },
+      endTime: { type: String, default: '17:00' }
     },
     friday: {
       isWorking: { type: Boolean, default: false },
-      morning: { start: String, end: String },
-      afternoon: { start: String, end: String }
+      startTime: { type: String, default: '08:00' },
+      endTime: { type: String, default: '17:00' }
     },
     saturday: {
       isWorking: { type: Boolean, default: false },
-      morning: { start: String, end: String },
-      afternoon: { start: String, end: String }
+      startTime: { type: String, default: '08:00' },
+      endTime: { type: String, default: '17:00' }
     },
     sunday: {
       isWorking: { type: Boolean, default: false },
-      morning: { start: String, end: String },
-      afternoon: { start: String, end: String }
+      startTime: { type: String, default: '08:00' },
+      endTime: { type: String, default: '17:00' }
     }
   },
   

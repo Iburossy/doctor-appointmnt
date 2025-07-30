@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/routes/app_router.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/config/app_config.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../../shared/widgets/custom_button.dart';
@@ -128,7 +128,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           if (Navigator.of(context).canPop()) {
             Navigator.of(context).pop();
           } else {
-            AppNavigation.goToHome();
+            context.goNamed('home');
           }
         } else {
           ScaffoldMessenger.of(context).showSnackBar(

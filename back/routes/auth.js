@@ -452,21 +452,37 @@ router.post('/reset-password', [
 // @access  Private
 router.get('/me', authenticate, async (req, res) => {
   try {
-    res.json({
-      user: {
-        id: req.user._id,
-        firstName: req.user.firstName,
-        lastName: req.user.lastName,
-        phone: req.user.phone,
-        email: req.user.email,
-        role: req.user.role,
-        isPhoneVerified: req.user.isPhoneVerified,
-        isEmailVerified: req.user.isEmailVerified,
-        profilePicture: req.user.profilePicture,
-        address: req.user.address,
-        language: req.user.language,
-        notifications: req.user.notifications
+    const user = req.user;
+    const userData = {
+      id: user._id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      phone: user.phone,
+      email: user.email,
+      role: user.role,
+      isPhoneVerified: user.isPhoneVerified,
+      isEmailVerified: user.isEmailVerified,
+      profilePicture: user.profilePicture,
+      address: user.address,
+      language: user.language,
+      notifications: user.notifications
+    };
+    
+    // If user is a doctor, fetch and include their doctor profile
+    if (user.role === 'doctor') {
+      const Doctor = require('../models/Doctor');
+      const doctorProfile = await Doctor.findOne({ userId: user._id });
+      
+      if (doctorProfile) {
+        userData.doctorProfile = doctorProfile;
+        console.log('Doctor profile found and attached to user data');
+      } else {
+        console.log('No doctor profile found for this user');
       }
+    }
+    
+    res.json({
+      user: userData
     });
   } catch (error) {
     console.error('Erreur récupération profil:', error);
