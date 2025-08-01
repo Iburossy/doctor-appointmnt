@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
 
 import '../providers/doctors_provider.dart';
@@ -119,6 +120,13 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
       floating: false,
       pinned: true,
       backgroundColor: AppTheme.primaryColor,
+      leading: IconButton(
+        icon: const Icon(
+          Icons.arrow_back,
+          color: Colors.white,
+        ),
+        onPressed: () => context.pop(),
+      ),
       flexibleSpace: FlexibleSpaceBar(
         background: Container(
           decoration: BoxDecoration(
@@ -470,7 +478,7 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  clinicInfo.address,
+                  '${clinicInfo.street}, ${clinicInfo.city}, ${clinicInfo.country}',
                   style: TextStyle(
                     fontSize: 16,
                     color: AppTheme.textSecondary,

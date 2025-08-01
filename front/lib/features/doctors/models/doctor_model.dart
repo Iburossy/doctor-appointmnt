@@ -20,7 +20,7 @@ class DoctorModel {
   final double rating;
   final int reviewCount;
   final DateTime? verifiedAt;
-  final String? verificationNotes;
+  final List<String> verificationNotes;
   final double? distance; // Distance from user location in km
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -47,7 +47,7 @@ class DoctorModel {
     required this.rating,
     required this.reviewCount,
     this.verifiedAt,
-    this.verificationNotes,
+    required this.verificationNotes,
     this.distance,
     required this.createdAt,
     required this.updatedAt,
@@ -151,40 +151,140 @@ class DoctorModel {
 
   // Factory constructor from JSON
   factory DoctorModel.fromJson(Map<String, dynamic> json) {
-    return DoctorModel(
-      id: json['_id'] ?? json['id'] ?? '',
-      userId: json['userId'] ?? '',
-      firstName: json['firstName'] ?? '',
-      lastName: json['lastName'] ?? '',
-      phone: json['phone'] ?? '',
-      email: json['email'],
-      avatar: json['avatar'],
-      specialization: json['specialization'],
-      licenseNumber: json['licenseNumber'],
-      experienceYears: json['experienceYears'],
-      education: json['education'],
-      bio: json['bio'],
-      languages: List<String>.from(json['languages'] ?? []),
-      clinicInfo: json['clinicInfo'] != null
-          ? ClinicInfo.fromJson(json['clinicInfo'])
-          : null,
-      workingHours: (json['workingHours'] as List?)
-              ?.map((e) => WorkingHours.fromJson(e))
-              .toList() ??
-          [],
-      consultationFee: json['consultationFee']?.toDouble(),
-      isVerified: json['isVerified'] ?? false,
-      isAvailable: json['isAvailable'] ?? true,
-      rating: (json['rating'] ?? 0).toDouble(),
-      reviewCount: json['reviewCount'] ?? 0,
-      verifiedAt: json['verifiedAt'] != null
-          ? DateTime.parse(json['verifiedAt'])
-          : null,
-      verificationNotes: json['verificationNotes'],
-      distance: json['distance']?.toDouble(),
-      createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']) : DateTime.now(),
-      updatedAt: json['updatedAt'] != null ? DateTime.parse(json['updatedAt']) : DateTime.now(),
-    );
+    print('--- [DEBUG] Parsing DoctorModel ---');
+    void logField(String key, dynamic value) {
+      print('[DEBUG] Field: $key | Value: $value | Type: ${value.runtimeType}');
+    }
+
+    try {
+      final doctorInfo = json['doctor'] as Map<String, dynamic>? ?? {};
+
+      final id = json['_id'] ?? json['id'] ?? '';
+      logField('id', id);
+
+      final userInfo = json['userId'] is Map<String, dynamic> ? json['userId'] as Map<String, dynamic> : {};
+
+      final userId = (json['userId'] is String ? json['userId'] : userInfo['_id']) ?? json['_id'] ?? '';
+      logField('userId', userId);
+
+      final firstName = json['firstName'] ?? doctorInfo['firstName'] ?? userInfo['firstName'] ?? '';
+      logField('firstName', firstName);
+
+      final lastName = json['lastName'] ?? doctorInfo['lastName'] ?? userInfo['lastName'] ?? '';
+      logField('lastName', lastName);
+
+      final phone = json['phone'] ?? doctorInfo['phone'] ?? userInfo['phone'] ?? '';
+      logField('phone', phone);
+
+      final email = json['email'] ?? doctorInfo['email'];
+      logField('email', email);
+
+      final avatar = json['avatar'] ?? doctorInfo['avatar'];
+      logField('avatar', avatar);
+
+      final specialization = json['specialization'] ?? 
+                         (json['specialties'] is List && (json['specialties'] as List).isNotEmpty 
+                          ? (json['specialties'] as List).first.toString() 
+                          : (json['specialties'] is String ? json['specialties'] : null));
+      logField('specialization', specialization);
+
+      final licenseNumber = json['licenseNumber'] ?? json['medicalLicenseNumber'];
+      logField('licenseNumber', licenseNumber);
+
+      final experienceYears = json['experienceYears'] ?? json['yearsOfExperience'];
+      logField('experienceYears', experienceYears);
+
+      final educationData = json['education'] ?? doctorInfo['education'];
+      final education = educationData is List
+          ? educationData.map((item) {
+              if (item is Map<String, dynamic>) {
+                return item['degree'] ?? item.toString();
+              }
+              return item.toString();
+            }).join(', ')
+          : educationData?.toString();
+      logField('education', education);
+
+      final bio = json['bio'];
+      logField('bio', bio);
+
+      final languages = _parseLanguages(json['languages']);
+      logField('languages', languages);
+
+      final clinicInfo = _parseClinicInfo(json);
+      logField('clinicInfo', clinicInfo);
+
+      final workingHours = _parseWorkingHours(json['workingHours']);
+      logField('workingHours', workingHours);
+
+      final consultationFee = json['consultationFee']?.toDouble();
+      logField('consultationFee', consultationFee);
+
+      final isVerified = json['isVerified'] ?? false;
+      logField('isVerified', isVerified);
+
+      final isAvailable = json['isAvailable'] ?? true;
+      logField('isAvailable', isAvailable);
+
+      final rating = _parseRating(json);
+      logField('rating', rating);
+
+      final reviewCount = _parseReviewCount(json);
+      logField('reviewCount', reviewCount);
+
+      final verifiedAt = json['verifiedAt'] != null ? DateTime.parse(json['verifiedAt']) : null;
+      logField('verifiedAt', verifiedAt);
+
+      final verificationNotesData = json['verificationNotes'] ?? doctorInfo['verificationNotes'];
+      final verificationNotes = verificationNotesData is List
+          ? List<String>.from(verificationNotesData.map((item) => item.toString()))
+          : (verificationNotesData != null ? [verificationNotesData.toString()] : <String>[]);
+      logField('verificationNotes', verificationNotes);
+
+      final distance = json['distance']?.toDouble();
+      logField('distance', distance);
+
+      final createdAt = json['createdAt'] != null ? DateTime.parse(json['createdAt']) : DateTime.now();
+      logField('createdAt', createdAt);
+
+      final updatedAt = json['updatedAt'] != null ? DateTime.parse(json['updatedAt']) : DateTime.now();
+      logField('updatedAt', updatedAt);
+
+      return DoctorModel(
+        id: id,
+        userId: userId,
+        firstName: firstName,
+        lastName: lastName,
+        phone: phone,
+        email: email,
+        avatar: avatar,
+        specialization: specialization,
+        licenseNumber: licenseNumber,
+        experienceYears: experienceYears,
+        education: education,
+        bio: bio,
+        languages: languages,
+        clinicInfo: clinicInfo,
+        workingHours: workingHours,
+        consultationFee: consultationFee,
+        isVerified: isVerified,
+        isAvailable: isAvailable,
+        rating: rating,
+        reviewCount: reviewCount,
+        verifiedAt: verifiedAt,
+        verificationNotes: verificationNotes,
+        distance: distance,
+        createdAt: createdAt,
+        updatedAt: updatedAt,
+      );
+    } catch (e, s) {
+      print('--- [ERROR] Failed to parse DoctorModel ---');
+      print('Error: $e');
+      print('Stacktrace: $s');
+      print('Problematic JSON: $json');
+      print('-----------------------------------------');
+      rethrow;
+    }
   }
 
   // Convert to JSON
@@ -262,38 +362,272 @@ class DoctorModel {
     
     return currentMinutes < targetMinutes;
   }
+  
+  // Méthode pour traiter les différents formats possibles du champ languages
+  static List<String> _parseLanguages(dynamic languagesData) {
+    if (languagesData == null) {
+      return [];
+    }
+    
+    // Si c'est déjà une liste
+    if (languagesData is List) {
+      return languagesData.map((lang) => lang.toString()).toList();
+    }
+    
+    // Si c'est une map/objet comme dans certaines réponses API
+    if (languagesData is Map) {
+      return languagesData.values.map((lang) => lang.toString()).toList();
+    }
+    
+    // Si c'est une chaîne unique
+    if (languagesData is String) {
+      return [languagesData];
+    }
+    
+    // Par défaut, retourner une liste vide
+    return [];
+  }
+  
+  // Méthode pour traiter les différents formats possibles du champ workingHours
+  static List<WorkingHours> _parseWorkingHours(dynamic workingHoursData) {
+    if (workingHoursData == null) {
+      return [];
+    }
+    
+    // Format du backend: {monday: {isWorking: bool, startTime: string, endTime: string}, ...}
+    if (workingHoursData is Map) {
+      List<WorkingHours> result = [];
+      
+      // Parcourir chaque jour de la semaine dans la map
+      workingHoursData.forEach((day, dayData) {
+        if (dayData is Map && day is String) {
+          try {
+            final bool isAvailable = dayData['isWorking'] ?? false;
+            final String startTime = dayData['startTime'] ?? '08:00';
+            final String endTime = dayData['endTime'] ?? '17:00';
+            
+            result.add(WorkingHours(
+              day: day,
+              isAvailable: isAvailable,
+              startTime: startTime,
+              endTime: endTime,
+            ));
+          } catch (e) {
+            // En cas d'erreur, ajouter un horaire par défaut pour ce jour
+            result.add(WorkingHours(
+              day: day,
+              isAvailable: false,
+              startTime: '08:00',
+              endTime: '17:00',
+            ));
+          }
+        }
+      });
+      
+      return result;
+    }
+    
+    // Si c'est déjà au format liste attendu
+    if (workingHoursData is List) {
+      return workingHoursData
+        .map((item) {
+          if (item is Map) {
+            // Convertir en Map<String, dynamic> pour éviter les erreurs de type
+            final Map<String, dynamic> convertedMap = {};
+            item.forEach((key, value) {
+              if (key is String) {
+                convertedMap[key] = value;
+              }
+            });
+            return WorkingHours.fromJson(convertedMap);
+          }
+          return null;
+        })
+        .whereType<WorkingHours>()
+        .toList();
+    }
+    
+    // Par défaut, retourner une liste vide
+    return [];
+  }
+  
+  // Méthode pour traiter les différentes structures possibles des infos de clinique
+  static ClinicInfo? _parseClinicInfo(Map<String, dynamic> json) {
+    // Vérifier d'abord la structure attendue par le frontend
+    if (json['clinicInfo'] != null) {
+      return ClinicInfo.fromJson(json['clinicInfo']);
+    }
+    
+    // Vérifier la structure utilisée par le backend
+    if (json['clinic'] != null && json['clinic'] is Map) {
+      final clinicData = json['clinic'] as Map;
+      final Map<String, dynamic> convertedClinic = {};
+      
+      // Convertir la structure backend vers la structure frontend
+      if (clinicData['name'] != null) {
+        convertedClinic['name'] = clinicData['name'];
+      }
+      
+      if (clinicData['phone'] != null) {
+        convertedClinic['phone'] = clinicData['phone'];
+      }
+      
+      if (clinicData['description'] != null) {
+        convertedClinic['description'] = clinicData['description'];
+      }
+      
+      if (clinicData['photos'] != null && clinicData['photos'] is List) {
+        convertedClinic['photos'] = clinicData['photos'];
+      }
+      
+      // Gestion de l'adresse
+      if (clinicData['address'] != null && clinicData['address'] is Map) {
+        final addressData = clinicData['address'] as Map;
+        final Map<String, dynamic> convertedAddress = {};
+        
+        if (addressData['street'] != null) {
+          convertedAddress['street'] = addressData['street'];
+        }
+        
+        if (addressData['city'] != null) {
+          convertedAddress['city'] = addressData['city'];
+        }
+        
+        if (addressData['region'] != null) {
+          convertedAddress['region'] = addressData['region'];
+        }
+        
+        if (addressData['country'] != null) {
+          convertedAddress['country'] = addressData['country'];
+        }
+        
+        // Géolocalisation
+        if (addressData['location'] != null && addressData['location'] is Map) {
+          final locationData = addressData['location'] as Map;
+          if (locationData['coordinates'] != null && locationData['coordinates'] is List) {
+            final coordinates = locationData['coordinates'] as List;
+            if (coordinates.length >= 2) {
+              // Conversion des coordonnées [longitude, latitude] en {longitude, latitude}
+              convertedAddress['longitude'] = coordinates[0];
+              convertedAddress['latitude'] = coordinates[1];
+            }
+          }
+        }
+        
+        convertedClinic['address'] = convertedAddress;
+      }
+      
+      return ClinicInfo.fromJson(convertedClinic);
+    }
+    
+    return null;
+  }
+  
+  // Méthode pour traiter le rating depuis les statistiques
+  static double _parseRating(Map<String, dynamic> json) {
+    // Vérifier d'abord le champ rating direct
+    if (json['rating'] != null) {
+      return (json['rating'] as num).toDouble();
+    }
+    
+    // Vérifier dans les statistiques
+    if (json['stats'] != null && json['stats'] is Map) {
+      final stats = json['stats'] as Map;
+      if (stats['averageRating'] != null) {
+        return (stats['averageRating'] as num).toDouble();
+      }
+    }
+    
+    return 0.0;
+  }
+  
+  // Méthode pour traiter le nombre d'avis depuis les statistiques
+  static int _parseReviewCount(Map<String, dynamic> json) {
+    // Vérifier d'abord le champ reviewCount direct
+    if (json['reviewCount'] != null) {
+      return json['reviewCount'] as int;
+    }
+    
+    // Vérifier dans les statistiques
+    if (json['stats'] != null && json['stats'] is Map) {
+      final stats = json['stats'] as Map;
+      if (stats['totalReviews'] != null) {
+        return stats['totalReviews'] as int;
+      }
+    }
+    
+    return 0;
+  }
 }
 
 class ClinicInfo {
   final String name;
-  final String address;
+  final String street;
+  final String city;
+  final String region;
+  final String country;
+  final String? postalCode;
+  final double latitude;
+  final double longitude;
   final String? phone;
-  final LocationData? location;
+  final String? description;
+  final List<String> photos;
 
   ClinicInfo({
     required this.name,
-    required this.address,
+    required this.street,
+    required this.city,
+    required this.region,
+    required this.country,
+    this.postalCode,
+    required this.latitude,
+    required this.longitude,
     this.phone,
-    this.location,
+    this.description,
+    required this.photos,
   });
 
   factory ClinicInfo.fromJson(Map<String, dynamic> json) {
+    final address = json['address'] as Map<String, dynamic>? ?? {};
+    final location = address['location'] as Map<String, dynamic>? ?? {};
+    final coordinates = location['coordinates'] as List<dynamic>?;
+
     return ClinicInfo(
       name: json['name'] ?? '',
-      address: json['address'] ?? '',
-      phone: json['phone'],
-      location: json['location'] != null
-          ? LocationData.fromJson(json['location'])
-          : null,
+      street: address['street'] ?? '',
+      city: address['city'] ?? '',
+      region: address['region'] ?? '',
+      country: address['country'] ?? '',
+      postalCode: address['postalCode'],
+      latitude: coordinates != null && coordinates.length > 1
+          ? (coordinates[1] as num).toDouble()
+          : (json['latitude'] as num?)?.toDouble() ?? 0.0,
+      longitude: coordinates != null && coordinates.isNotEmpty
+          ? (coordinates[0] as num).toDouble()
+          : (json['longitude'] as num?)?.toDouble() ?? 0.0,
+      phone: json['phone']?.toString(),
+      description: json['description'],
+      photos: List<String>.from(json['photos'] ?? []),
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'name': name,
-      'address': address,
+      'address': {
+        'street': street,
+        'city': city,
+        'region': region,
+        'country': country,
+        'postalCode': postalCode,
+        'location': {
+          'type': 'Point',
+          'coordinates': [longitude, latitude],
+        },
+      },
       'phone': phone,
-      'location': location?.toJson(),
+      'description': description,
+      'photos': photos,
     };
   }
 }

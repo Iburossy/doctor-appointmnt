@@ -75,7 +75,22 @@ class DoctorsProvider with ChangeNotifier {
         final responseData = response.data as Map<String, dynamic>;
         final List<dynamic> doctorsData = responseData['doctors'] ?? [];
         _searchResults = doctorsData
-            .map((json) => DoctorModel.fromJson(json))
+            .map((json) {
+              // Fusion des données du médecin et des infos du médecin
+              // Le backend utilise parfois un format où certaines infos du médecin
+              // sont stockées dans un sous-objet 'doctor'
+              final Map<String, dynamic> processedJson = Map<String, dynamic>.from(json);
+              if (processedJson.containsKey('doctor') && processedJson['doctor'] is Map) {
+                final doctorInfo = processedJson['doctor'] as Map;
+                // Fusionner les informations du médecin dans l'objet principal
+                doctorInfo.forEach((key, value) {
+                  if (!processedJson.containsKey(key)) {
+                    processedJson[key] = value;
+                  }
+                });
+              }
+              return DoctorModel.fromJson(processedJson);
+            })
             .toList();
       } else {
         _setError(response.message ?? 'Erreur lors de la recherche');
@@ -97,7 +112,28 @@ class DoctorsProvider with ChangeNotifier {
       
       if (response.isSuccess && response.data != null) {
         final doctorData = response.data;
-        _selectedDoctor = DoctorModel.fromJson(doctorData);
+        // Pré-traitement des données du médecin pour gérer les différentes structures
+        final Map<String, dynamic> processedData = 
+            (doctorData is Map<String, dynamic>) 
+            ? Map<String, dynamic>.from(doctorData)
+            : <String, dynamic>{};
+            
+        // Fusionner les données du sous-objet doctor si elles existent
+        if (processedData.containsKey('doctor') && processedData['doctor'] is Map) {
+          final doctorInfo = processedData['doctor'] as Map;
+          doctorInfo.forEach((key, value) {
+            if (!processedData.containsKey(key)) {
+              processedData[key] = value;
+            }
+          });
+        }
+        
+        // S'assurer que l'id est correctement transmis
+        if (!processedData.containsKey('id') && processedData.containsKey('_id')) {
+          processedData['id'] = processedData['_id'];
+        }
+        
+        _selectedDoctor = DoctorModel.fromJson(processedData);
         notifyListeners();
         return _selectedDoctor;
       } else {

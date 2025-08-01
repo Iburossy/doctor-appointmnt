@@ -418,7 +418,7 @@ class _DoctorsSearchScreenState extends State<DoctorsSearchScreen> {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
-          onTap: () => context.goNamed('doctor-details', pathParameters: {'id': doctor.id}),
+          onTap: () => context.pushNamed('doctor-detail', pathParameters: {'doctorId': doctor.id}),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
