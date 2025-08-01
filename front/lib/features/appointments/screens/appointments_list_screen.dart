@@ -181,9 +181,9 @@ class _AppointmentsListScreenState extends State<AppointmentsListScreen>
                 const SizedBox(height: 8),
                 
                 // Specialization
-                if (appointment.doctorInfo?.specialization != null)
+                if (appointment.doctorInfo != null)
                   Text(
-                    appointment.doctorInfo!.specialization!,
+                    appointment.doctorInfo!.displaySpecialization,
                     style: TextStyle(
                       fontSize: 14,
                       color: AppTheme.primaryColor,

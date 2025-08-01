@@ -39,7 +39,18 @@ class _DoctorScheduleScreenState extends State<DoctorScheduleScreen> {
   @override
   void initState() {
     super.initState();
+    _ensureDoctorProfileLoaded();
     _loadDoctorSchedule();
+  }
+  
+  void _ensureDoctorProfileLoaded() {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    if (authProvider.user?.doctorProfile == null && authProvider.isAuthenticated) {
+      authProvider.refreshUser().then((_) {
+        // Recharger les horaires après que le profil soit chargé
+        _loadDoctorSchedule();
+      });
+    }
   }
   
   void _loadDoctorSchedule() {
@@ -461,19 +472,32 @@ class _DoctorScheduleScreenState extends State<DoctorScheduleScreen> {
     final user = authProvider.user;
     
     if (user == null || user.doctorProfile == null || user.doctorProfile!.id == null || user.doctorProfile!.id!.isEmpty) {
-      setState(() {
-        _isLoading = false;
-      });
-      
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Impossible de récupérer votre profil médecin'),
-            backgroundColor: Colors.red,
-          ),
-        );
+      // Tenter de recharger le profil médecin avant d'afficher l'erreur
+      try {
+        await authProvider.refreshUser();
+        final refreshedUser = authProvider.user;
+        
+        if (refreshedUser == null || refreshedUser.doctorProfile == null || refreshedUser.doctorProfile!.id == null || refreshedUser.doctorProfile!.id!.isEmpty) {
+          throw Exception('Profil médecin non disponible');
+        }
+        
+        // Continuer avec le profil rechargé
+        // (le code continuera après ce bloc)
+      } catch (e) {
+        setState(() {
+          _isLoading = false;
+        });
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Impossible de récupérer votre profil médecin'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
       }
-      return;
     }
 
     final apiService = ApiService();

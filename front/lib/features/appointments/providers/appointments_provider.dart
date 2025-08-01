@@ -51,9 +51,10 @@ class AppointmentsProvider with ChangeNotifier {
   Future<bool> createAppointment({
     required String doctorId,
     required DateTime appointmentDate,
-    required String timeSlot,
-    String? reason,
-    String? notes,
+    required String appointmentTime,
+    required String reason,
+    String? symptoms,
+    String? patientNotes,
   }) async {
     _setLoading(true);
     _clearError();
@@ -61,23 +62,37 @@ class AppointmentsProvider with ChangeNotifier {
     try {
       final response = await _apiService.post('/appointments', data: {
         'doctorId': doctorId,
-        'appointmentDate': appointmentDate.toIso8601String(),
-        'timeSlot': timeSlot,
+        'appointmentDate': appointmentDate.toIso8601String().split('T')[0],
+        'appointmentTime': appointmentTime,
         'reason': reason,
-        'notes': notes,
+        'symptoms': symptoms,
+        'patientNotes': patientNotes,
       });
       
       if (response.isSuccess && response.data != null) {
         final appointmentData = response.data;
-        final newAppointment = AppointmentModel.fromJson(appointmentData);
+        print('📋 APPOINTMENT DATA RECEIVED: $appointmentData');
         
-        _appointments.add(newAppointment);
-        _categorizeAppointments();
+        // Extraire les données du rendez-vous depuis la réponse
+        final appointmentJson = appointmentData['appointment'] ?? appointmentData;
+        print('📋 APPOINTMENT JSON TO PARSE: $appointmentJson');
         
-        // Schedule notification reminder
-        await _scheduleAppointmentReminder(newAppointment);
-        
-        return true;
+        try {
+          final newAppointment = AppointmentModel.fromJson(appointmentJson);
+          print('✅ APPOINTMENT PARSED SUCCESSFULLY: ${newAppointment.id}');
+          
+          _appointments.add(newAppointment);
+          _categorizeAppointments();
+          
+          // Schedule notification reminder
+          await _scheduleAppointmentReminder(newAppointment);
+          
+          return true;
+        } catch (parseError) {
+          print('❌ PARSING ERROR: $parseError');
+          _setError('Erreur lors du traitement des données: $parseError');
+          return false;
+        }
       } else {
         _setError(response.message ?? 'Erreur lors de la création du rendez-vous');
         return false;
@@ -251,7 +266,7 @@ class AppointmentsProvider with ChangeNotifier {
           _appointments[index] = _appointments[index].copyWith(
             status: 'completed',
             diagnosis: diagnosis,
-            prescription: prescription,
+            prescription: prescription != null ? [prescription] : null,
             doctorNotes: notes,
           );
           _categorizeAppointments();
@@ -319,15 +334,23 @@ class AppointmentsProvider with ChangeNotifier {
   }) async {
     try {
       final response = await _apiService.get(
-        '/doctors/$doctorId/availability',
+        '/appointments/availability/$doctorId',
         queryParameters: {
           'date': date.toIso8601String().split('T')[0],
         },
       );
       
       if (response.isSuccess && response.data != null) {
-        final List<dynamic> slots = response.data['availableSlots'] ?? [];
-        return slots.cast<String>();
+        final List<dynamic> bookedSlotsData = response.data['bookedSlots'] ?? [];
+        final List<String> bookedSlots = bookedSlotsData.cast<String>();
+        
+        // Generate all possible time slots (every 30 minutes from 8:00 to 18:00)
+        final List<String> allSlots = _generateTimeSlots();
+        
+        // Filter out booked slots
+        final availableSlots = allSlots.where((slot) => !bookedSlots.contains(slot)).toList();
+        
+        return availableSlots;
       } else {
         _setError(response.message ?? 'Erreur lors de la récupération des créneaux');
         return [];
@@ -336,6 +359,19 @@ class AppointmentsProvider with ChangeNotifier {
       _setError('Erreur de connexion: $e');
       return [];
     }
+  }
+  
+  // Generate time slots every 30 minutes
+  List<String> _generateTimeSlots() {
+    final List<String> slots = [];
+    
+    // Generate slots from 8:00 to 18:00 (every 30 minutes)
+    for (int hour = 8; hour < 18; hour++) {
+      slots.add('${hour.toString().padLeft(2, '0')}:00');
+      slots.add('${hour.toString().padLeft(2, '0')}:30');
+    }
+    
+    return slots;
   }
 
   // Categorize appointments

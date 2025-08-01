@@ -135,7 +135,7 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
           const SizedBox(height: 16),
           
           // Medical Info Card (if available)
-          if (_appointment!.diagnosis != null || _appointment!.prescription != null)
+          if (_appointment!.diagnosis != null || _appointment!.prescription.isNotEmpty)
             _buildMedicalInfoCard(),
           
           const SizedBox(height: 16),
@@ -286,10 +286,10 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
                       ),
                     ),
                     
-                    if (doctor?.specialization != null) ...[
+                    if (doctor != null) ...[
                       const SizedBox(height: 4),
                       Text(
-                        doctor!.specialization!,
+                        doctor.displaySpecialization,
                         style: TextStyle(
                           fontSize: 14,
                           color: AppTheme.primaryColor,
@@ -477,11 +477,11 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
           ],
           
           // Prescription
-          if (_appointment!.prescription != null)
+          if (_appointment!.prescription.isNotEmpty)
             _buildDetailRow(
               Icons.medication,
               'Prescription',
-              _appointment!.prescription!,
+              _appointment!.prescription.join(', '),
             ),
           
           // Doctor Notes

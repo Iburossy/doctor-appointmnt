@@ -545,6 +545,41 @@ router.post('/:id/review', authenticate, [
   }
 });
 
+// @route   GET /api/appointments/availability/:doctorId
+// @desc    Obtenir les créneaux horaires déjà réservés pour un médecin à une date donnée
+// @access  Private
+router.get('/availability/:doctorId', authenticate, [
+  query('date').isISO8601().withMessage('Format de date invalide (YYYY-MM-DD)')
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ error: 'Date invalide', details: errors.array() });
+    }
+
+    const { doctorId } = req.params;
+    const { date } = req.query;
+
+    const searchDate = new Date(date);
+    const startDate = new Date(searchDate.setHours(0, 0, 0, 0));
+    const endDate = new Date(searchDate.setHours(23, 59, 59, 999));
+
+    const appointments = await Appointment.find({
+      doctor: doctorId,
+      appointmentDate: { $gte: startDate, $lt: endDate },
+      status: { $in: ['pending', 'confirmed'] }
+    });
+
+    const bookedSlots = appointments.map(app => app.appointmentTime);
+
+    res.json({ bookedSlots });
+
+  } catch (error) {
+    console.error('Erreur récupération disponibilités:', error);
+    res.status(500).json({ error: 'Erreur lors de la récupération des disponibilités' });
+  }
+});
+
 // @route   GET /api/appointments/doctor/me
 // @desc    Obtenir les rendez-vous du médecin connecté
 // @access  Private (Doctor)

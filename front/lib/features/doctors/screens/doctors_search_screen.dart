@@ -495,15 +495,14 @@ class _DoctorsSearchScreenState extends State<DoctorsSearchScreen> {
                       const SizedBox(height: 4),
                       
                       // Specialization
-                      if (doctor.specialization != null)
-                        Text(
-                          doctor.specialization!,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: AppTheme.primaryColor,
-                            fontWeight: FontWeight.w600,
-                          ),
+                      Text(
+                        doctor.displaySpecialization,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: AppTheme.primaryColor,
+                          fontWeight: FontWeight.w600,
                         ),
+                      ),
                       
                       const SizedBox(height: 8),
                       

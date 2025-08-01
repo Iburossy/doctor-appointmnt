@@ -90,8 +90,8 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
   }
   
   Future<void> _bookAppointment() async {
-    if (_selectedDate == null || _selectedTimeSlot == null || _reasonController.text.trim().isEmpty) {
-      _showErrorDialog('Veuillez remplir tous les champs obligatoires');
+    if (_selectedDate == null || _selectedTimeSlot == null) {
+      _showErrorDialog('Veuillez sélectionner une date et un créneau horaire');
       return;
     }
     
@@ -103,9 +103,9 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
       final success = await appointmentsProvider.createAppointment(
         doctorId: widget.doctorId,
         appointmentDate: _selectedDate!,
-        timeSlot: _selectedTimeSlot!,
-        reason: _reasonController.text.trim(),
-        notes: _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
+        appointmentTime: _selectedTimeSlot!,
+        reason: _reasonController.text.trim().isEmpty ? 'Consultation générale' : _reasonController.text.trim(),
+        patientNotes: _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
       );
       
       if (success) {
@@ -306,7 +306,7 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          _doctor!.specialization ?? 'Médecin généraliste',
+                          _doctor!.displaySpecialization,
                           style: const TextStyle(
                             fontSize: 14,
                             color: AppTheme.textSecondaryColor,
@@ -317,21 +317,27 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
                           children: [
                             const Icon(Icons.star, color: Colors.amber, size: 16),
                             const SizedBox(width: 4),
-                            Text(
-                              _doctor!.formattedRating,
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: AppTheme.textSecondaryColor,
+                            Flexible(
+                              child: Text(
+                                _doctor!.formattedRating,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: AppTheme.textSecondaryColor,
+                                ),
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                             const SizedBox(width: 16),
                             const Icon(Icons.work, color: AppTheme.primaryColor, size: 16),
                             const SizedBox(width: 4),
-                            Text(
-                              _doctor!.formattedExperience,
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: AppTheme.textSecondaryColor,
+                            Flexible(
+                              child: Text(
+                                _doctor!.formattedExperience,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: AppTheme.textSecondaryColor,
+                                ),
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                           ],
@@ -484,7 +490,7 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
           TextField(
             controller: _reasonController,
             decoration: const InputDecoration(
-              labelText: 'Motif de consultation *',
+              labelText: 'Motif de consultation (optionnel)',
               hintText: 'Ex: Consultation générale, douleur abdominale...',
               border: OutlineInputBorder(),
             ),
@@ -525,7 +531,7 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
                   const SizedBox(height: 16),
                   
                   _buildSummaryRow('Médecin', _doctor!.displayName),
-                  _buildSummaryRow('Spécialité', _doctor!.specialization ?? 'Médecin généraliste'),
+                  _buildSummaryRow('Spécialité', _doctor!.displaySpecialization),
                   if (_selectedDate != null)
                     _buildSummaryRow('Date', DateFormat('EEEE d MMMM yyyy', 'fr_FR').format(_selectedDate!)),
                   if (_selectedTimeSlot != null)
@@ -599,12 +605,12 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
                     child: Column(
                       children: [
                         _buildSummaryRow('Médecin', _doctor!.displayName),
-                        _buildSummaryRow('Spécialité', _doctor!.specialization ?? 'Médecin généraliste'),
+                        _buildSummaryRow('Spécialité', _doctor!.displaySpecialization),
                         if (_selectedDate != null)
                           _buildSummaryRow('Date', DateFormat('EEEE d MMMM yyyy', 'fr_FR').format(_selectedDate!)),
                         if (_selectedTimeSlot != null)
                           _buildSummaryRow('Heure', _selectedTimeSlot!),
-                        _buildSummaryRow('Motif', _reasonController.text.trim()),
+                        _buildSummaryRow('Motif', _reasonController.text.trim().isEmpty ? 'Consultation générale' : _reasonController.text.trim()),
                         const Divider(),
                         _buildSummaryRow('Total à payer', _doctor!.formattedFee, isTotal: true),
                       ],
@@ -623,22 +629,32 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: isTotal ? 16 : 14,
-              fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
-              color: AppTheme.textSecondaryColor,
+          Expanded(
+            flex: 2,
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: isTotal ? 16 : 14,
+                fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
+                color: AppTheme.textSecondaryColor,
+              ),
             ),
           ),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: isTotal ? 16 : 14,
-              fontWeight: isTotal ? FontWeight.bold : FontWeight.w500,
-              color: isTotal ? AppTheme.primaryColor : AppTheme.textPrimaryColor,
+          const SizedBox(width: 8),
+          Expanded(
+            flex: 3,
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              overflow: TextOverflow.visible,
+              softWrap: true,
+              style: TextStyle(
+                fontSize: isTotal ? 16 : 14,
+                fontWeight: isTotal ? FontWeight.bold : FontWeight.w500,
+                color: isTotal ? AppTheme.primaryColor : AppTheme.textPrimaryColor,
+              ),
             ),
           ),
         ],
@@ -691,7 +707,7 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
       case 1:
         return _selectedDate != null && _selectedTimeSlot != null;
       case 2:
-        return _reasonController.text.trim().isNotEmpty;
+        return true; // Motif optionnel pour simplifier l'expérience utilisateur
       default:
         return false;
     }

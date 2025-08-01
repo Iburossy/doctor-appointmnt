@@ -266,9 +266,7 @@ class DoctorsProvider with ChangeNotifier {
   List<String> getSpecializations() {
     final specializations = <String>{};
     for (final doctor in _searchResults) {
-      if (doctor.specialization != null) {
-        specializations.add(doctor.specialization!);
-      }
+      specializations.add(doctor.displaySpecialization);
     }
     return specializations.toList()..sort();
   }

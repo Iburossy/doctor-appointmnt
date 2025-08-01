@@ -176,25 +176,24 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
               const SizedBox(height: 8),
               
               // Specialization
-              if (doctor.specialization != null)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    doctor.specialization!,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  doctor.displaySpecialization,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
+              ),
             ],
           ),
         ),
@@ -680,13 +679,10 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
   }
 
   void _bookAppointment(DoctorModel doctor) {
-    // Navigate to appointment booking screen
-    // TODO: Navigate to appointment booking screen
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Réservation de rendez-vous - À implémenter'),
-        backgroundColor: AppTheme.primaryColor,
-      ),
+    context.pushNamed(
+      'book-appointment',
+      pathParameters: {'doctorId': doctor.id},
+      extra: doctor,
     );
   }
 }

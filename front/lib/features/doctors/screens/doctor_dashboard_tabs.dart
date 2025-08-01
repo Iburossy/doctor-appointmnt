@@ -12,6 +12,11 @@ class DoctorHomeTab extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<AuthProvider>(
       builder: (context, authProvider, child) {
+        // Forcer le chargement du profil médecin si pas encore chargé
+        if (authProvider.user?.doctorProfile == null && authProvider.isAuthenticated) {
+          Future.microtask(() => authProvider.refreshUser());
+        }
+        
         final user = authProvider.user;
         final doctorProfile = user?.doctorProfile;
 

@@ -6,7 +6,7 @@ class DoctorModel {
   final String phone;
   final String? email;
   final String? avatar;
-  final String? specialization;
+  final List<String> specialties;
   final String? licenseNumber;
   final int? experienceYears;
   final String? education;
@@ -33,7 +33,7 @@ class DoctorModel {
     required this.phone,
     this.email,
     this.avatar,
-    this.specialization,
+    required this.specialties,
     this.licenseNumber,
     this.experienceYears,
     this.education,
@@ -74,6 +74,12 @@ class DoctorModel {
   // Formatted rating
   String get formattedRating {
     return '$rating ($reviewCount avis)';
+  }
+
+  // Display specialization
+  String get displaySpecialization {
+    if (specialties.isNotEmpty) return specialties.first;
+    return 'Médecin généraliste';
   }
 
   // Formatted distance
@@ -182,11 +188,16 @@ class DoctorModel {
       final avatar = json['avatar'] ?? doctorInfo['avatar'];
       logField('avatar', avatar);
 
-      final specialization = json['specialization'] ?? 
-                         (json['specialties'] is List && (json['specialties'] as List).isNotEmpty 
-                          ? (json['specialties'] as List).first.toString() 
-                          : (json['specialties'] is String ? json['specialties'] : null));
-      logField('specialization', specialization);
+      final specialtiesData = json['specialties'] ?? json['specialization'];
+      final List<String> specialties;
+      if (specialtiesData is List) {
+        specialties = List<String>.from(specialtiesData.map((s) => s.toString()));
+      } else if (specialtiesData is String) {
+        specialties = [specialtiesData];
+      } else {
+        specialties = [];
+      }
+      logField('specialties', specialties);
 
       final licenseNumber = json['licenseNumber'] ?? json['medicalLicenseNumber'];
       logField('licenseNumber', licenseNumber);
@@ -258,7 +269,7 @@ class DoctorModel {
         phone: phone,
         email: email,
         avatar: avatar,
-        specialization: specialization,
+        specialties: specialties,
         licenseNumber: licenseNumber,
         experienceYears: experienceYears,
         education: education,
@@ -297,7 +308,7 @@ class DoctorModel {
       'phone': phone,
       'email': email,
       'avatar': avatar,
-      'specialization': specialization,
+      'specialties': specialties,
       'licenseNumber': licenseNumber,
       'experienceYears': experienceYears,
       'education': education,
