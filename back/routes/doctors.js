@@ -353,6 +353,8 @@ router.get('/search', [
             distanceField: "distance",
             maxDistance: radiusInMeters,
             spherical: true,
+            distanceMultiplier: 0.001, // Convertir les mètres en km pour l'affichage
+            key: "clinic.address.location", // Spécifier explicitement quel index utiliser
             query: query
           }
         },

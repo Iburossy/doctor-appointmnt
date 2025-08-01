@@ -100,6 +100,14 @@ class AuthProvider with ChangeNotifier {
       });
       
       if (response.isSuccess) {
+        // Sauvegarder les données d'authentification
+        if (response.data != null && response.data['token'] != null) {
+          // Sauvegarder le token et les données utilisateur
+          await _saveAuthData(response.data);
+          // Utilisateur connecté mais pas vérifié
+          _isAuthenticated = true;
+          notifyListeners();
+        }
         // Registration successful, phone verification needed
         return true;
       } else {
@@ -184,6 +192,22 @@ class AuthProvider with ChangeNotifier {
       
       if (response.isSuccess && response.data != null) {
         await _saveAuthData(response.data);
+        
+        // Vérifier si l'utilisateur est un médecin et recharger son profil
+        if (_user?.role == 'doctor') {
+          print('DEBUG: AuthProvider - User is a doctor, scheduling profile reload');
+          
+          // Notifier pour mettre à jour le statut d'authentification
+          // Les widgets qui écoutent ce provider seront reconstruits
+          // et pourront déclencher le chargement du profil médecin
+          notifyListeners();
+          
+          // Au lieu d'essayer d'accéder directement au DoctorProfileProvider,
+          // on s'assure que l'UI est mise à jour et les widgets pourront
+          // faire le travail de rechargement eux-mêmes
+          print('DEBUG: AuthProvider - Auth state updated, UI should trigger profile reload');
+        }
+        
         return true;
       } else {
         _setError(response.message ?? 'Identifiants incorrects');
@@ -517,10 +541,16 @@ class AuthProvider with ChangeNotifier {
       await StorageService.clearUser();
       await NotificationService.cancelAllNotifications();
       
+      // Déterminer si l'utilisateur était un médecin avant déconnexion
+      final wasDoctor = _user?.role == 'doctor';
+      
       print('DEBUG: Setting user state to null...');
       _user = null;
       _isAuthenticated = false;
       _clearError();
+      
+      // Publier une notification pour que DoctorProfileProvider puisse réagir
+      print('DEBUG: User was doctor: $wasDoctor');
       
       print('DEBUG: User logged out successfully');
       print('DEBUG: isAuthenticated = $_isAuthenticated');

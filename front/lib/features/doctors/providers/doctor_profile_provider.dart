@@ -19,21 +19,45 @@ class DoctorProfileProvider with ChangeNotifier {
 
   // Get current doctor profile
   Future<bool> getDoctorProfile() async {
+    print('DEBUG: DoctorProfileProvider - Loading doctor profile...');
     _setLoading(true);
     _clearError();
     
     try {
-      final response = await _apiService.get('/doctors/profile');
+      // Ajouter un timestamp pour éviter le cache
+      final response = await _apiService.get(
+        '/doctors/profile', 
+        queryParameters: {'_ts': DateTime.now().millisecondsSinceEpoch.toString()}
+      );
+      
+      print('DEBUG: DoctorProfileProvider - API response received, success=${response.isSuccess}');
       
       if (response.isSuccess && response.data != null) {
-        _doctorProfile = DoctorProfile.fromJson(response.data);
-        notifyListeners();
-        return true;
+        try {
+          print('DEBUG: DoctorProfileProvider - Parsing doctor profile data');
+          _doctorProfile = DoctorProfile.fromJson(response.data);
+          print('DEBUG: DoctorProfileProvider - Profile loaded successfully');
+          print('DEBUG: DoctorProfileProvider - User ID: ${_doctorProfile?.userId}');
+          print('DEBUG: DoctorProfileProvider - Specialization: ${_doctorProfile?.specialization}');
+          print('DEBUG: DoctorProfileProvider - License: ${_doctorProfile?.medicalLicenseNumber}');
+          print('DEBUG: DoctorProfileProvider - Clinic: ${_doctorProfile?.clinicName}');
+          print('DEBUG: DoctorProfileProvider - Years of Experience: ${_doctorProfile?.yearsOfExperience}');
+          
+          notifyListeners();
+          return true;
+        } catch (parseError) {
+          print('ERROR: DoctorProfileProvider - Failed to parse profile: $parseError');
+          print('DEBUG: DoctorProfileProvider - Raw data: ${response.data}');
+          _setError('Erreur lors du traitement des données du profil: $parseError');
+          return false;
+        }
       } else {
+        print('ERROR: DoctorProfileProvider - Failed to load profile: ${response.message}');
         _setError(response.message ?? 'Erreur lors de la récupération du profil');
         return false;
       }
     } catch (e) {
+      print('ERROR: DoctorProfileProvider - Exception: $e');
       _setError('Erreur de connexion: $e');
       return false;
     } finally {
@@ -279,9 +303,58 @@ class DoctorProfileProvider with ChangeNotifier {
 
   // Clear profile data
   void clearProfile() {
+    print('DEBUG: DoctorProfileProvider - Clearing doctor profile data');
     _doctorProfile = null;
     _clearError();
     notifyListeners();
+  }
+  
+  // Force reload profile - completely clears cache and gets fresh data
+  Future<bool> forceReloadProfile() async {
+    print('DEBUG: DoctorProfileProvider - Force reloading doctor profile');
+    // Clear current profile data
+    _doctorProfile = null;
+    // Don't notify listeners yet to avoid UI flickering
+    
+    // Get fresh profile data with timestamp to avoid any caching
+    try {
+      final response = await _apiService.get(
+        '/doctors/profile', 
+        queryParameters: {'_ts': DateTime.now().millisecondsSinceEpoch.toString(), 'nocache': 'true'}
+      );
+      
+      print('DEBUG: DoctorProfileProvider - Force reload response received, success=${response.isSuccess}');
+      
+      if (response.isSuccess && response.data != null) {
+        try {
+          print('DEBUG: DoctorProfileProvider - Raw profile data: ${response.data}');
+          _doctorProfile = DoctorProfile.fromJson(response.data);
+          print('DEBUG: DoctorProfileProvider - Profile force-loaded successfully');
+          print('DEBUG: DoctorProfileProvider - ID: ${_doctorProfile?.id}');
+          print('DEBUG: DoctorProfileProvider - User ID: ${_doctorProfile?.userId}');
+          print('DEBUG: DoctorProfileProvider - Specialization: ${_doctorProfile?.specialization}');
+          
+          notifyListeners();
+          return true;
+        } catch (parseError) {
+          print('ERROR: DoctorProfileProvider - Failed to parse forced profile data: $parseError');
+          print('DEBUG: DoctorProfileProvider - Parse error with data: ${response.data}');
+          _setError('Erreur lors du traitement des données du profil: $parseError');
+          notifyListeners();
+          return false;
+        }
+      } else {
+        print('ERROR: DoctorProfileProvider - Failed to force-load profile: ${response.message}');
+        _setError(response.message ?? 'Erreur lors de la récupération du profil');
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      print('ERROR: DoctorProfileProvider - Exception during force reload: $e');
+      _setError('Erreur de connexion lors du rechargement: $e');
+      notifyListeners();
+      return false;
+    }
   }
 
   // Refresh profile

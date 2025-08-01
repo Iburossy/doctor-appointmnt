@@ -4,16 +4,61 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../auth/models/user_model.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../providers/doctor_profile_provider.dart';
 
-class DoctorProfileTab extends StatelessWidget {
+class DoctorProfileTab extends StatefulWidget {
   const DoctorProfileTab({super.key});
 
   @override
+  State<DoctorProfileTab> createState() => _DoctorProfileTabState();
+}
+
+class _DoctorProfileTabState extends State<DoctorProfileTab> {
+  @override
+  void initState() {
+    super.initState();
+    // Reporter le chargement après la phase de construction
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadDoctorProfile(context);
+    });
+  }
+
+  Future<void> _loadDoctorProfile(BuildContext context) async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    if (authProvider.isAuthenticated && authProvider.isDoctor) {
+      final doctorProfileProvider = Provider.of<DoctorProfileProvider>(context, listen: false);
+      
+      // Afficher l'état actuel du profil avant rechargement
+      print('DEBUG: DoctorProfileTab - État actuel du profil: ${doctorProfileProvider.doctorProfile != null ? "Chargé" : "Non chargé"}');
+      if (doctorProfileProvider.doctorProfile != null) {
+        print('DEBUG: DoctorProfileTab - Spécialisation: ${doctorProfileProvider.doctorProfile!.specialization}');
+        print('DEBUG: DoctorProfileTab - ID du profil: ${doctorProfileProvider.doctorProfile!.id}');
+      }
+      
+      print('DEBUG: DoctorProfileTab - Forçage du rechargement du profil médecin...');
+      // Forcer un rechargement complet du profil médecin
+      final success = await doctorProfileProvider.forceReloadProfile();
+      
+      // Vérifier le résultat du rechargement
+      print('DEBUG: DoctorProfileTab - Résultat du rechargement: ${success ? "Succès" : "Échec"}');
+      print('DEBUG: DoctorProfileTab - Profil après rechargement: ${doctorProfileProvider.doctorProfile != null ? "Présent" : "Absent"}');
+    } else {
+      print('DEBUG: DoctorProfileTab - Impossible de charger le profil: ${authProvider.isAuthenticated ? "Authentifié" : "Non authentifié"}, ${authProvider.isDoctor ? "Médecin" : "Non médecin"}');
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    // Utiliser des Consumers imbriqués pour accéder aux deux providers
     return Consumer<AuthProvider>(
-      builder: (context, authProvider, child) {
+      builder: (context, authProvider, _) {
+        // Accéder au provider du profil médecin
+        final doctorProfileProvider = Provider.of<DoctorProfileProvider>(context);
+        
         final user = authProvider.user;
-        final doctorProfile = user?.doctorProfile;
+        
+        // Utiliser le profil du DoctorProfileProvider au lieu de user.doctorProfile
+        final doctorProfile = doctorProfileProvider.doctorProfile;
 
         if (user == null) {
           return Center(
@@ -48,13 +93,30 @@ class DoctorProfileTab extends StatelessWidget {
         
         // Création d'un profil vide si nécessaire
         final profile = doctorProfile ?? DoctorProfile(id: '', userId: user.id, specialization: []);
+        
+        // Si le profil est vide et que le provider est en chargement, afficher un indicateur de chargement
+        if (doctorProfile == null && doctorProfileProvider.isLoading) {
+          return const Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(height: 16),
+                Text('Chargement du profil médecin...'),
+              ],
+            ),
+          );
+        }
 
         return SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+          child: RefreshIndicator(
+            onRefresh: () => doctorProfileProvider.forceReloadProfile(),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24.0),
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                 // Profile Header
                 _buildProfileHeader(user, profile),
 
@@ -165,7 +227,7 @@ class DoctorProfileTab extends StatelessWidget {
               ],
             ),
           ),
-        );
+        ));
       },
     );
   }

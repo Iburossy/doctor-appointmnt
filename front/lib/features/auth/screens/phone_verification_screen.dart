@@ -73,8 +73,17 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
 
     final authProvider = context.read<AuthProvider>();
     
+    // Utiliser le numéro de téléphone du profil utilisateur au lieu de celui de l'URL
+    final userPhone = authProvider.user?.phone;
+    if (userPhone == null) {
+      _showErrorSnackBar('Erreur: numéro de téléphone non trouvé');
+      return;
+    }
+    
+    print('📱 Vérification avec le numéro: $userPhone (au lieu de ${widget.phoneNumber})');
+    
     final success = await authProvider.verifyPhone(
-      phone: widget.phoneNumber,
+      phone: userPhone,
       code: _pinController.text,
     );
 
@@ -96,7 +105,14 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
 
     final authProvider = context.read<AuthProvider>();
     
-    final success = await authProvider.resendVerificationCode(widget.phoneNumber);
+    // Utiliser le numéro de téléphone du profil utilisateur
+    final userPhone = authProvider.user?.phone;
+    if (userPhone == null) {
+      _showErrorSnackBar('Erreur: numéro de téléphone non trouvé');
+      return;
+    }
+    
+    final success = await authProvider.resendVerificationCode(userPhone);
 
     if (success && mounted) {
       _showSuccessSnackBar('Code renvoyé avec succès !');

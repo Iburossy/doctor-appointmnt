@@ -497,8 +497,14 @@ router.get('/me', authenticate, async (req, res) => {
 // @access  Public
 router.post('/verify-phone-registration', [
   body('phone')
-    .isMobilePhone('any')
-    .withMessage('Numéro de téléphone invalide'),
+    .custom((value) => {
+      // Utiliser la validation locale du service SMS
+      const formattedPhone = smsService.formatPhoneNumber(value);
+      if (!smsService.validateSenegalPhoneNumber(formattedPhone)) {
+        throw new Error('Numéro de téléphone sénégalais invalide');
+      }
+      return true;
+    }),
   body('code')
     .isLength({ min: 6, max: 6 })
     .isNumeric()
@@ -516,8 +522,19 @@ router.post('/verify-phone-registration', [
     const { phone, code } = req.body;
     const formattedPhone = smsService.formatPhoneNumber(phone);
 
+    // Logs de débogage
+    console.log('📱 [VERIFY-PHONE] Numéro reçu:', phone);
+    console.log('📱 [VERIFY-PHONE] Numéro formaté:', formattedPhone);
+    console.log('📱 [VERIFY-PHONE] Code reçu:', code);
+    console.log('📱 [VERIFY-PHONE] Validation réussie:', smsService.validateSenegalPhoneNumber(formattedPhone));
+
     // Trouver l'utilisateur par numéro de téléphone
     const user = await User.findOne({ phone: formattedPhone });
+    console.log('📱 [VERIFY-PHONE] Utilisateur trouvé:', user ? 'Oui' : 'Non');
+    if (user) {
+      console.log('📱 [VERIFY-PHONE] Numéro en base:', user.phone);
+      console.log('📱 [VERIFY-PHONE] Déjà vérifié:', user.isPhoneVerified);
+    }
     
     if (!user) {
       return res.status(404).json({

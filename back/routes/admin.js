@@ -1,10 +1,16 @@
 const express = require('express');
-const { body, validationResult, query } = require('express-validator');
+const { body, param, validationResult, query } = require('express-validator');
 const User = require('../models/User');
 const Doctor = require('../models/Doctor');
+const Patient = require('../models/Patient');
 const DoctorRequest = require('../models/doctorRequest');
 const Appointment = require('../models/Appointment');
-const { authenticate, authorize } = require('../middleware/auth');
+const MedicalRecord = require('../models/MedicalRecord');
+const Notification = require('../models/Notification');
+const RefreshToken = require('../models/RefreshToken');
+const PasswordResetToken = require('../models/PasswordResetToken');
+const AuditLog = require('../models/AuditLog');
+const { authenticate: auth, authorize: adminCheck } = require('../middleware/auth');
 const { sendPushNotification } = require('../services/pushNotification.service');
 
 const router = express.Router();
@@ -12,7 +18,7 @@ const router = express.Router();
 // @route   GET /api/admin/dashboard
 // @desc    Obtenir les statistiques du dashboard admin
 // @access  Private (Admin)
-router.get('/dashboard', authenticate, authorize('admin'), async (req, res) => {
+router.get('/dashboard', auth, adminCheck('admin'), async (req, res) => {
   try {
     // Statistiques générales
     const totalUsers = await User.countDocuments({ isActive: true });
@@ -140,7 +146,7 @@ router.get('/dashboard', authenticate, authorize('admin'), async (req, res) => {
 // @route   GET /api/admin/doctors/pending
 // @desc    Obtenir la liste des médecins en attente de validation
 // @access  Private (Admin)
-router.get('/doctors/pending', authenticate, authorize('admin'), [
+router.get('/doctors/pending', auth, adminCheck('admin'), [
   query('page')
     .optional()
     .isInt({ min: 1 })
@@ -198,7 +204,7 @@ router.get('/doctors/pending', authenticate, authorize('admin'), [
 // @route   GET /api/admin/doctor-requests
 // @desc    Obtenir la liste de toutes les demandes d'upgrade médecin avec filtres
 // @access  Private (Admin)
-router.get('/doctor-requests', authenticate, authorize('admin'), [
+router.get('/doctor-requests', auth, adminCheck('admin'), [
   query('page')
     .optional()
     .isInt({ min: 1 })
@@ -300,7 +306,7 @@ router.get('/doctor-requests', authenticate, authorize('admin'), [
 // @route   GET /api/admin/doctor-requests/:id
 // @desc    Obtenir les détails d'une demande d'upgrade médecin spécifique
 // @access  Private (Admin)
-router.get('/doctor-requests/:id', authenticate, authorize('admin'), async (req, res) => {
+router.get('/doctor-requests/:id', auth, adminCheck('admin'), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -352,7 +358,7 @@ router.get('/doctor-requests/:id', authenticate, authorize('admin'), async (req,
 // @route   GET /api/admin/users
 // @desc    Obtenir la liste des utilisateurs
 // @access  Private (Admin)
-router.get('/users', authenticate, authorize('admin'), [
+router.get('/users', auth, adminCheck('admin'), [
   query('role')
     .optional()
     .isIn(['patient', 'doctor', 'admin'])
@@ -442,7 +448,7 @@ router.get('/users', authenticate, authorize('admin'), [
 // @route   PUT /api/admin/users/:id/status
 // @desc    Activer/désactiver un utilisateur
 // @access  Private (Admin)
-router.put('/users/:id/status', authenticate, authorize('admin'), [
+router.put('/users/:id/status', auth, adminCheck('admin'), [
   body('isActive')
     .isBoolean()
     .withMessage('Statut actif requis (true/false)'),
@@ -521,7 +527,7 @@ router.put('/users/:id/status', authenticate, authorize('admin'), [
 // @route   GET /api/admin/appointments
 // @desc    Obtenir la liste des rendez-vous (admin)
 // @access  Private (Admin)
-router.get('/appointments', authenticate, authorize('admin'), [
+router.get('/appointments', auth, adminCheck('admin'), [
   query('status')
     .optional()
     .isIn(['pending', 'confirmed', 'completed', 'cancelled', 'no_show'])
@@ -617,7 +623,7 @@ router.get('/appointments', authenticate, authorize('admin'), [
 // @route   GET /api/admin/reports/monthly
 // @desc    Rapport mensuel
 // @access  Private (Admin)
-router.get('/reports/monthly', authenticate, authorize('admin'), [
+router.get('/reports/monthly', auth, adminCheck('admin'), [
   query('year')
     .isInt({ min: 2020, max: 2030 })
     .withMessage('Année invalide'),
@@ -726,7 +732,7 @@ router.get('/reports/monthly', authenticate, authorize('admin'), [
 // @route   GET /api/admin/doctor-requests
 // @desc    Obtenir toutes les demandes d'upgrade médecin
 // @access  Private (Admin)
-router.get('/doctor-requests', authenticate, authorize('admin'), [
+router.get('/doctor-requests', auth, adminCheck('admin'), [
   query('status')
     .optional()
     .isIn(['pending', 'approved', 'rejected'])
@@ -833,7 +839,7 @@ router.get('/doctor-requests', authenticate, authorize('admin'), [
 // @route   GET /api/admin/doctor-requests/:id
 // @desc    Obtenir les détails d'une demande spécifique (accepte l'ID médecin ou l'ID utilisateur)
 // @access  Private (Admin)
-router.get('/doctor-requests/:id', authenticate, authorize('admin'), async (req, res) => {
+router.get('/doctor-requests/:id', auth, adminCheck('admin'), async (req, res) => {
   try {
     const { id } = req.params;
     
@@ -947,7 +953,7 @@ router.get('/doctor-requests/:id', authenticate, authorize('admin'), async (req,
 // @route   POST /api/admin/doctor-requests/:id/approve
 // @desc    Approuver une demande d'upgrade médecin
 // @access  Private (Admin)
-router.post('/doctor-requests/:id/approve', authenticate, authorize('admin'), [
+router.post('/doctor-requests/:id/approve', auth, adminCheck('admin'), [
   body('notes')
     .optional()
     .isLength({ max: 500 })
@@ -998,6 +1004,26 @@ router.post('/doctor-requests/:id/approve', authenticate, authorize('admin'), [
       };
     });
     
+    // Transformer les coordonnées du format latitude/longitude au format GeoJSON Point
+    // Créer une copie profonde de l'objet clinic pour éviter de modifier l'original
+    const clinic = JSON.parse(JSON.stringify(doctorRequest.clinic));
+    
+    // Vérifier si les coordonnées existent
+    if (clinic && clinic.address && clinic.address.coordinates) {
+      // Transformer les coordonnées au format GeoJSON
+      clinic.address.location = {
+        type: 'Point',
+        coordinates: [
+          clinic.address.coordinates.longitude,  // Longitude d'abord
+          clinic.address.coordinates.latitude    // Puis latitude
+        ]
+      };
+      // Supprimer l'ancien champ coordinates
+      delete clinic.address.coordinates;
+    } else {
+      console.warn('⚠️ Aucune coordonnée trouvée dans la demande de médecin, la validation pourrait échouer');
+    }
+
     const newDoctor = new Doctor({
       userId: doctorRequest.userId._id,
       specialties: doctorRequest.specialties,
@@ -1006,7 +1032,7 @@ router.post('/doctor-requests/:id/approve', authenticate, authorize('admin'), [
       education: educationMapped, // Utiliser les données mappées
       workingHours: doctorRequest.workingHours,
       consultationFee: doctorRequest.consultationFee,
-      clinic: doctorRequest.clinic,
+      clinic: clinic, // Utiliser la version transformée avec GeoJSON
       languages: doctorRequest.languages,
       bio: doctorRequest.bio,
       documents: doctorRequest.documents,
@@ -1071,7 +1097,7 @@ router.post('/doctor-requests/:id/approve', authenticate, authorize('admin'), [
 // @route   POST /api/admin/doctor-requests/:id/reject
 // @desc    Rejeter une demande d'upgrade médecin
 // @access  Private (Admin)
-router.post('/doctor-requests/:id/reject', authenticate, authorize('admin'), [
+router.post('/doctor-requests/:id/reject', auth, adminCheck('admin'), [
   body('reason')
     .notEmpty()
     .isLength({ min: 10, max: 500 })
@@ -1155,7 +1181,7 @@ router.post('/doctor-requests/:id/reject', authenticate, authorize('admin'), [
 // @route   GET /api/admin/doctor-requests/stats
 // @desc    Obtenir les statistiques des demandes d'upgrade
 // @access  Private (Admin)
-router.get('/doctor-requests/stats', authenticate, authorize('admin'), async (req, res) => {
+router.get('/doctor-requests/stats', auth, adminCheck('admin'), async (req, res) => {
   try {
     // Statistiques générales
     const totalRequests = await DoctorRequest.countDocuments();
@@ -1271,7 +1297,7 @@ router.get('/doctor-requests/stats', authenticate, authorize('admin'), async (re
 // @route   GET /api/admin/users
 // @desc    Obtenir la liste des utilisateurs avec filtres
 // @access  Private (Admin)
-router.get('/users', authenticate, authorize('admin'), [
+router.get('/users', auth, adminCheck('admin'), [
   query('role')
     .optional()
     .isIn(['patient', 'doctor', 'admin'])
@@ -1392,7 +1418,7 @@ router.get('/users', authenticate, authorize('admin'), [
 // @route   GET /api/admin/users/:id
 // @desc    Obtenir les détails d'un utilisateur spécifique
 // @access  Private (Admin)
-router.get('/users/:id', authenticate, authorize('admin'), async (req, res) => {
+router.get('/users/:id', auth, adminCheck('admin'), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -1463,7 +1489,7 @@ router.get('/users/:id', authenticate, authorize('admin'), async (req, res) => {
 // @route   PUT /api/admin/users/:id/status
 // @desc    Activer/Désactiver un utilisateur
 // @access  Private (Admin)
-router.put('/users/:id/status', authenticate, authorize('admin'), [
+router.put('/users/:id/status', auth, adminCheck('admin'), [
   body('isActive')
     .isBoolean()
     .withMessage('Le statut doit être un booléen'),
@@ -1541,7 +1567,7 @@ router.put('/users/:id/status', authenticate, authorize('admin'), [
 // @route   DELETE /api/admin/users/:id
 // @desc    Supprimer un utilisateur (soft delete)
 // @access  Private (Admin)
-router.delete('/users/:id', authenticate, authorize('admin'), [
+router.delete('/users/:id', auth, adminCheck('admin'), [
   body('reason')
     .notEmpty()
     .isLength({ min: 10, max: 200 })
@@ -1616,13 +1642,15 @@ router.delete('/users/:id', authenticate, authorize('admin'), [
     );
 
     // Log de l'action
-    console.log(`🗑️ Admin ${req.user.firstName} ${req.user.lastName} a supprimé l'utilisateur ${user.firstName} ${user.lastName} - Raison: ${reason}`);
+    console.log(`🔒 Admin ${req.user.firstName} ${req.user.lastName} a désactivé l'utilisateur ${user.firstName} ${user.lastName} - Raison: ${reason}`);
 
     res.json({
       success: true,
-      message: 'Utilisateur supprimé avec succès',
+      message: 'Utilisateur désactivé avec succès',
       data: {
         id: user._id,
+        isActive: false,
+        isDeleted: true,
         deletedAt: user.deletedAt
       }
     });
@@ -1631,6 +1659,196 @@ router.delete('/users/:id', authenticate, authorize('admin'), [
     console.error('Erreur suppression utilisateur:', error);
     res.status(500).json({
       error: 'Erreur lors de la suppression'
+    });
+  }
+});
+
+// Supprimer définitivement un utilisateur (hard delete)
+router.delete('/users/:id/permanent', auth, adminCheck('admin'), [
+  param('id').isMongoId().withMessage('ID utilisateur invalide'),
+  body('confirmation').isString().equals('SUPPRIMER DÉFINITIVEMENT')
+    .withMessage('Texte de confirmation incorrect'),
+  body('password').isString().notEmpty()
+    .withMessage('Mot de passe administrateur requis'),
+  body('reason').isString().notEmpty()
+    .withMessage('Raison de la suppression requise')
+], async (req, res) => {
+  try {
+    // Vérifier les erreurs de validation
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ 
+        success: false,
+        error: errors.array()[0].msg 
+      });
+    }
+
+    const { id } = req.params;
+    const { confirmation, password, reason } = req.body;
+    
+    // Vérification supplémentaire du mot de passe administrateur
+    const admin = await User.findById(req.user.id);
+    const isPasswordValid = await admin.comparePassword(password);
+    
+    if (!isPasswordValid) {
+      return res.status(403).json({
+        success: false,
+        error: 'Mot de passe administrateur incorrect'
+      });
+    }
+
+    // Vérifier que l'utilisateur existe
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: 'Utilisateur non trouvé'
+      });
+    }
+
+    // Empêcher la suppression d'administrateurs par des administrateurs
+    if (user.role === 'admin' && req.user.role !== 'superadmin') {
+      return res.status(403).json({
+        success: false,
+        error: 'Seul un super-administrateur peut supprimer un administrateur'
+      });
+    }
+
+    // Supprimer définitivement les données personnelles tout en conservant les données médicales anonymisées
+    if (user.role === 'patient') {
+      // Récupérer l'ID du patient
+      const patient = await Patient.findOne({ userId: id });
+      
+      if (patient) {
+        // Anonymiser le patient
+        await Patient.updateOne(
+          { userId: id },
+          {
+            firstName: 'Anonymisé',
+            lastName: 'Anonymisé',
+            email: `anonyme-${Date.now()}@supprime.local`,
+            phoneNumber: null,
+            address: null,
+            dateOfBirth: null,
+            gender: 'non-spécifié',
+            userId: null,
+            isAnonymized: true,
+            anonymizedAt: new Date(),
+            anonymizedBy: req.user.id
+          }
+        );
+        
+        // Anonymiser les rendez-vous passés mais les conserver pour l'historique médical
+        await Appointment.updateMany(
+          {
+            patient: patient._id,
+            appointmentDate: { $lt: new Date() },
+            status: 'completed'
+          },
+          {
+            patientName: 'Patient anonymisé',
+            patientContact: null,
+            patientId: null,
+            isAnonymized: true
+          }
+        );
+        
+        // Supprimer les rendez-vous futurs et annulés
+        await Appointment.deleteMany({
+          patient: patient._id,
+          $or: [
+            { appointmentDate: { $gte: new Date() } },
+            { status: { $in: ['cancelled', 'pending', 'confirmed'] } }
+          ]
+        });
+        
+        // Anonymiser les dossiers médicaux mais les conserver
+        await MedicalRecord.updateMany(
+          { patientId: patient._id },
+          {
+            patientName: 'Patient anonymisé',
+            isAnonymized: true,
+            anonymizedAt: new Date()
+          }
+        );
+      }
+    } else if (user.role === 'doctor') {
+      // Récupérer l'ID du médecin
+      const doctor = await Doctor.findOne({ userId: id });
+      
+      if (doctor) {
+        // Anonymiser les rendez-vous passés mais les conserver
+        await Appointment.updateMany(
+          {
+            doctor: doctor._id,
+            appointmentDate: { $lt: new Date() },
+            status: 'completed'
+          },
+          {
+            doctorName: 'Médecin anonymisé',
+            doctorId: null,
+            isAnonymized: true
+          }
+        );
+        
+        // Supprimer les rendez-vous futurs
+        await Appointment.deleteMany({
+          doctor: doctor._id,
+          $or: [
+            { appointmentDate: { $gte: new Date() } },
+            { status: { $in: ['cancelled', 'pending', 'confirmed'] } }
+          ]
+        });
+        
+        // Supprimer définitivement le profil médecin
+        await Doctor.deleteOne({ userId: id });
+      }
+    }
+    
+    // Supprimer les notifications
+    await Notification.deleteMany({ userId: id });
+    
+    // Supprimer les tokens de rafraîchissement
+    await RefreshToken.deleteMany({ userId: id });
+    
+    // Supprimer les tokens de réinitialisation de mot de passe
+    await PasswordResetToken.deleteMany({ userId: id });
+    
+    // Enregistrer les logs de suppression définitive pour l'audit
+    const deletionLog = new AuditLog({
+      action: 'PERMANENT_DELETE_USER',
+      entityType: 'User',
+      entityId: id,
+      description: `Suppression définitive de l'utilisateur ${user.firstName} ${user.lastName} (${user.email}) par l'administrateur ${req.user.firstName} ${req.user.lastName}`,
+      metadata: {
+        reason,
+        userRole: user.role,
+        userEmail: user.email
+      },
+      performedBy: req.user.id
+    });
+    await deletionLog.save();
+    
+    // Log de l'action dans la console
+    console.log(`⚠️ SUPPRESSION PERMANENTE: Admin ${req.user.firstName} ${req.user.lastName} a supprimé définitivement l'utilisateur ${user.firstName} ${user.lastName} - Raison: ${reason}`);
+    
+    // Supprimer définitivement l'utilisateur
+    await User.deleteOne({ _id: id });
+    
+    res.json({
+      success: true,
+      message: 'Utilisateur supprimé définitivement avec succès',
+      data: {
+        id: id,
+        deletedAt: new Date()
+      }
+    });
+
+  } catch (error) {
+    console.error('Erreur suppression permanente utilisateur:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Erreur lors de la suppression définitive'
     });
   }
 });

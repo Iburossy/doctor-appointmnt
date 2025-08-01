@@ -54,11 +54,11 @@ class AppRouter {
     ),
     
     GoRoute(
-      path: '/auth/verify-phone',
-      name: 'verify-phone',
+      path: '/auth/verify-phone/:phone',
+      name: 'phone-verification',
       builder: (context, state) {
-        final phone = state.extra as String?;
-        return PhoneVerificationScreen(phoneNumber: phone ?? '');
+        final phone = state.pathParameters['phone'] ?? '';
+        return PhoneVerificationScreen(phoneNumber: phone);
       },
     ),
     
@@ -197,11 +197,24 @@ class AppRouter {
         // 2. Si l'utilisateur est connecté
         if (isLoggedIn) {
           final isDoctor = user?.isDoctor == true;
+          final isPhoneVerified = user?.isPhoneVerified == true;
           final correctHome = isDoctor ? '/doctor-dashboard' : '/home';
 
-          // Si l'utilisateur est sur une page d'authentification, le rediriger
+          // PRIORITÉ 1: Si l'utilisateur n'est pas vérifié, le rediriger vers la vérification téléphonique
+          if (!isPhoneVerified) {
+            final isPhoneVerification = location.startsWith('/auth/verify-phone');
+            if (!isPhoneVerification) {
+              print('🔄 REDIRECT: Authenticated but not verified user → phone verification');
+              return '/auth/verify-phone/${user?.phone ?? ''}';
+            }
+            // Si déjà sur la page de vérification, rester
+            print('🔄 REDIRECT: Staying on phone verification page');
+            return null;
+          }
+
+          // PRIORITÉ 2: Si l'utilisateur est vérifié et sur une page d'authentification, le rediriger
           if (isGoingToAuth) {
-            print('🔄 REDIRECT: Authenticated user on auth page → $correctHome');
+            print('🔄 REDIRECT: Verified user on auth page → $correctHome');
             return correctHome;
           }
 

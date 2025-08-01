@@ -97,6 +97,15 @@ class _DoctorsSearchScreenState extends State<DoctorsSearchScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[50],
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => context.goNamed('home'),
+        ),
+      ),
       body: Consumer2<DoctorsProvider, LocationProvider>(
         builder: (context, doctorsProvider, locationProvider, child) {
           return LoadingOverlay(

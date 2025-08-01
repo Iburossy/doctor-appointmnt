@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../doctors/screens/doctors_search_screen.dart';
 import '../../profile/screens/profile_screen.dart';
+import '../../location/providers/location_provider.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -15,6 +16,19 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    
+    // Initialisation différée de la géolocalisation pour éviter les erreurs
+    // de setState pendant la construction
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      print('🏠 HOME SCREEN: Démarrage de la détection automatique GPS');
+      final locationProvider = Provider.of<LocationProvider>(context, listen: false);
+      locationProvider.initialize(autoDetect: true);
+    });
+  }
 
   final List<Widget> _pages = [
     const _HomeTab(),

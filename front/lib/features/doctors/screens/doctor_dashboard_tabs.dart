@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../providers/doctor_stats_provider.dart';
 
 // Classe pour l'onglet d'accueil
 class DoctorHomeTab extends StatelessWidget {
@@ -121,62 +122,121 @@ class DoctorHomeTab extends StatelessWidget {
   }
 
   Widget _buildQuickStats() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Statistiques rapides',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: AppTheme.textPrimaryColor,
-          ),
-        ),
-        const SizedBox(height: 16),
-        Row(
+    // Utiliser Consumer pour accéder au provider et recharger automatiquement
+    return Consumer<DoctorStatsProvider>(
+      builder: (context, statsProvider, child) {
+        // Charger les stats si ce n'est pas déjà fait
+        if (statsProvider.stats == null && !statsProvider.isLoading) {
+          // Appel asynchrone pour charger les données
+          Future.microtask(() => statsProvider.loadDoctorStats());
+        }
+        
+        // Si chargement en cours, afficher un indicateur
+        if (statsProvider.isLoading) {
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.all(24.0),
+              child: CircularProgressIndicator(),
+            ),
+          );
+        }
+        
+        // Si erreur, afficher un message
+        if (statsProvider.error != null) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Statistiques rapides',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.textPrimaryColor,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Card(
+                color: Colors.red.shade50,
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    children: [
+                      const Icon(Icons.error_outline, color: Colors.red),
+                      const SizedBox(height: 8),
+                      Text('Impossible de charger les statistiques',
+                          style: TextStyle(color: Colors.red.shade800)),
+                      TextButton(
+                        onPressed: () => statsProvider.loadDoctorStats(),
+                        child: const Text('Réessayer'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          );
+        }
+        
+        // Données disponibles, les afficher
+        final stats = statsProvider.stats;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
-              child: _buildStatCard(
-                'Patients aujourd\'hui',
-                '12',
-                Icons.people,
-                AppTheme.primaryColor,
+            const Text(
+              'Statistiques rapides',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: AppTheme.textPrimaryColor,
               ),
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: _buildStatCard(
-                'Rendez-vous',
-                '8',
-                Icons.calendar_today,
-                AppTheme.secondaryColor,
-              ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildStatCard(
+                    'Patients aujourd\'hui',
+                    '${stats?.patientsCount ?? 0}',
+                    Icons.people,
+                    AppTheme.primaryColor,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _buildStatCard(
+                    'Rendez-vous',
+                    '${stats?.todaysAppointments ?? 0}',
+                    Icons.calendar_today,
+                    AppTheme.secondaryColor,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildStatCard(
+                    'Revenus du mois',
+                    stats?.monthlyRevenue ?? '0€',
+                    Icons.euro,
+                    Colors.green,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _buildStatCard(
+                    'Satisfaction',
+                    stats?.ratingText ?? '0.0/5',
+                    Icons.star,
+                    Colors.orange,
+                  ),
+                ),
+              ],
             ),
           ],
-        ),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: _buildStatCard(
-                'Revenus du mois',
-                '2,450€',
-                Icons.euro,
-                Colors.green,
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: _buildStatCard(
-                'Satisfaction',
-                '4.8/5',
-                Icons.star,
-                Colors.orange,
-              ),
-            ),
-          ],
-        ),
-      ],
+        );
+      },
     );
   }
 

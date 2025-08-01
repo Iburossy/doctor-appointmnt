@@ -1,4 +1,12 @@
 
+Quand j'installe l'application pour la premiere fois et que je me connecte comme doctor, mon profil se charge au complet sans probleme .
+Mais quand je me deconnecte (logout)  de mon compte de doctor et ensuite je me reconnecte a nouveau, de toutes less informations de mon profil, ya que mon nom par exemple "Dr. touna" qui se charges malgré qu'on me redirige bien vers le dashboard des medecins.
+pour ressoudre le probleme, je suis obligé de désinstallé puis installé  q nouvequ l'application.
+
+d'apres tes analyses et tes connaissances du projet, d'ou peut provenir ce probleme ?
+
+
+
 Maintenant, je comprends mieux la situation. J'ai temporairement modifié le backend pour contourner l'erreur d'autorisation afin que vous puissiez tester la fonctionnalité.
 
 Problème identifié

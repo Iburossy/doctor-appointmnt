@@ -93,13 +93,11 @@ const doctorSchema = new mongoose.Schema({
       },
       region: String,
       country: { type: String, default: 'Sénégal' },
-      coordinates: {
-        latitude: {
-          type: Number,
-          required: [true, 'Les coordonnées sont requises pour la géolocalisation']
-        },
-        longitude: {
-          type: Number,
+      location: {
+        type: { type: String, enum: ['Point'], default: 'Point' },
+        coordinates: {
+          // Format [longitude, latitude] - standard GeoJSON
+          type: [Number],
           required: [true, 'Les coordonnées sont requises pour la géolocalisation']
         }
       }
@@ -270,7 +268,7 @@ const doctorSchema = new mongoose.Schema({
 });
 
 // Index pour la recherche géographique
-doctorSchema.index({ "clinic.address.coordinates": "2dsphere" });
+doctorSchema.index({ "clinic.address.location": "2dsphere" });
 doctorSchema.index({ specialties: 1 });
 doctorSchema.index({ verificationStatus: 1 });
 doctorSchema.index({ isActive: 1, isAvailable: 1 });

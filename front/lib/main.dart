@@ -16,6 +16,7 @@ import 'features/auth/providers/auth_provider.dart';
 import 'features/location/providers/location_provider.dart';
 import 'features/doctors/providers/doctors_provider.dart';
 import 'features/doctors/providers/doctor_profile_provider.dart';
+import 'features/doctors/providers/doctor_stats_provider.dart';
 import 'features/appointments/providers/appointments_provider.dart';
 
 void main() async {
@@ -94,14 +95,22 @@ class DoctorsApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => LocationProvider()),
         ChangeNotifierProvider(create: (_) => DoctorsProvider()),
         ChangeNotifierProvider(create: (_) => DoctorProfileProvider()),
+        ChangeNotifierProvider(create: (_) => DoctorStatsProvider()),
         ChangeNotifierProvider(create: (_) => AppointmentsProvider()),
       ],
-      child: Consumer<AuthProvider>(
-        builder: (context, authProvider, child) {
+      child: Builder(
+        builder: (context) {
+          final authProvider = Provider.of<AuthProvider>(context);
+          final locationProvider = Provider.of<LocationProvider>(context, listen: false);
           // Ne pas configurer la vérification périodique au moment de la construction
           // Cela sera fait via un callback post-frame
           WidgetsBinding.instance.addPostFrameCallback((_) {
+            // Initialisation de la vérification périodique du rôle utilisateur
             _setupPeriodicRoleCheck(authProvider);
+            
+            // Initialisation de la détection de localisation
+            print('🚨 APP STARTUP: Activation de la détection GPS automatique');
+            locationProvider.initialize(autoDetect: true);
           });
           
           return MaterialApp.router(

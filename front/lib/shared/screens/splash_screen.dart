@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../features/auth/providers/auth_provider.dart';
+import '../../features/location/providers/location_provider.dart';
 import '../../core/theme/app_theme.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -49,6 +50,11 @@ class _SplashScreenState extends State<SplashScreen>
 
   Future<void> _initializeApp() async {
     final authProvider = context.read<AuthProvider>();
+    final locationProvider = context.read<LocationProvider>();
+
+    // Initialiser la détection de localisation immédiatement pour tous les utilisateurs
+    print('DEBUG: Splash - Starting automatic location detection');
+    locationProvider.initialize(autoDetect: true);
 
     // Si l'utilisateur est déjà authentifié et initialisé, pas besoin de réinitialiser
     // GoRouter va s'occuper de la redirection automatiquement

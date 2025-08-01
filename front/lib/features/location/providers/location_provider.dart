@@ -20,8 +20,8 @@ class LocationProvider with ChangeNotifier {
   bool get hasLocation => _currentPosition != null;
   bool get permissionRequested => _permissionRequested;
 
-  // Initialize location
-  Future<void> initialize() async {
+  // Initialize location with auto-detection
+  Future<void> initialize({bool autoDetect = true}) async {
     _setLoading(true);
     
     try {
@@ -35,8 +35,15 @@ class LocationProvider with ChangeNotifier {
         notifyListeners();
       }
       
-      // Try to get current location if permission was granted before
-      if (_permissionRequested) {
+      // Always try to get current location when auto-detect is enabled
+      if (autoDetect) {
+        await getCurrentLocation(savePosition: true);
+        
+        // Schedule periodic location updates
+        _setupPeriodicLocationUpdates();
+      }
+      // Sinon, seulement si la permission avait déjà été accordée
+      else if (_permissionRequested) {
         await getCurrentLocation();
       }
     } catch (e) {
@@ -45,21 +52,53 @@ class LocationProvider with ChangeNotifier {
       _setLoading(false);
     }
   }
+  
+  // Setup periodic location updates
+  void _setupPeriodicLocationUpdates() {
+    // Mise à jour toutes les 10 minutes
+    Future.delayed(const Duration(minutes: 10), () {
+      if (this.hasListeners) { // Only update if provider still has listeners
+        print('🌍 GEOLOCATION: Mise à jour périodique de la position');
+        getCurrentLocation(savePosition: true);
+        _setupPeriodicLocationUpdates(); // Reschedule
+      } else {
+        print('🌍 GEOLOCATION: Mise à jour périodique annulée - plus d\'écouteurs');
+      }
+    });
+  }
 
   // Get current location
-  Future<bool> getCurrentLocation() async {
+  Future<bool> getCurrentLocation({bool savePosition = false}) async {
     _setLoading(true);
     _clearError();
     
     try {
+      // Vérification des services de localisation
+      final servicesEnabled = await _locationService.isLocationServiceEnabled();
+      
+      if (!servicesEnabled) {
+        _setError('Services de localisation désactivés');
+        _setLoading(false);
+        return false;
+      }
+      
+      // Vérification des permissions
+      await _locationService.checkPermission();
+      
+      // Demande de position
       final position = await _locationService.getCurrentPosition();
       
       if (position != null) {
         _currentPosition = position;
         _permissionRequested = true;
+        print('🌐 GEOLOCATION: Position GPS obtenue avec succès!');
         
-        // Get address from coordinates
+        // Obtenir l'adresse à partir des coordonnées
         await _getAddressFromPosition(position);
+        
+        if (savePosition) {
+          print('💾 LOCATION SERVICE: Position sauvegardée dans le stockage local');
+        }
         
         notifyListeners();
         return true;
@@ -68,15 +107,7 @@ class LocationProvider with ChangeNotifier {
         return false;
       }
     } catch (e) {
-      if (e is loc_service.LocationServiceDisabledException) {
-        _setError('Les services de localisation sont désactivés');
-      } else if (e is loc_service.LocationPermissionDeniedException) {
-        _setError('Permission de localisation refusée');
-      } else if (e is loc_service.LocationPermissionDeniedForeverException) {
-        _setError('Permission de localisation refusée définitivement');
-      } else {
-        _setError('Erreur de localisation: $e');
-      }
+      _setError('Erreur lors de la récupération de la position: $e');
       return false;
     } finally {
       _setLoading(false);

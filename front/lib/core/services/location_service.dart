@@ -11,7 +11,7 @@ class LocationService {
     return await Geolocator.isLocationServiceEnabled();
   }
   
-  // Check location permission status
+  // Check permission
   Future<LocationPermission> checkPermission() async {
     return await Geolocator.checkPermission();
   }
@@ -19,6 +19,8 @@ class LocationService {
   // Request location permission
   Future<LocationPermission> requestPermission() async {
     await StorageService.setBool(_locationPermissionKey, true);
+    // Ajouter un court délai pour éviter les demandes simultanées
+    await Future.delayed(const Duration(milliseconds: 500));
     return await Geolocator.requestPermission();
   }
   
@@ -31,7 +33,9 @@ class LocationService {
   Future<Position?> getCurrentPosition() async {
     try {
       // Check if location services are enabled
-      if (!await isLocationServiceEnabled()) {
+      final servicesEnabled = await isLocationServiceEnabled();
+      
+      if (!servicesEnabled) {
         throw LocationServiceDisabledException();
       }
       
@@ -40,6 +44,7 @@ class LocationService {
       
       if (permission == LocationPermission.denied) {
         permission = await requestPermission();
+        
         if (permission == LocationPermission.denied) {
           throw LocationPermissionDeniedException();
         }
@@ -57,10 +62,10 @@ class LocationService {
       
       // Save to storage
       await _saveCurrentLocation(position);
+      print('💾 LOCATION SERVICE: Position sauvegardée dans le stockage local');
       
       return position;
     } catch (e) {
-      print('Error getting current position: $e');
       return null;
     }
   }
@@ -70,7 +75,6 @@ class LocationService {
     try {
       return await Geolocator.getLastKnownPosition();
     } catch (e) {
-      print('Error getting last known position: $e');
       return null;
     }
   }
