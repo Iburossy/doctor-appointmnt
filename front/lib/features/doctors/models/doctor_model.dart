@@ -183,7 +183,7 @@ class DoctorModel {
       final email = json['email'] ?? doctorInfo['email'];
       logField('email', email);
 
-      final avatar = json['avatar'] ?? doctorInfo['avatar'];
+      final avatar = json['avatar'] ?? doctorInfo['avatar'] ?? doctorInfo['profilePicture'] ?? userInfo['profilePicture'];
       logField('avatar', avatar);
 
       final specialtiesData = json['specialties'] ?? json['specialization'];

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/config/app_config.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../location/providers/location_provider.dart';
@@ -427,10 +428,10 @@ class _DoctorsSearchScreenState extends State<DoctorsSearchScreen> {
                 CircleAvatar(
                   radius: 30,
                   backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
-                  backgroundImage: doctor.avatar != null
-                      ? NetworkImage(doctor.avatar!)
+                  backgroundImage: doctor.avatar != null && _getFullAvatarUrl(doctor.avatar).isNotEmpty
+                      ? NetworkImage(_getFullAvatarUrl(doctor.avatar))
                       : null,
-                  child: doctor.avatar == null
+                  child: doctor.avatar == null || _getFullAvatarUrl(doctor.avatar).isEmpty
                       ? Icon(
                           Icons.person,
                           color: AppTheme.primaryColor,
@@ -708,5 +709,21 @@ class _DoctorsSearchScreenState extends State<DoctorsSearchScreen> {
         ],
       ),
     );
+  }
+
+  String _getFullAvatarUrl(String? avatarPath) {
+    if (avatarPath == null || avatarPath.isEmpty) return '';
+    if (avatarPath.startsWith('http')) return avatarPath;
+    
+    String fullUrl;
+    // Si le chemin commence par /uploads/, construire l'URL complète
+    if (avatarPath.startsWith('/uploads/')) {
+      fullUrl = '${AppConfig.staticUrl}$avatarPath';
+    } else {
+      // Sinon, ajouter /uploads/ si nécessaire
+      fullUrl = '${AppConfig.staticUrl}/uploads/$avatarPath';
+    }
+    
+    return fullUrl;
   }
 }
