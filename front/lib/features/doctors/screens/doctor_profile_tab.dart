@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/config/app_config.dart';
 import '../../auth/models/user_model.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../providers/doctor_profile_provider.dart';
@@ -220,6 +221,8 @@ class _DoctorProfileTabState extends State<DoctorProfileTab> {
   }
 
   Widget _buildProfileHeader(UserModel user, DoctorProfile profile) {
+    
+    
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -232,8 +235,10 @@ class _DoctorProfileTabState extends State<DoctorProfileTab> {
             radius: 40,
             backgroundColor: AppTheme.primaryColor,
             backgroundImage:
-                user.profilePicture != null ? NetworkImage(user.profilePicture!) : null,
-            child: user.profilePicture == null
+                user.profilePicture != null && user.profilePicture!.isNotEmpty
+                    ? NetworkImage(_getFullAvatarUrl(user.profilePicture!))
+                    : null,
+            child: user.profilePicture == null || user.profilePicture!.isEmpty
                 ? Text(
                     (user.firstName.isNotEmpty == true)
                         ? user.firstName.substring(0, 1).toUpperCase()
@@ -350,6 +355,26 @@ class _DoctorProfileTabState extends State<DoctorProfileTab> {
     return formattedEducations.isNotEmpty 
         ? formattedEducations.join('\n') 
         : 'Non spécifiée';
+  }
+  
+  String _getFullAvatarUrl(String? avatarPath) {
+    if (avatarPath == null || avatarPath.isEmpty) {
+      return '';
+    }
+    if (avatarPath.startsWith('http')) {
+      return avatarPath;
+    }
+    
+    String fullUrl;
+    // Si le chemin commence par /uploads/, construire l'URL complète
+    if (avatarPath.startsWith('/uploads/')) {
+      fullUrl = '${AppConfig.staticUrl}$avatarPath';
+    } else {
+      // Sinon, ajouter /uploads/ si nécessaire
+      fullUrl = '${AppConfig.staticUrl}/uploads/$avatarPath';
+    }
+    
+    return fullUrl;
   }
   
   Widget _buildInfoCard({

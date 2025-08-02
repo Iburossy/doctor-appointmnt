@@ -34,16 +34,16 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
             _selectedIndex = index;
           });
         },
-        selectedItemColor: AppTheme.primaryColor,
+        selectedItemColor: const Color.fromARGB(255, 9, 84, 205),
         unselectedItemColor: AppTheme.textSecondary,
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.dashboard),
-            label: 'Tableau de bord',
+            label: 'Accueil',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.calendar_today),
-            label: 'Rendez-vous',
+            label: 'RV',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.people),

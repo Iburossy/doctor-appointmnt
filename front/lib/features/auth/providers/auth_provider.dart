@@ -654,4 +654,12 @@ class AuthProvider with ChangeNotifier {
            _user!.role == 'doctor' && 
            _user!.doctorProfile?.isVerified == true;
   }
+  
+  // Refresh user data
+  Future<void> refreshUserData() async {
+    if (_isAuthenticated) {
+      await _getCurrentUser(forceFullRefresh: true);
+      notifyListeners();
+    }
+  }
 }

@@ -6,6 +6,7 @@ class AppConfig {
   
   // API Configuration
   static const String baseUrl = 'http://10.0.2.2:5000/api'; // Spécial IP pour accéder à localhost depuis l'émulateur Android
+  static const String staticUrl = 'http://10.0.2.2:5000'; // URL pour les fichiers statiques (sans /api)
   static const String apiVersion = 'v1';
   
   // Endpoints

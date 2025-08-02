@@ -783,4 +783,129 @@ router.get('/me/patients', authenticate, authorize('doctor'), async (req, res) =
   }
 });
 
+// @route   PUT /api/doctors/me
+// @desc    Mettre à jour le profil du médecin
+// @access  Private (Doctor)
+router.put('/me', authenticate, authorize('doctor'), async (req, res) => {
+  try {
+    const {
+      yearsOfExperience,
+      bio,
+      languages,
+      consultationFee,
+      clinic
+    } = req.body;
+
+    // Trouver le profil du médecin
+    const doctor = await Doctor.findOne({ userId: req.user._id });
+    if (!doctor) {
+      return res.status(404).json({ error: 'Profil médecin non trouvé' });
+    }
+
+    // Mettre à jour les champs modifiables
+    if (yearsOfExperience !== undefined) doctor.yearsOfExperience = yearsOfExperience;
+    if (bio !== undefined) doctor.bio = bio;
+    if (languages !== undefined) doctor.languages = languages;
+    if (consultationFee !== undefined) doctor.consultationFee = consultationFee;
+    if (clinic !== undefined) doctor.clinic = clinic;
+
+    await doctor.save();
+
+    // Retourner le profil mis à jour avec les données utilisateur
+    const updatedDoctor = await Doctor.findOne({ userId: req.user._id })
+      .populate('userId', 'firstName lastName email phone profilePicture');
+
+    res.json(updatedDoctor);
+  } catch (error) {
+    console.error('Erreur mise à jour profil médecin:', error);
+    res.status(500).json({ error: 'Erreur lors de la mise à jour du profil' });
+  }
+});
+
+// @route   POST /api/doctors/me/profile-image
+// @desc    Upload de la photo de profil du médecin
+// @access  Private (Doctor)
+router.post('/me/profile-image', 
+  authenticate, 
+  authorize('doctor'),
+  uploadWithLogs([{ name: 'profileImage', maxCount: 1 }]),
+  async (req, res) => {
+    try {
+      if (!req.files || !req.files.profileImage || req.files.profileImage.length === 0) {
+        return res.status(400).json({ error: 'Aucune image fournie' });
+      }
+
+      const profileImageFile = req.files.profileImage[0];
+      // Convertir le chemin complet en chemin relatif
+      const fullPath = normalizePath(profileImageFile.path);
+      const profileImagePath = fullPath.replace(/.*[\\\/]uploads[\\\/]/, '/uploads/');
+
+      // Mettre à jour la photo de profil dans le modèle User
+      await User.findByIdAndUpdate(req.user._id, {
+        profilePicture: profileImagePath
+      });
+
+      // Traiter les données additionnelles si présentes
+      if (req.body.yearsOfExperience || req.body.bio || req.body.languages || 
+          req.body.consultationFee || req.body.clinic) {
+        
+        const doctor = await Doctor.findOne({ userId: req.user._id });
+        if (doctor) {
+          if (req.body.yearsOfExperience !== undefined) {
+            doctor.yearsOfExperience = parseInt(req.body.yearsOfExperience);
+          }
+          if (req.body.bio !== undefined) doctor.bio = req.body.bio;
+          if (req.body.languages !== undefined) {
+            try {
+              if (Array.isArray(req.body.languages)) {
+                doctor.languages = req.body.languages;
+              } else if (typeof req.body.languages === 'string') {
+                // Essayer de parser comme JSON d'abord
+                try {
+                  doctor.languages = JSON.parse(req.body.languages);
+                } catch {
+                  // Si ça échoue, traiter comme une chaîne simple avec des virgules
+                  doctor.languages = req.body.languages
+                    .replace(/[\[\]]/g, '') // Supprimer les crochets
+                    .split(',')
+                    .map(lang => lang.trim())
+                    .filter(lang => lang.length > 0);
+                }
+              }
+            } catch (error) {
+              console.error('Erreur parsing languages:', error);
+              doctor.languages = [];
+            }
+          }
+          if (req.body.consultationFee !== undefined) {
+            doctor.consultationFee = parseFloat(req.body.consultationFee);
+          }
+          if (req.body.clinic !== undefined) {
+            try {
+              doctor.clinic = typeof req.body.clinic === 'string' 
+                ? JSON.parse(req.body.clinic) 
+                : req.body.clinic;
+            } catch (error) {
+              console.error('Erreur parsing clinic:', error);
+              // Garder la valeur existante en cas d'erreur
+            }
+          }
+          
+          await doctor.save();
+        }
+      }
+
+      // Retourner le profil mis à jour
+      const updatedDoctor = await Doctor.findOne({ userId: req.user._id })
+        .populate('userId', 'firstName lastName email phone profilePicture');
+
+      // Retourner directement les données du docteur pour compatibilité avec le frontend
+      res.json(updatedDoctor);
+    } catch (error) {
+      console.error('Erreur upload photo profil:', error);
+      res.status(500).json({ error: 'Erreur lors de l\'upload de la photo' });
+    }
+  }
+);
+
 module.exports = router;

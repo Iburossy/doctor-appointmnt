@@ -1,9 +1,14 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../core/theme/app_theme.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/doctor_profile_provider.dart';
 import '../../auth/models/user_model.dart'; // Utilise ClinicInfo de user_model
+import '../../auth/providers/auth_provider.dart';
+import '../../../core/config/app_config.dart';
 
 class EditDoctorProfileScreen extends StatefulWidget {
   const EditDoctorProfileScreen({super.key});
@@ -26,6 +31,7 @@ class _EditDoctorProfileScreenState extends State<EditDoctorProfileScreen> {
 
   List<String> _selectedLanguages = [];
   bool _isLoading = false;
+  File? _profileImageFile;
 
   final List<String> _availableLanguages = [
     'Français',
@@ -110,6 +116,69 @@ class _EditDoctorProfileScreenState extends State<EditDoctorProfileScreen> {
     }
   }
 
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+
+    if (pickedFile != null) {
+      setState(() {
+        _profileImageFile = File(pickedFile.path);
+      });
+    }
+  }
+
+  String _getFullAvatarUrl(String? avatarPath) {
+    if (avatarPath == null || avatarPath.isEmpty) return '';
+    if (avatarPath.startsWith('http')) return avatarPath;
+    String fullUrl;
+    // Si le chemin commence par /uploads/, construire l'URL complète
+    if (avatarPath.startsWith('/uploads/')) {
+      fullUrl = '${AppConfig.staticUrl}$avatarPath';
+    } else {
+      // Sinon, ajouter /uploads/ si nécessaire
+      fullUrl = '${AppConfig.staticUrl}/uploads/$avatarPath';
+    }
+    return fullUrl;
+  }
+
+  Widget _buildAvatarPicker() {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final user = authProvider.user;
+
+    return Center(
+      child: Stack(
+        children: [
+          CircleAvatar(
+            radius: 50,
+            backgroundImage: _profileImageFile != null
+                ? FileImage(_profileImageFile!) as ImageProvider
+                : (user?.profilePicture != null && user!.profilePicture!.isNotEmpty
+                    ? NetworkImage(_getFullAvatarUrl(user.profilePicture!))
+                    : null),
+            child: _profileImageFile == null && (user?.profilePicture == null || user!.profilePicture!.isEmpty)
+                ? const Icon(Icons.person, size: 50, color: Colors.grey)
+                : null,
+          ),
+          Positioned(
+            bottom: 0,
+            right: 0,
+            child: GestureDetector(
+              onTap: _pickImage,
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: const BoxDecoration(
+                  color: AppTheme.primaryColor,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.edit, color: Colors.white, size: 20),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _saveProfile() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -137,6 +206,7 @@ class _EditDoctorProfileScreenState extends State<EditDoctorProfileScreen> {
       languages: _selectedLanguages,
       consultationFee: double.tryParse(_consultationFeeController.text.trim()),
       clinicInfo: clinicInfo,
+      profileImage: _profileImageFile,
     );
 
     setState(() {
@@ -145,6 +215,13 @@ class _EditDoctorProfileScreenState extends State<EditDoctorProfileScreen> {
 
     if (mounted) {
       if (success) {
+        // Recharger les données utilisateur et le profil médecin pour mettre à jour la photo de profil
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        await authProvider.refreshUserData();
+        
+        // Recharger aussi le profil médecin
+        await provider.getDoctorProfile();
+        
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Profil mis à jour avec succès'),
@@ -208,6 +285,10 @@ class _EditDoctorProfileScreenState extends State<EditDoctorProfileScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Photo de profil
+              _buildAvatarPicker(),
+              const SizedBox(height: 24),
+              
               // Informations professionnelles
               _buildSectionTitle('Informations professionnelles'),
               

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import '../../../core/services/api_service.dart';
@@ -70,6 +71,7 @@ class DoctorProfileProvider with ChangeNotifier {
     double? consultationFee,
     ClinicInfo? clinicInfo,
     List<WorkingHours>? workingHours,
+    File? profileImage,
   }) async {
     _setUpdating(true);
     _clearError();
@@ -132,7 +134,34 @@ class DoctorProfileProvider with ChangeNotifier {
       // Nous utilisons temporairement la route /doctors/me pour la mise à jour
       // Ajouter un log pour débugger la requête
       // print('ℹ️ Tentative de mise à jour du profil avec: $data');
-      final response = await _apiService.put('/doctors/me', data: data);
+      
+      ApiResponse response;
+      
+      // Si une image est fournie, utiliser uploadFile
+      if (profileImage != null) {
+        // Préparer les données pour l'upload multipart
+        // Les objets complexes doivent être sérialisés en JSON
+        final uploadData = <String, dynamic>{};
+        
+        data.forEach((key, value) {
+          if (value is Map || value is List) {
+            // Sérialiser les objets et listes en JSON
+            uploadData[key] = jsonEncode(value);
+          } else {
+            // Garder les valeurs primitives telles quelles
+            uploadData[key] = value;
+          }
+        });
+        
+        response = await _apiService.uploadFile(
+          '/doctors/me/profile-image',
+          profileImage,
+          fieldName: 'profileImage',
+          additionalData: uploadData,
+        );
+      } else {
+        response = await _apiService.put('/doctors/me', data: data);
+      }
       
       if (response.isSuccess && response.data != null) {
         _doctorProfile = DoctorProfile.fromJson(response.data);
