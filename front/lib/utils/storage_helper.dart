@@ -15,7 +15,6 @@ class StorageHelper {
       final prefs = await SharedPreferences.getInstance();
       return await prefs.setString(_tokenKey, token);
     } catch (e) {
-      print('❌ Erreur sauvegarde token: $e');
       return false;
     }
   }
@@ -26,7 +25,6 @@ class StorageHelper {
       final prefs = await SharedPreferences.getInstance();
       return prefs.getString(_tokenKey);
     } catch (e) {
-      print('❌ Erreur récupération token: $e');
       return null;
     }
   }
@@ -37,7 +35,6 @@ class StorageHelper {
       final prefs = await SharedPreferences.getInstance();
       return await prefs.remove(_tokenKey);
     } catch (e) {
-      print('❌ Erreur suppression token: $e');
       return false;
     }
   }
@@ -57,7 +54,6 @@ class StorageHelper {
       final jsonString = json.encode(userData);
       return await prefs.setString(_userKey, jsonString);
     } catch (e) {
-      print('❌ Erreur sauvegarde données utilisateur: $e');
       return false;
     }
   }
@@ -72,7 +68,6 @@ class StorageHelper {
       }
       return null;
     } catch (e) {
-      print('❌ Erreur récupération données utilisateur: $e');
       return null;
     }
   }
@@ -83,7 +78,6 @@ class StorageHelper {
       final prefs = await SharedPreferences.getInstance();
       return await prefs.remove(_userKey);
     } catch (e) {
-      print('❌ Erreur suppression données utilisateur: $e');
       return false;
     }
   }
@@ -97,7 +91,6 @@ class StorageHelper {
       final jsonString = json.encode(settings);
       return await prefs.setString(_settingsKey, jsonString);
     } catch (e) {
-      print('❌ Erreur sauvegarde paramètres: $e');
       return false;
     }
   }
@@ -112,7 +105,6 @@ class StorageHelper {
       }
       return null;
     } catch (e) {
-      print('❌ Erreur récupération paramètres: $e');
       return null;
     }
   }
@@ -124,7 +116,6 @@ class StorageHelper {
       currentSettings[key] = value;
       return await saveSettings(currentSettings);
     } catch (e) {
-      print('❌ Erreur mise à jour paramètre: $e');
       return false;
     }
   }
@@ -135,7 +126,6 @@ class StorageHelper {
       final settings = await getSettings();
       return settings?[key] as T? ?? defaultValue;
     } catch (e) {
-      print('❌ Erreur récupération paramètre: $e');
       return defaultValue;
     }
   }
@@ -148,7 +138,6 @@ class StorageHelper {
       final prefs = await SharedPreferences.getInstance();
       return await prefs.clear();
     } catch (e) {
-      print('❌ Erreur suppression toutes données: $e');
       return false;
     }
   }
@@ -160,7 +149,6 @@ class StorageHelper {
       final userDataCleared = await clearUserData();
       return tokenCleared && userDataCleared;
     } catch (e) {
-      print('❌ Erreur suppression données auth: $e');
       return false;
     }
   }
@@ -190,7 +178,6 @@ class StorageHelper {
       
       return totalSize;
     } catch (e) {
-      print('❌ Erreur calcul taille stockage: $e');
       return 0;
     }
   }
@@ -201,7 +188,6 @@ class StorageHelper {
       final prefs = await SharedPreferences.getInstance();
       return prefs.getKeys();
     } catch (e) {
-      print('❌ Erreur récupération clés: $e');
       return <String>{};
     }
   }
@@ -209,18 +195,9 @@ class StorageHelper {
   /// Affiche les informations de debug sur le stockage
   static Future<void> printDebugInfo() async {
     try {
-      final keys = await getAllKeys();
-      final size = await getStorageSize();
-      final isLoggedIn = await StorageHelper.isLoggedIn();
-      
-      print('\n💾 === INFORMATIONS STOCKAGE ===');
-      print('🔐 Utilisateur connecté: $isLoggedIn');
-      print('🔑 Nombre de clés: ${keys.length}');
-      print('📊 Taille approximative: ${size} octets');
-      print('🗝️ Clés: ${keys.join(', ')}');
-      print('💾 === FIN INFORMATIONS STOCKAGE ===\n');
+      // Méthode vide : debug info désactivée pour la production
     } catch (e) {
-      print('❌ Erreur affichage debug stockage: $e');
+
     }
   }
 }

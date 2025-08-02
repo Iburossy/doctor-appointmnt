@@ -31,7 +31,6 @@ class _DoctorHomeTabState extends State<DoctorHomeTab> {
       
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       if (authProvider.isAuthenticated && authProvider.isDoctor) {
-        print('DEBUG: DoctorHomeTab - Loading doctor profile (one-time)');
         await authProvider.refreshUser(forceFullRefresh: true);
       }
     }
@@ -82,10 +81,6 @@ class _DoctorHomeTabState extends State<DoctorHomeTab> {
   }
 
   Widget _buildDoctorHeader(String doctorName, String? specialization) {
-    // Ajouter des logs pour debug
-    print('DEBUG: DoctorHomeTab - Displaying header with name: $doctorName');
-    print('DEBUG: DoctorHomeTab - Specialization: $specialization');
-    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -122,8 +117,8 @@ class _DoctorHomeTabState extends State<DoctorHomeTab> {
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                AppTheme.primaryColor,
-                AppTheme.primaryColor.withAlpha(204),
+                const Color.fromARGB(255, 12, 106, 173),
+                const Color.fromARGB(255, 24, 38, 238),
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -460,83 +455,4 @@ class _DoctorHomeTabState extends State<DoctorHomeTab> {
 }
 
 // L'onglet des rendez-vous est maintenant dans un fichier séparé : doctor_appointments_tab.dart
-
-// Classe pour l'onglet des patients
-class DoctorPatientsTab extends StatelessWidget {
-  const DoctorPatientsTab({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Mes patients',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.textPrimaryColor,
-              ),
-            ),
-            const SizedBox(height: 24),
-            // Barre de recherche
-            TextField(
-              decoration: InputDecoration(
-                hintText: 'Rechercher un patient...',
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: AppTheme.borderColor),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: AppTheme.borderColor),
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-            // Liste des patients (placeholder)
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade50,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppTheme.borderColor),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.people_outline,
-                    size: 64,
-                    color: AppTheme.textSecondary.withAlpha(128),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Aucun patient',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.textSecondary,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Les patients apparaîtront ici',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: AppTheme.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
+// L'onglet des patients est maintenant dans un fichier séparé : doctor_patients_tab.dart

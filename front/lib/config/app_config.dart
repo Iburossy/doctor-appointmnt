@@ -22,21 +22,21 @@ class AppConfig {
         envFile = isProduction ? '.env.production' : '.env.development';
       }
       
-      print('🔧 Chargement de la configuration: $envFile');
+      // print('🔧 Chargement de la configuration: $envFile');
       await dotenv.load(fileName: envFile);
-      print('✅ Configuration chargée avec succès');
+      // print('✅ Configuration chargée avec succès');
       
       // Validation des variables critiques
       _validateConfiguration();
       
     } catch (e) {
-      print('❌ Erreur lors du chargement de la configuration: $e');
+      // print('❌ Erreur lors du chargement de la configuration: $e');
       // Fallback vers .env par défaut
       try {
         await dotenv.load(fileName: '.env');
-        print('⚠️ Utilisation de la configuration par défaut');
+        // print('⚠️ Utilisation de la configuration par défaut');
       } catch (fallbackError) {
-        print('❌ Impossible de charger la configuration par défaut: $fallbackError');
+        // print('❌ Impossible de charger la configuration par défaut: $fallbackError');
         rethrow;
       }
     }
@@ -56,7 +56,7 @@ class AppConfig {
       }
     }
     
-    print('✅ Validation de la configuration réussie');
+    // print('✅ Validation de la configuration réussie');
   }
 
   // ==================== CONFIGURATION GÉNÉRALE ====================
@@ -164,21 +164,21 @@ class AppConfig {
   void printConfiguration() {
     if (!enableDebugMode) return;
     
-    print('\n🔧 === CONFIGURATION ACTUELLE ===');
-    print('📱 App: $appName v$appVersion');
-    print('🌍 Environnement: $environment');
-    print('🌐 API Base URL: $apiBaseUrl');
-    print('⏱️ API Timeout: ${apiTimeout}ms');
-    print('📁 Taille max fichier: ${maxFileSizeMB.toStringAsFixed(1)}MB');
-    print('📄 Types autorisés: ${allowedFileTypes.join(', ')}');
-    print('🔢 Max fichiers/upload: $maxFilesPerUpload');
-    print('🗣️ Langue par défaut: $defaultLanguage');
-    print('🌐 Langues supportées: ${supportedLanguages.join(', ')}');
-    print('📝 Logs activés: $enableLogging');
-    print('🐛 Debug activé: $enableDebugMode');
-    print('💥 Crash reporting: $enableCrashReporting');
-    print('🔔 Notifications: $enablePushNotifications');
-    print('🔧 === FIN CONFIGURATION ===\n');
+    // print('\n🔧 === CONFIGURATION ACTUELLE ===');
+    // print('📱 App: $appName v$appVersion');
+    // print('🌍 Environnement: $environment');
+    // print('🌐 API Base URL: $apiBaseUrl');
+    // print('⏱️ API Timeout: ${apiTimeout}ms');
+    // print('📁 Taille max fichier: ${maxFileSizeMB.toStringAsFixed(1)}MB');
+    // print('📄 Types autorisés: ${allowedFileTypes.join(', ')}');
+    // print('🔢 Max fichiers/upload: $maxFilesPerUpload');
+    // print('🗣️ Langue par défaut: $defaultLanguage');
+    // print('🌐 Langues supportées: ${supportedLanguages.join(', ')}');
+    // print('📝 Logs activés: $enableLogging');
+    // print('🐛 Debug activé: $enableDebugMode');
+    // print('💥 Crash reporting: $enableCrashReporting');
+    // print('🔔 Notifications: $enablePushNotifications');
+    // print('🔧 === FIN CONFIGURATION ===\n');
   }
   
   /// Obtient une variable d'environnement personnalisée

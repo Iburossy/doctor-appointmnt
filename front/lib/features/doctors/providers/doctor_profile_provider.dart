@@ -19,7 +19,7 @@ class DoctorProfileProvider with ChangeNotifier {
 
   // Get current doctor profile
   Future<bool> getDoctorProfile() async {
-    print('DEBUG: DoctorProfileProvider - Loading doctor profile...');
+
     _setLoading(true);
     _clearError();
     
@@ -30,34 +30,28 @@ class DoctorProfileProvider with ChangeNotifier {
         queryParameters: {'_ts': DateTime.now().millisecondsSinceEpoch.toString()}
       );
       
-      print('DEBUG: DoctorProfileProvider - API response received, success=${response.isSuccess}');
+
       
       if (response.isSuccess && response.data != null) {
         try {
-          print('DEBUG: DoctorProfileProvider - Parsing doctor profile data');
+
           _doctorProfile = DoctorProfile.fromJson(response.data);
-          print('DEBUG: DoctorProfileProvider - Profile loaded successfully');
-          print('DEBUG: DoctorProfileProvider - User ID: ${_doctorProfile?.userId}');
-          print('DEBUG: DoctorProfileProvider - Specialization: ${_doctorProfile?.specialization}');
-          print('DEBUG: DoctorProfileProvider - License: ${_doctorProfile?.medicalLicenseNumber}');
-          print('DEBUG: DoctorProfileProvider - Clinic: ${_doctorProfile?.clinicName}');
-          print('DEBUG: DoctorProfileProvider - Years of Experience: ${_doctorProfile?.yearsOfExperience}');
+
           
           notifyListeners();
           return true;
         } catch (parseError) {
-          print('ERROR: DoctorProfileProvider - Failed to parse profile: $parseError');
-          print('DEBUG: DoctorProfileProvider - Raw data: ${response.data}');
+
           _setError('Erreur lors du traitement des données du profil: $parseError');
           return false;
         }
       } else {
-        print('ERROR: DoctorProfileProvider - Failed to load profile: ${response.message}');
+
         _setError(response.message ?? 'Erreur lors de la récupération du profil');
         return false;
       }
     } catch (e) {
-      print('ERROR: DoctorProfileProvider - Exception: $e');
+
       _setError('Erreur de connexion: $e');
       return false;
     } finally {
@@ -81,21 +75,64 @@ class DoctorProfileProvider with ChangeNotifier {
     _clearError();
     
     try {
+      // Adapter les noms des champs pour correspondre à ceux attendus par le backend
       final data = <String, dynamic>{};
       
-      if (specialization != null) data['specialization'] = specialization;
+      // Champs avec noms différents entre backend et frontend
+      if (experienceYears != null) data['yearsOfExperience'] = experienceYears; // backend: yearsOfExperience, frontend: experienceYears
+      
+      // Conversion spéciale pour ClinicInfo : user_model.dart vers backend format
+      if (clinicInfo != null) {
+        // Convertir le format simple de user_model.dart vers le format attendu par le backend
+        data['clinic'] = {
+          'name': clinicInfo.name,
+          'address': {
+            'street': clinicInfo.address, // Utiliser l'adresse complète comme street
+            'city': 'Dakar', // Valeur par défaut - à améliorer
+            'region': 'Dakar', // Valeur par défaut
+            'country': 'Sénégal', // Valeur par défaut
+            'location': {
+              'type': 'Point',
+              'coordinates': [-17.4467, 14.6928] // Coordonnées par défaut de Dakar
+            }
+          },
+          'phone': clinicInfo.phone,
+          'description': null,
+          'photos': []
+        };
+        // print('📊 Données clinic converties pour le backend: ${data['clinic']}'); // Pour débogage
+      }
+      
+      if (specialization != null) data['specialties'] = [specialization]; // backend: specialties (array), frontend: specialization
+      
+      // Traitement spécial pour l'education (le backend attend un tableau d'objets)
+      if (education != null) {
+        // Créons une structure minimale valide pour l'education
+        final educationData = [{
+          'degree': education,
+          'institution': 'Non spécifié',
+          'year': DateTime.now().year,
+          'country': 'Sénégal'
+        }];
+        // print('📊 Données education formatées: $educationData'); // Pour débogage
+        data['education'] = educationData;
+      }
+      
+      // Champs avec les mêmes noms
       if (licenseNumber != null) data['licenseNumber'] = licenseNumber;
-      if (experienceYears != null) data['experienceYears'] = experienceYears;
-      if (education != null) data['education'] = education;
       if (bio != null) data['bio'] = bio;
       if (languages != null) data['languages'] = languages;
       if (consultationFee != null) data['consultationFee'] = consultationFee;
-      if (clinicInfo != null) data['clinicInfo'] = clinicInfo.toJson();
+      
       if (workingHours != null) {
         data['workingHours'] = workingHours.map((wh) => wh.toJson()).toList();
       }
 
-      final response = await _apiService.put('/doctors/profile', data: data);
+      // La route correcte pour la mise à jour du profil n'existe pas dans le backend
+      // Nous utilisons temporairement la route /doctors/me pour la mise à jour
+      // Ajouter un log pour débugger la requête
+      // print('ℹ️ Tentative de mise à jour du profil avec: $data');
+      final response = await _apiService.put('/doctors/me', data: data);
       
       if (response.isSuccess && response.data != null) {
         _doctorProfile = DoctorProfile.fromJson(response.data);
@@ -303,7 +340,7 @@ class DoctorProfileProvider with ChangeNotifier {
 
   // Clear profile data
   void clearProfile() {
-    print('DEBUG: DoctorProfileProvider - Clearing doctor profile data');
+
     _doctorProfile = null;
     _clearError();
     notifyListeners();
@@ -311,7 +348,7 @@ class DoctorProfileProvider with ChangeNotifier {
   
   // Force reload profile - completely clears cache and gets fresh data
   Future<bool> forceReloadProfile() async {
-    print('DEBUG: DoctorProfileProvider - Force reloading doctor profile');
+
     // Clear current profile data
     _doctorProfile = null;
     // Don't notify listeners yet to avoid UI flickering
@@ -323,34 +360,30 @@ class DoctorProfileProvider with ChangeNotifier {
         queryParameters: {'_ts': DateTime.now().millisecondsSinceEpoch.toString(), 'nocache': 'true'}
       );
       
-      print('DEBUG: DoctorProfileProvider - Force reload response received, success=${response.isSuccess}');
+
       
       if (response.isSuccess && response.data != null) {
         try {
-          print('DEBUG: DoctorProfileProvider - Raw profile data: ${response.data}');
+
           _doctorProfile = DoctorProfile.fromJson(response.data);
-          print('DEBUG: DoctorProfileProvider - Profile force-loaded successfully');
-          print('DEBUG: DoctorProfileProvider - ID: ${_doctorProfile?.id}');
-          print('DEBUG: DoctorProfileProvider - User ID: ${_doctorProfile?.userId}');
-          print('DEBUG: DoctorProfileProvider - Specialization: ${_doctorProfile?.specialization}');
+
           
           notifyListeners();
           return true;
         } catch (parseError) {
-          print('ERROR: DoctorProfileProvider - Failed to parse forced profile data: $parseError');
-          print('DEBUG: DoctorProfileProvider - Parse error with data: ${response.data}');
+
           _setError('Erreur lors du traitement des données du profil: $parseError');
           notifyListeners();
           return false;
         }
       } else {
-        print('ERROR: DoctorProfileProvider - Failed to force-load profile: ${response.message}');
+
         _setError(response.message ?? 'Erreur lors de la récupération du profil');
         notifyListeners();
         return false;
       }
     } catch (e) {
-      print('ERROR: DoctorProfileProvider - Exception during force reload: $e');
+
       _setError('Erreur de connexion lors du rechargement: $e');
       notifyListeners();
       return false;
@@ -391,5 +424,42 @@ class DoctorProfileProvider with ChangeNotifier {
     if (_doctorProfile!.workingHours != null) completedFields++;
     
     return completedFields / totalFields;
+  }
+
+  // SÉCURITÉ: Fonction pour nettoyer les données sensibles
+  Map<String, dynamic> _sanitizeProfileData(Map<String, dynamic> data) {
+    final cleanedData = Map<String, dynamic>.from(data);
+    
+    // Nettoyer le champ education pour supprimer les IDs MongoDB
+    if (cleanedData['education'] != null && cleanedData['education'] is List) {
+      final List educationList = cleanedData['education'];
+      cleanedData['education'] = educationList.map((item) {
+        if (item is Map<String, dynamic>) {
+          // Garder seulement les champs sûrs, supprimer _id, id, etc.
+          return {
+            'degree': item['degree']?.toString()?.replaceAll(RegExp(r'[{}\[\]_id:,]'), '')?.trim() ?? '',
+            'institution': item['institution']?.toString() ?? '',
+            'year': item['year'],
+            'country': item['country']?.toString() ?? ''
+          };
+        }
+        return item;
+      }).toList();
+    }
+    
+    // Nettoyer d'autres champs potentiellement sensibles
+    _removeMongoIds(cleanedData);
+    
+    return cleanedData;
+  }
+  
+  // Fonction récursive pour supprimer tous les IDs MongoDB
+  void _removeMongoIds(dynamic data) {
+    if (data is Map<String, dynamic>) {
+      data.removeWhere((key, value) => key == '_id' || key == 'id' || key.startsWith('_'));
+      data.values.forEach(_removeMongoIds);
+    } else if (data is List) {
+      data.forEach(_removeMongoIds);
+    }
   }
 }

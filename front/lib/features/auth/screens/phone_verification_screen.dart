@@ -80,8 +80,6 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
       return;
     }
     
-    print('📱 Vérification avec le numéro: $userPhone (au lieu de ${widget.phoneNumber})');
-    
     final success = await authProvider.verifyPhone(
       phone: userPhone,
       code: _pinController.text,

@@ -28,22 +28,8 @@ class _DoctorProfileTabState extends State<DoctorProfileTab> {
     if (authProvider.isAuthenticated && authProvider.isDoctor) {
       final doctorProfileProvider = Provider.of<DoctorProfileProvider>(context, listen: false);
       
-      // Afficher l'état actuel du profil avant rechargement
-      print('DEBUG: DoctorProfileTab - État actuel du profil: ${doctorProfileProvider.doctorProfile != null ? "Chargé" : "Non chargé"}');
-      if (doctorProfileProvider.doctorProfile != null) {
-        print('DEBUG: DoctorProfileTab - Spécialisation: ${doctorProfileProvider.doctorProfile!.specialization}');
-        print('DEBUG: DoctorProfileTab - ID du profil: ${doctorProfileProvider.doctorProfile!.id}');
-      }
-      
-      print('DEBUG: DoctorProfileTab - Forçage du rechargement du profil médecin...');
       // Forcer un rechargement complet du profil médecin
-      final success = await doctorProfileProvider.forceReloadProfile();
-      
-      // Vérifier le résultat du rechargement
-      print('DEBUG: DoctorProfileTab - Résultat du rechargement: ${success ? "Succès" : "Échec"}');
-      print('DEBUG: DoctorProfileTab - Profil après rechargement: ${doctorProfileProvider.doctorProfile != null ? "Présent" : "Absent"}');
-    } else {
-      print('DEBUG: DoctorProfileTab - Impossible de charger le profil: ${authProvider.isAuthenticated ? "Authentifié" : "Non authentifié"}, ${authProvider.isDoctor ? "Médecin" : "Non médecin"}');
+      await doctorProfileProvider.forceReloadProfile();
     }
   }
 
@@ -143,7 +129,7 @@ class _DoctorProfileTabState extends State<DoctorProfileTab> {
                   icon: Icons.school,
                   title: 'Formation',
                   value: profile.education != null && profile.education!.isNotEmpty
-                      ? profile.education!.first.toString()
+                      ? _extractEducationInfo(profile.education!)
                       : 'Non spécifiée',
                 ),
 
@@ -194,7 +180,8 @@ class _DoctorProfileTabState extends State<DoctorProfileTab> {
                     Expanded(
                       child: OutlinedButton.icon(
                         onPressed: () {
-                          // TODO: Implement edit profile
+                          // Redirection vers l'écran d'édition du profil médecin
+                          context.pushNamed('edit-doctor-profile');
                         },
                         icon: const Icon(Icons.edit),
                         label: const Text('Modifier'),
@@ -325,6 +312,46 @@ class _DoctorProfileTabState extends State<DoctorProfileTab> {
     );
   }
 
+  // Extraire les informations d'éducation de manière sécurisée sans exposer les IDs MongoDB
+  String _extractEducationInfo(List<dynamic> educationList) {
+    if (educationList.isEmpty) return 'Non spécifiée';
+    
+    // Récupérer les informations pertinentes de chaque élément d'éducation
+    final List<String> formattedEducations = [];
+    
+    for (var edu in educationList) {
+      if (edu is Map) {
+        // Si c'est un objet, extraire seulement le diplôme et l'institution
+        final degree = edu['degree']?.toString() ?? '';
+        final institution = edu['institution']?.toString() ?? '';
+        final year = edu['year']?.toString() ?? '';
+        
+        String formattedEdu = '';
+        if (degree.isNotEmpty) formattedEdu += degree;
+        if (institution.isNotEmpty) {
+          if (formattedEdu.isNotEmpty) formattedEdu += ' - ';
+          formattedEdu += institution;
+        }
+        if (year.isNotEmpty) {
+          if (formattedEdu.isNotEmpty) formattedEdu += ' (';
+          formattedEdu += year;
+          if (formattedEdu.endsWith('(')) formattedEdu += ')';
+        }
+        
+        if (formattedEdu.isNotEmpty) {
+          formattedEducations.add(formattedEdu);
+        }
+      } else if (edu is String) {
+        // Si c'est une chaîne simple, l'ajouter directement
+        formattedEducations.add(edu);
+      }
+    }
+    
+    return formattedEducations.isNotEmpty 
+        ? formattedEducations.join('\n') 
+        : 'Non spécifiée';
+  }
+  
   Widget _buildInfoCard({
     required IconData icon,
     required String title,

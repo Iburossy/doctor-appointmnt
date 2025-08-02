@@ -71,15 +71,12 @@ class AppointmentsProvider with ChangeNotifier {
       
       if (response.isSuccess && response.data != null) {
         final appointmentData = response.data;
-        print('📋 APPOINTMENT DATA RECEIVED: $appointmentData');
         
         // Extraire les données du rendez-vous depuis la réponse
         final appointmentJson = appointmentData['appointment'] ?? appointmentData;
-        print('📋 APPOINTMENT JSON TO PARSE: $appointmentJson');
         
         try {
           final newAppointment = AppointmentModel.fromJson(appointmentJson);
-          print('✅ APPOINTMENT PARSED SUCCESSFULLY: ${newAppointment.id}');
           
           _appointments.add(newAppointment);
           _categorizeAppointments();
@@ -89,7 +86,6 @@ class AppointmentsProvider with ChangeNotifier {
           
           return true;
         } catch (parseError) {
-          print('❌ PARSING ERROR: $parseError');
           _setError('Erreur lors du traitement des données: $parseError');
           return false;
         }

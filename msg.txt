@@ -1,3 +1,8 @@
+sur l'ecran de detail du medecin, le patient devrait pouvoir la localisation du clinic du medecin comme ca s'il clique sur le bouton de la localisation, on lui ouvre google maps ou plan en fonction de son systeme d'exploitation android ou IOS pour lui permettre de se rendre facilement sur le clinic du medecin 
+
+
+
+
 Voici une série de questions à vérifier pour espérer résoudre le problème de chargement du profil du médecin.
 Tu dois avancer étape par étape : commence par une question spécifique, puis documente tes découvertes avant de passer à la suivante, et ainsi de suite. 
 

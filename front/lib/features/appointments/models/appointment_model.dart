@@ -160,16 +160,16 @@ class AppointmentModel {
   // Factory constructor from JSON
   factory AppointmentModel.fromJson(Map<String, dynamic> json) {
     try {
-      print('--- [DEBUG] Début du parsing AppointmentModel ---');
+      
       
       // Extraire les informations du patient et du médecin si elles sont imbriquées
-      print('[DEBUG] Extraction des données patient/doctor/payment');
+      
       final patientData = json['patient'] is Map ? json['patient'] as Map<String, dynamic> : null;
       final doctorData = json['doctor'] is Map ? json['doctor'] as Map<String, dynamic> : null;
       final paymentData = json['payment'] is Map ? json['payment'] as Map<String, dynamic> : null;
       
       // Ignorer les champs complexes pour éviter les erreurs de parsing
-      print('[DEBUG] Création d\'une copie du JSON et suppression des champs complexes');
+      
       final jsonCopy = Map<String, dynamic>.from(json);
       
       // Supprimer tous les champs complexes non essentiels
@@ -182,108 +182,87 @@ class AppointmentModel {
         jsonCopy.remove(field);
       }
       
-      // Afficher tous les champs du JSON pour débogage
-      print('[DEBUG] Champs disponibles dans le JSON: ${jsonCopy.keys.toList()}');
       
-      // Vérifier le type de chaque champ pour débogage
       jsonCopy.forEach((key, value) {
-        print('[DEBUG] Champ: $key | Type: ${value?.runtimeType} | Valeur: $value');
+        
       });
     
-    print('[DEBUG] Début de la création de l\'objet AppointmentModel');
+    
     
     // Traiter chaque champ individuellement avec des logs
-    print('[DEBUG] Traitement du champ id');
+    
     final id = jsonCopy['_id'] ?? jsonCopy['id'] ?? '';
-    print('[DEBUG] id = $id (${id.runtimeType})');
     
-    print('[DEBUG] Traitement du champ patientId');
+    
     final patientId = patientData?['_id'] ?? patientData?['id'] ?? jsonCopy['patient'] ?? '';
-    print('[DEBUG] patientId = $patientId (${patientId.runtimeType})');
     
-    print('[DEBUG] Traitement du champ doctorId');
+    
     final doctorId = doctorData?['_id'] ?? doctorData?['id'] ?? jsonCopy['doctor'] ?? '';
-    print('[DEBUG] doctorId = $doctorId (${doctorId.runtimeType})');
     
-    print('[DEBUG] Traitement du champ appointmentDate');
+    
+    
     final appointmentDate = DateTime.parse(jsonCopy['appointmentDate']);
-    print('[DEBUG] appointmentDate = $appointmentDate (${appointmentDate.runtimeType})');
     
-    print('[DEBUG] Traitement du champ timeSlot');
+    
     final timeSlot = jsonCopy['appointmentTime'] ?? jsonCopy['timeSlot'] ?? '';
-    print('[DEBUG] timeSlot = $timeSlot (${timeSlot.runtimeType})');
     
-    print('[DEBUG] Traitement du champ status');
+    
     final status = jsonCopy['status'] ?? 'pending';
-    print('[DEBUG] status = $status (${status.runtimeType})');
     
-    print('[DEBUG] Traitement du champ reason');
+    
+    
     final reason = jsonCopy['reason'];
-    print('[DEBUG] reason = $reason (${reason?.runtimeType})');
     
-    print('[DEBUG] Traitement du champ symptoms');
+    
     final symptoms = _parseStringList(jsonCopy['symptoms']);
-    print('[DEBUG] symptoms = $symptoms (${symptoms.runtimeType})');
     
-    print('[DEBUG] Traitement du champ notes');
+    
     final notes = jsonCopy['patientNotes'] ?? jsonCopy['notes'];
-    print('[DEBUG] notes = $notes (${notes?.runtimeType})');
     
-    print('[DEBUG] Traitement du champ diagnosis');
+    
     final diagnosis = jsonCopy['diagnosis'];
-    print('[DEBUG] diagnosis = $diagnosis (${diagnosis?.runtimeType})');
     
-    print('[DEBUG] Traitement du champ prescription');
+    
     final prescription = _parseStringList(jsonCopy['prescription']);
-    print('[DEBUG] prescription = $prescription (${prescription.runtimeType})');
     
-    print('[DEBUG] Traitement du champ doctorNotes');
+    
     final doctorNotes = jsonCopy['doctorNotes'];
-    print('[DEBUG] doctorNotes = $doctorNotes (${doctorNotes?.runtimeType})');
     
-    print('[DEBUG] Traitement du champ cancellationReason');
+    
     final cancellationReason = jsonCopy['cancellationReason'];
-    print('[DEBUG] cancellationReason = $cancellationReason (${cancellationReason?.runtimeType})');
     
-    print('[DEBUG] Traitement du champ duration');
+    
     final duration = jsonCopy['duration'];
-    print('[DEBUG] duration = $duration (${duration?.runtimeType})');
     
-    print('[DEBUG] Traitement du champ consultationType');
+    
     final consultationType = jsonCopy['consultationType'];
-    print('[DEBUG] consultationType = $consultationType (${consultationType?.runtimeType})');
     
-    print('[DEBUG] Traitement du champ paymentInfo');
+    
     final paymentInfoObj = paymentData != null
         ? PaymentInfo.fromJson(paymentData)
         : (jsonCopy['paymentInfo'] != null ? PaymentInfo.fromJson(jsonCopy['paymentInfo']) : null);
-    print('[DEBUG] paymentInfo = $paymentInfoObj (${paymentInfoObj?.runtimeType})');
     
-    print('[DEBUG] Traitement du champ review');
+    
     final reviewObj = jsonCopy['review'] != null
         ? ReviewModel.fromJson(jsonCopy['review'])
         : null;
-    print('[DEBUG] review = $reviewObj (${reviewObj?.runtimeType})');
     
-    print('[DEBUG] Traitement du champ doctorInfo');
+    
     final doctorInfoObj = doctorData != null
         ? DoctorModel.fromJson(doctorData)
         : (jsonCopy['doctorInfo'] != null ? DoctorModel.fromJson(jsonCopy['doctorInfo']) : null);
-    print('[DEBUG] doctorInfo = $doctorInfoObj (${doctorInfoObj?.runtimeType})');    
     
-    print('[DEBUG] Traitement du champ patient');
+    
     final patientObj = patientData ?? jsonCopy['patient'];
-    print('[DEBUG] patient = $patientObj (${patientObj?.runtimeType})');
     
-    print('[DEBUG] Traitement du champ createdAt');
+    
+    
     final createdAt = jsonCopy['createdAt'] != null ? DateTime.parse(jsonCopy['createdAt']) : DateTime.now();
-    print('[DEBUG] createdAt = $createdAt (${createdAt.runtimeType})');
     
-    print('[DEBUG] Traitement du champ updatedAt');
+    
     final updatedAt = jsonCopy['updatedAt'] != null ? DateTime.parse(jsonCopy['updatedAt']) : DateTime.now();
-    print('[DEBUG] updatedAt = $updatedAt (${updatedAt.runtimeType})');
     
-    print('[DEBUG] Création de l\'objet AppointmentModel avec tous les champs');
+    
     return AppointmentModel(
       id: id,
       patientId: patientId,
@@ -308,8 +287,7 @@ class AppointmentModel {
       updatedAt: updatedAt,
     );
     } catch (e, stackTrace) {
-      print('❌ ERREUR DANS APPOINTMENT MODEL PARSING: $e');
-      print('STACK TRACE: $stackTrace');
+      
       rethrow;
     }
   }

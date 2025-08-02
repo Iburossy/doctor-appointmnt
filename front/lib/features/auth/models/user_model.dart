@@ -95,10 +95,8 @@ class UserModel {
       doctorProfile: json['doctorProfile'] != null
           ? (() {
               try {
-                print('DEBUG: Parsing doctorProfile with data: ${json['doctorProfile']}');
                 return DoctorProfile.fromJson(json['doctorProfile']);
               } catch (e) {
-                print('DEBUG: Error parsing doctorProfile: $e');
                 // Retourne un objet minimal au lieu de null pour éviter les problèmes d'affichage
                 return DoctorProfile(
                   id: json['doctorProfile']['_id']?.toString() ?? json['doctorProfile']['id']?.toString(),
@@ -368,10 +366,6 @@ class DoctorProfile {
             DateTime.parse(json['updatedAt']) : null,
       );
     } catch (e) {
-      print('Error parsing DoctorProfile: $e');
-      print('JSON data: $json');
-      // Au lieu de propager l'erreur, on crée un objet DoctorProfile minimal
-      // pour éviter que toute la chaîne de parsing échoue
       return DoctorProfile(
         id: json['_id']?.toString() ?? json['id']?.toString(),
         userId: json['userId']?.toString(),

@@ -62,8 +62,6 @@ class LocationService {
       
       // Save to storage
       await _saveCurrentLocation(position);
-      print('💾 LOCATION SERVICE: Position sauvegardée dans le stockage local');
-      
       return position;
     } catch (e) {
       return null;
@@ -171,7 +169,7 @@ class LocationService {
         return _formatAddress(placemark);
       }
     } catch (e) {
-      print('Error getting address from coordinates: $e');
+
     }
     return null;
   }
@@ -197,7 +195,7 @@ class LocationService {
         );
       }
     } catch (e) {
-      print('Error getting coordinates from address: $e');
+
     }
     return null;
   }

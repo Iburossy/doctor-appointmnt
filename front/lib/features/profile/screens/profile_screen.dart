@@ -374,8 +374,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (address == null) return 'Non renseigné';
     
     // Debug: afficher la structure de l'adresse
-    print('DEBUG (ProfileScreen) - Address type: ${address.runtimeType}');
-    print('DEBUG (ProfileScreen) - Address value: $address');
+    // print('DEBUG (ProfileScreen) - Address type: ${address.runtimeType}');
+    // print('DEBUG (ProfileScreen) - Address value: $address');
     
     if (address is Map) {
       final street = address['street']?.toString() ?? '';

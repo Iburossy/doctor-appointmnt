@@ -125,8 +125,7 @@ class LocationProvider extends ChangeNotifier {
           country: place.country,
         );
         
-        print('DEBUG: Location détectée - ${_currentLocation!.formattedAddress}');
-        print('DEBUG: Coordonnées - Lat: ${position.latitude}, Lng: ${position.longitude}');
+
       } else {
         // On a uniquement les coordonnées sans adresse
         _currentLocation = LocationData(
@@ -142,7 +141,7 @@ class LocationProvider extends ChangeNotifier {
     } catch (e) {
       _error = 'Erreur de géolocalisation: $e';
       _isLoading = false;
-      print('ERROR: LocationProvider - $_error');
+
       notifyListeners();
       return null;
     }

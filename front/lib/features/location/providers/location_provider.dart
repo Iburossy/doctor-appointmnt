@@ -57,12 +57,11 @@ class LocationProvider with ChangeNotifier {
   void _setupPeriodicLocationUpdates() {
     // Mise à jour toutes les 10 minutes
     Future.delayed(const Duration(minutes: 10), () {
-      if (this.hasListeners) { // Only update if provider still has listeners
-        print('🌍 GEOLOCATION: Mise à jour périodique de la position');
+      if (hasListeners) { // Only update if provider still has listeners
         getCurrentLocation(savePosition: true);
         _setupPeriodicLocationUpdates(); // Reschedule
       } else {
-        print('🌍 GEOLOCATION: Mise à jour périodique annulée - plus d\'écouteurs');
+        
       }
     });
   }
@@ -91,13 +90,13 @@ class LocationProvider with ChangeNotifier {
       if (position != null) {
         _currentPosition = position;
         _permissionRequested = true;
-        print('🌐 GEOLOCATION: Position GPS obtenue avec succès!');
+        // print('🌐 GEOLOCATION: Position GPS obtenue avec succès!');
         
         // Obtenir l'adresse à partir des coordonnées
         await _getAddressFromPosition(position);
         
         if (savePosition) {
-          print('💾 LOCATION SERVICE: Position sauvegardée dans le stockage local');
+          // print('💾 LOCATION SERVICE: Position sauvegardée dans le stockage local');
         }
         
         notifyListeners();

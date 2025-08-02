@@ -2,6 +2,7 @@ const express = require('express');
 const { body, validationResult, query } = require('express-validator');
 const User = require('../models/User');
 const Doctor = require('../models/Doctor');
+const Appointment = require('../models/Appointment');
 const DoctorRequest = require('../models/doctorRequest');
 const { authenticate, authorize, requireVerification } = require('../middleware/auth');
 const { uploadWithLogs } = require('../middleware/upload');
@@ -484,6 +485,8 @@ router.get('/profile', authenticate, authorize('doctor'), async (req, res) => {
   }
 });
 
+
+
 // @route   GET /api/doctors/check-role
 // @desc    Vérifier le rôle actuel de l'utilisateur
 // @access  Private
@@ -709,5 +712,75 @@ router.put('/schedule',
     }
   }
 );
+
+// @route   GET /api/doctors/me/patients
+// @desc    Récupérer les patients d'un médecin
+// @access  Private (Médecin)
+router.get('/me/patients', authenticate, authorize('doctor'), async (req, res) => {
+  try {
+    const doctor = await Doctor.findOne({ userId: req.user._id });
+    
+    if (!doctor) {
+      return res.status(404).json({ msg: 'Profil de médecin non trouvé' });
+    }
+
+    // Récupérer tous les rendez-vous confirmés ou terminés de ce médecin
+    const appointments = await Appointment.find({
+      doctor: doctor._id,
+      status: { $in: ['confirmed', 'completed'] }
+    })
+    .populate('patient', 'firstName lastName phone email dateOfBirth gender address')
+    .sort({ appointmentDate: -1 });
+
+    // Extraire les patients uniques avec leurs informations
+    const patientsMap = new Map();
+    
+    appointments.forEach(appointment => {
+      if (appointment.patient) {
+        const patientId = appointment.patient._id.toString();
+        
+        if (!patientsMap.has(patientId)) {
+          patientsMap.set(patientId, {
+            id: appointment.patient._id,
+            firstName: appointment.patient.firstName,
+            lastName: appointment.patient.lastName,
+            phone: appointment.patient.phone,
+            email: appointment.patient.email,
+            dateOfBirth: appointment.patient.dateOfBirth,
+            gender: appointment.patient.gender,
+            address: appointment.patient.address,
+            lastAppointment: appointment.appointmentDate,
+            totalAppointments: 1,
+            completedAppointments: appointment.status === 'completed' ? 1 : 0
+          });
+        } else {
+          // Mettre à jour les statistiques du patient
+          const existingPatient = patientsMap.get(patientId);
+          existingPatient.totalAppointments += 1;
+          if (appointment.status === 'completed') {
+            existingPatient.completedAppointments += 1;
+          }
+          // Garder la date du dernier rendez-vous
+          if (new Date(appointment.appointmentDate) > new Date(existingPatient.lastAppointment)) {
+            existingPatient.lastAppointment = appointment.appointmentDate;
+          }
+        }
+      }
+    });
+
+    // Convertir la Map en array
+    const patients = Array.from(patientsMap.values());
+
+    res.json({
+      success: true,
+      count: patients.length,
+      patients
+    });
+
+  } catch (err) {
+    console.error('Erreur lors de la récupération des patients:', err.message);
+    res.status(500).json({ msg: 'Erreur du serveur' });
+  }
+});
 
 module.exports = router;

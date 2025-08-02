@@ -59,7 +59,7 @@ class DoctorAppointmentsProvider with ChangeNotifier {
   /// Mettre à jour le statut d'un rendez-vous
   Future<void> updateAppointmentStatus(String appointmentId, String newStatus) async {
     try {
-      print('DEBUG: Updating appointment $appointmentId to status $newStatus');
+
       
       final response = await _apiService.put(
         '/appointments/$appointmentId/status',
@@ -74,14 +74,14 @@ class DoctorAppointmentsProvider with ChangeNotifier {
           notifyListeners();
         }
         
-        print('DEBUG: Successfully updated appointment status');
+
       } else {
         _setError('Impossible de mettre à jour le rendez-vous');
-        print('DEBUG: Failed to update appointment status: ${response.message}');
+
       }
     } catch (e) {
       _setError('Erreur lors de la mise à jour: $e');
-      print('DEBUG: Exception updating appointment status: $e');
+
     }
   }
 

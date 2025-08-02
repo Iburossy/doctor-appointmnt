@@ -18,6 +18,7 @@ import 'features/doctors/providers/doctors_provider.dart';
 import 'features/doctors/providers/doctor_profile_provider.dart';
 import 'features/doctors/providers/doctor_stats_provider.dart';
 import 'features/doctors/providers/doctor_appointments_provider.dart';
+import 'features/doctors/providers/doctor_patients_provider.dart';
 import 'features/appointments/providers/appointments_provider.dart';
 
 void main() async {
@@ -77,7 +78,7 @@ class DoctorsApp extends StatelessWidget {
           if (authProvider.isAuthenticated) {
             authProvider.checkCurrentRole().then((serverRole) {
               if (serverRole != null && serverRole != authProvider.user?.role) {
-                print('Role mismatch detected in periodic check! Refreshing user data...');
+                // print('Role mismatch detected in periodic check! Refreshing user data...');
                 authProvider.refreshUser();
               }
             });
@@ -98,6 +99,7 @@ class DoctorsApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => DoctorProfileProvider()),
         ChangeNotifierProvider(create: (_) => DoctorStatsProvider()),
         ChangeNotifierProvider(create: (_) => DoctorAppointmentsProvider()),
+        ChangeNotifierProvider(create: (_) => DoctorPatientsProvider()),
         ChangeNotifierProvider(create: (_) => AppointmentsProvider()),
       ],
       child: Builder(

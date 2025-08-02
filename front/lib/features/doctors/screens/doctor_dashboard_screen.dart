@@ -3,6 +3,7 @@ import '../../../core/theme/app_theme.dart';
 import 'doctor_profile_tab.dart';
 import 'doctor_dashboard_tabs.dart';
 import 'doctor_appointments_tab.dart';
+import 'doctor_patients_tab.dart';
 
 class DoctorDashboardScreen extends StatefulWidget {
   const DoctorDashboardScreen({super.key});

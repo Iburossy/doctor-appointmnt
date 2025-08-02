@@ -193,17 +193,17 @@ class AppRouter {
         final location = state.matchedLocation;
 
         // Debug logging
-        print('🔄 REDIRECT DEBUG: location=$location, isInit=$isInitialized, isAuth=$isLoggedIn, isOnboarded=$isOnboarded, role=${user?.role}');
+        // print('🔄 REDIRECT DEBUG: location=$location, isInit=$isInitialized, isAuth=$isLoggedIn, isOnboarded=$isOnboarded, role=${user?.role}');
 
         // Si l'initialisation n'est pas terminée, on attend
         if (!isInitialized) {
-          print('🔄 REDIRECT: Not initialized - waiting...');
+          //print('🔄 REDIRECT: Not initialized - waiting...');
           return null;
         }
 
         // 1. Priorité à l'onboarding
         if (!isOnboarded) {
-          print('🔄 REDIRECT: Not onboarded → onboarding');
+          // print('🔄 REDIRECT: Not onboarded → onboarding');
           return location == '/onboarding' ? null : '/onboarding';
         }
 
@@ -220,44 +220,44 @@ class AppRouter {
           if (!isPhoneVerified) {
             final isPhoneVerification = location.startsWith('/auth/verify-phone');
             if (!isPhoneVerification) {
-              print('🔄 REDIRECT: Authenticated but not verified user → phone verification');
+              // print('🔄 REDIRECT: Authenticated but not verified user → phone verification');
               return '/auth/verify-phone/${user?.phone ?? ''}';
             }
             // Si déjà sur la page de vérification, rester
-            print('🔄 REDIRECT: Staying on phone verification page');
+            // print('🔄 REDIRECT: Staying on phone verification page');
             return null;
           }
 
           // PRIORITÉ 2: Si l'utilisateur est vérifié et sur une page d'authentification, le rediriger
           if (isGoingToAuth) {
-            print('🔄 REDIRECT: Verified user on auth page → $correctHome');
+            // print('🔄 REDIRECT: Verified user on auth page → $correctHome');
             return correctHome;
           }
 
           // Si un docteur est sur la page d'accueil du patient, le rediriger
           if (isDoctor && location == '/home') {
-            print('🔄 REDIRECT: Doctor on patient home → $correctHome');
+            // print('🔄 REDIRECT: Doctor on patient home → $correctHome');
             return correctHome;
           }
 
           // Si un patient est sur le dashboard du docteur, le rediriger
           if (!isDoctor && location == '/doctor-dashboard') {
-            print('🔄 REDIRECT: Patient on doctor dashboard → $correctHome');
+            // print('🔄 REDIRECT: Patient on doctor dashboard → $correctHome');
             return correctHome;
           }
 
-          print('🔄 REDIRECT: Authenticated user, staying on $location');
+          // print('🔄 REDIRECT: Authenticated user, staying on $location');
         } else { 
           // 3. Si l'utilisateur n'est pas connecté et n'essaie pas d'accéder à une page d'auth, on le redirige vers le login
           if (!isGoingToAuth) {
-            print('🔄 REDIRECT: Not authenticated → login');
+            // print('🔄 REDIRECT: Not authenticated → login');
             return '/auth/login';
           }
-          print('🔄 REDIRECT: Not authenticated, staying on auth page $location');
+          // print('🔄 REDIRECT: Not authenticated, staying on auth page $location');
         }
 
         // Pas de redirection nécessaire
-        print('🔄 REDIRECT: No redirect needed for $location');
+        // print('🔄 REDIRECT: No redirect needed for $location');
         return null;
       },
       

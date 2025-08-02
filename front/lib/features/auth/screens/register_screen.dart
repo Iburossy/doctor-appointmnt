@@ -64,7 +64,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (success && mounted) {
       // Le routeur redirigera automatiquement vers la page de vérification téléphonique
       // car l'utilisateur est maintenant authentifié mais pas vérifié
-      print('✅ Inscription réussie - redirection automatique vers vérification téléphonique');
+      
     } else if (mounted) {
       _showErrorSnackBar(authProvider.error ?? 'Erreur lors de l\'inscription');
     }

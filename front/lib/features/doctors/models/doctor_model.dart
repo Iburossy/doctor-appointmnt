@@ -157,9 +157,7 @@ class DoctorModel {
 
   // Factory constructor from JSON
   factory DoctorModel.fromJson(Map<String, dynamic> json) {
-    print('--- [DEBUG] Parsing DoctorModel ---');
     void logField(String key, dynamic value) {
-      print('[DEBUG] Field: $key | Value: $value | Type: ${value.runtimeType}');
     }
 
     try {
@@ -288,12 +286,8 @@ class DoctorModel {
         createdAt: createdAt,
         updatedAt: updatedAt,
       );
-    } catch (e, s) {
-      print('--- [ERROR] Failed to parse DoctorModel ---');
-      print('Error: $e');
-      print('Stacktrace: $s');
-      print('Problematic JSON: $json');
-      print('-----------------------------------------');
+    } catch (e) {
+      // Log d'erreur désactivé pour la production
       rethrow;
     }
   }

@@ -52,7 +52,7 @@ class _DoctorScheduleScreenState extends State<DoctorScheduleScreen> {
   void _ensureDoctorProfileLoaded() {
     // Vérifier si le profil a déjà été chargé une fois pour éviter la boucle infinie
     if (_hasLoadedProfile) {
-      print('DEBUG: DoctorScheduleScreen - Profile already loaded, skipping refresh');
+      // print('DEBUG: DoctorScheduleScreen - Profile already loaded, skipping refresh');
       _loadDoctorSchedule(); // Charger quand même les horaires
       return;
     }
@@ -63,11 +63,14 @@ class _DoctorScheduleScreenState extends State<DoctorScheduleScreen> {
       // Marquer comme déjà chargé pour éviter les rechargements multiples
       _hasLoadedProfile = true;
       
-      print('DEBUG: DoctorScheduleScreen - Loading doctor profile (one-time)');
+      // print('DEBUG: DoctorScheduleScreen - Loading doctor profile (one-time)');
       // Forcer une actualisation complète du profil pour contourner le cache
       authProvider.refreshUser(forceFullRefresh: true).then((_) {
-        // Recharger les horaires après que le profil soit rechargé
-        _loadDoctorSchedule();
+        // Vérifier si le widget est encore monté avant de continuer
+        if (mounted) {
+          // Recharger les horaires après que le profil soit rechargé
+          _loadDoctorSchedule();
+        }
       });
     } else {
       // Si l'utilisateur n'est pas un médecin authentifié, charger quand même les horaires
@@ -76,6 +79,9 @@ class _DoctorScheduleScreenState extends State<DoctorScheduleScreen> {
   }
   
   void _loadDoctorSchedule() {
+    // Vérifier si le widget est encore monté avant d'accéder au contexte
+    if (!mounted) return;
+    
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final user = authProvider.user;
     
@@ -105,13 +111,16 @@ class _DoctorScheduleScreenState extends State<DoctorScheduleScreen> {
             final String startTime = dayData['startTime'] ?? '08:00';
             final String endTime = dayData['endTime'] ?? '17:00';
             
-            setState(() {
-              _schedule[frenchDay] = {
-                'isAvailable': isWorking,
-                'startTime': startTime,
-                'endTime': endTime
-              };
-            });
+            // Vérifier si le widget est encore monté avant setState
+            if (mounted) {
+              setState(() {
+                _schedule[frenchDay] = {
+                  'isAvailable': isWorking,
+                  'startTime': startTime,
+                  'endTime': endTime
+                };
+              });
+            }
           }
         });
       }
@@ -228,9 +237,11 @@ class _DoctorScheduleScreenState extends State<DoctorScheduleScreen> {
               Switch(
                 value: isAvailable,
                 onChanged: (value) {
-                  setState(() {
-                    _schedule[day]!['isAvailable'] = value;
-                  });
+                  if (mounted) {
+                    setState(() {
+                      _schedule[day]!['isAvailable'] = value;
+                    });
+                  }
                 },
                 activeColor: AppTheme.primaryColor,
               ),
@@ -454,40 +465,46 @@ class _DoctorScheduleScreenState extends State<DoctorScheduleScreen> {
       },
     );
 
-    if (picked != null) {
+    if (picked != null && mounted) {
       final formattedTime = '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
       onChanged(formattedTime);
     }
   }
 
   void _setWeekdaySchedule() {
-    setState(() {
-      for (int i = 0; i < 5; i++) { // Lundi à Vendredi
-        final day = _daysOfWeek[i];
-        _schedule[day]!['isAvailable'] = true;
-        _schedule[day]!['startTime'] = '08:00';
-        _schedule[day]!['endTime'] = '17:00';
-      }
-      // Weekend fermé
-      _schedule['Samedi']!['isAvailable'] = false;
-      _schedule['Dimanche']!['isAvailable'] = false;
-    });
+    if (mounted) {
+      setState(() {
+        for (int i = 0; i < 5; i++) { // Lundi à Vendredi
+          final day = _daysOfWeek[i];
+          _schedule[day]!['isAvailable'] = true;
+          _schedule[day]!['startTime'] = '08:00';
+          _schedule[day]!['endTime'] = '17:00';
+        }
+        // Weekend fermé
+        _schedule['Samedi']!['isAvailable'] = false;
+        _schedule['Dimanche']!['isAvailable'] = false;
+      });
+    }
   }
 
   void _clearAllSchedule() {
-    setState(() {
-      for (final day in _daysOfWeek) {
-        _schedule[day]!['isAvailable'] = false;
-      }
-    });
+    if (mounted) {
+      setState(() {
+        for (final day in _daysOfWeek) {
+          _schedule[day]!['isAvailable'] = false;
+        }
+      });
+    }
   }
 
   Future<void> _saveSchedule() async {
     if (_isLoading) return;
 
-    setState(() {
-      _isLoading = true;
-    });
+    if (mounted) {
+      setState(() {
+        _isLoading = true;
+      });
+    }
 
     // Récupérer le doctorId du profil utilisateur
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
@@ -506,9 +523,11 @@ class _DoctorScheduleScreenState extends State<DoctorScheduleScreen> {
         // Continuer avec le profil rechargé
         // (le code continuera après ce bloc)
       } catch (e) {
-        setState(() {
-          _isLoading = false;
-        });
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
         
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(

@@ -24,7 +24,6 @@ class _HomeScreenState extends State<HomeScreen> {
     // Initialisation différée de la géolocalisation pour éviter les erreurs
     // de setState pendant la construction
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      print('🏠 HOME SCREEN: Démarrage de la détection automatique GPS');
       final locationProvider = Provider.of<LocationProvider>(context, listen: false);
       locationProvider.initialize(autoDetect: true);
     });

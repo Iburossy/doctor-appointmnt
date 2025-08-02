@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import '../../../core/theme/app_theme.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/doctor_profile_provider.dart';
-import '../../auth/models/user_model.dart';
+import '../../auth/models/user_model.dart'; // Utilise ClinicInfo de user_model
 
 class EditDoctorProfileScreen extends StatefulWidget {
   const EditDoctorProfileScreen({super.key});
@@ -38,28 +38,7 @@ class _EditDoctorProfileScreenState extends State<EditDoctorProfileScreen> {
     'Mandinka',
   ];
 
-  final List<String> _specializations = [
-    'Médecine générale',
-    'Cardiologie',
-    'Dermatologie',
-    'Gynécologie',
-    'Pédiatrie',
-    'Orthopédie',
-    'Ophtalmologie',
-    'ORL',
-    'Neurologie',
-    'Psychiatrie',
-    'Radiologie',
-    'Anesthésie',
-    'Chirurgie générale',
-    'Urologie',
-    'Endocrinologie',
-    'Gastro-entérologie',
-    'Pneumologie',
-    'Rhumatologie',
-    'Oncologie',
-    'Médecine interne',
-  ];
+  // Liste des spécialisations supprimée car les champs sont en lecture seule
 
   @override
   void initState() {
@@ -92,9 +71,24 @@ class _EditDoctorProfileScreenState extends State<EditDoctorProfileScreen> {
         _licenseController.text = profile.medicalLicenseNumber ?? '';
         _experienceController.text = profile.yearsOfExperience?.toString() ?? '';
         
-        // Handle education which is now a List<dynamic>?
+        // Handle education - SÉCURITÉ: extraire seulement le degree, jamais les IDs
         if (profile.education != null && profile.education!.isNotEmpty) {
-          _educationController.text = profile.education!.first.toString();
+          final educationItem = profile.education!.first;
+          String safeEducationText = '';
+          
+          if (educationItem is Map<String, dynamic>) {
+            // SÉCURITÉ: Extraire UNIQUEMENT le champ degree, ignorer _id, id, etc.
+            final degree = educationItem['degree'];
+            if (degree != null && degree is String) {
+              // Nettoyer le texte pour éviter l'injection et les données sensibles
+              safeEducationText = degree.replaceAll(RegExp(r'[{}\[\]_id:,]'), '').trim();
+            }
+          } else if (educationItem is String) {
+            // Si c'est déjà une chaîne, la nettoyer aussi
+            safeEducationText = educationItem.replaceAll(RegExp(r'[{}\[\]_id:,]'), '').trim();
+          }
+          
+          _educationController.text = safeEducationText;
         }
         
         // Use clinic description instead of bio
@@ -125,16 +119,18 @@ class _EditDoctorProfileScreenState extends State<EditDoctorProfileScreen> {
 
     final provider = context.read<DoctorProfileProvider>();
     
+    // Créer l'objet ClinicInfo avec la structure correcte (user_model.dart)
     final clinicInfo = ClinicInfo(
       name: _clinicNameController.text.trim(),
       address: _clinicAddressController.text.trim(),
       phone: _clinicPhoneController.text.trim(),
-      location: null, // TODO: Add location picker
+      location: null, // TODO: Ajouter un sélecteur de localisation
     );
 
+    // Ne pas envoyer les champs sensibles (spécialisation et numéro d'ordre médical)
+    // pour des raisons de sécurité
     final success = await provider.updateDoctorProfile(
-      specialization: _specializationController.text.trim(),
-      licenseNumber: _licenseController.text.trim(),
+      // specialization et licenseNumber sont omis intentionnellement
       experienceYears: int.tryParse(_experienceController.text.trim()),
       education: _educationController.text.trim(),
       bio: _bioController.text.trim(),
@@ -215,10 +211,11 @@ class _EditDoctorProfileScreenState extends State<EditDoctorProfileScreen> {
               // Informations professionnelles
               _buildSectionTitle('Informations professionnelles'),
               
-              _buildDropdownField(
+              // Champ de spécialisation en lecture seule
+              _buildTextField(
                 controller: _specializationController,
                 label: 'Spécialisation',
-                items: _specializations,
+                readOnly: true,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Veuillez sélectionner une spécialisation';
@@ -229,9 +226,11 @@ class _EditDoctorProfileScreenState extends State<EditDoctorProfileScreen> {
               
               const SizedBox(height: 16),
               
+              // Numéro d'ordre médical en lecture seule
               _buildTextField(
                 controller: _licenseController,
                 label: 'Numéro d\'ordre médical',
+                readOnly: true,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Veuillez saisir votre numéro d\'ordre';
@@ -361,12 +360,15 @@ class _EditDoctorProfileScreenState extends State<EditDoctorProfileScreen> {
     TextInputType? keyboardType,
     int maxLines = 1,
     String? Function(String?)? validator,
+    bool readOnly = false,
   }) {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
       maxLines: maxLines,
       validator: validator,
+      readOnly: readOnly,
+      enabled: !readOnly,
       decoration: InputDecoration(
         labelText: label,
         hintText: hintText,
@@ -396,53 +398,7 @@ class _EditDoctorProfileScreenState extends State<EditDoctorProfileScreen> {
     );
   }
 
-  Widget _buildDropdownField({
-    required TextEditingController controller,
-    required String label,
-    required List<String> items,
-    String? Function(String?)? validator,
-  }) {
-    return DropdownButtonFormField<String>(
-      value: controller.text.isEmpty ? null : controller.text,
-      onChanged: (value) {
-        if (value != null) {
-          controller.text = value;
-        }
-      },
-      validator: validator,
-      decoration: InputDecoration(
-        labelText: label,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppTheme.borderColor),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppTheme.borderColor),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppTheme.primaryColor, width: 2),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.red),
-        ),
-        focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.red, width: 2),
-        ),
-        filled: true,
-        fillColor: Colors.grey.shade50,
-      ),
-      items: items.map((String item) {
-        return DropdownMenuItem<String>(
-          value: item,
-          child: Text(item),
-        );
-      }).toList(),
-    );
-  }
+  // Méthode de dropdown supprimée car les champs sensibles sont en lecture seule
 
   Widget _buildLanguageSelector() {
     return Container(

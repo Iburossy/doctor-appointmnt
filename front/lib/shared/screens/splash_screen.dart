@@ -53,19 +53,19 @@ class _SplashScreenState extends State<SplashScreen>
     final locationProvider = context.read<LocationProvider>();
 
     // Initialiser la détection de localisation immédiatement pour tous les utilisateurs
-    print('DEBUG: Splash - Starting automatic location detection');
+    // print('DEBUG: Splash - Starting automatic location detection');
     locationProvider.initialize(autoDetect: true);
 
     // Si l'utilisateur est déjà authentifié et initialisé, pas besoin de réinitialiser
     // GoRouter va s'occuper de la redirection automatiquement
     if (authProvider.isInitialized && authProvider.isAuthenticated) {
-      print('DEBUG: Splash - User already authenticated, letting GoRouter handle navigation');
+      // print('DEBUG: Splash - User already authenticated, letting GoRouter handle navigation');
       // Juste lancer l'animation et laisser GoRouter faire le reste
       await _animationController.forward().orCancel;
       return;
     }
 
-    print('DEBUG: Splash - Starting initialization for non-authenticated user');
+    // print('DEBUG: Splash - Starting initialization for non-authenticated user');
     
     // Lancer l'animation et l'initialisation en parallèle
     final animationFuture = _animationController.forward().orCancel;
