@@ -15,6 +15,7 @@ class DoctorScheduleScreen extends StatefulWidget {
 
 class _DoctorScheduleScreenState extends State<DoctorScheduleScreen> {
   bool _isLoading = false;
+  bool _hasLoadedProfile = false;
   final List<String> _daysOfWeek = [
     'Lundi',
     'Mardi',
@@ -39,17 +40,38 @@ class _DoctorScheduleScreenState extends State<DoctorScheduleScreen> {
   @override
   void initState() {
     super.initState();
-    _ensureDoctorProfileLoaded();
-    _loadDoctorSchedule();
+    // Assurer que le profil du médecin est chargé avant d'afficher les horaires
+    // Utiliser un délai court pour éviter les conflits avec d'autres chargements
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (mounted) {
+        _ensureDoctorProfileLoaded();
+      }
+    });
   }
   
   void _ensureDoctorProfileLoaded() {
+    // Vérifier si le profil a déjà été chargé une fois pour éviter la boucle infinie
+    if (_hasLoadedProfile) {
+      print('DEBUG: DoctorScheduleScreen - Profile already loaded, skipping refresh');
+      _loadDoctorSchedule(); // Charger quand même les horaires
+      return;
+    }
+    
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    if (authProvider.user?.doctorProfile == null && authProvider.isAuthenticated) {
-      authProvider.refreshUser().then((_) {
-        // Recharger les horaires après que le profil soit chargé
+    
+    if (authProvider.isAuthenticated && authProvider.isDoctor) {
+      // Marquer comme déjà chargé pour éviter les rechargements multiples
+      _hasLoadedProfile = true;
+      
+      print('DEBUG: DoctorScheduleScreen - Loading doctor profile (one-time)');
+      // Forcer une actualisation complète du profil pour contourner le cache
+      authProvider.refreshUser(forceFullRefresh: true).then((_) {
+        // Recharger les horaires après que le profil soit rechargé
         _loadDoctorSchedule();
       });
+    } else {
+      // Si l'utilisateur n'est pas un médecin authentifié, charger quand même les horaires
+      _loadDoctorSchedule();
     }
   }
   

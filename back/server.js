@@ -21,7 +21,8 @@ const corsOptions = {
   origin: function (origin, callback) {
     // `!origin` est utilisé pour autoriser les requêtes sans origine (ex: Postman, apps mobiles)
     if (whitelist.indexOf(origin) !== -1 || !origin) {
-      console.log(`CORS: Autorisation de l'origine ${origin}`);
+      const logMessage = origin ? `Autorisation de l'origine ${origin}` : "Autorisation pour une requête sans origine (ex: app mobile)";
+      console.log(`CORS: ${logMessage}`);
       callback(null, true);
     } else {
       console.error(`CORS: Blocage de l'origine ${origin}`);

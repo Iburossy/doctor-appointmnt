@@ -1,47 +1,58 @@
+import 'package:intl/intl.dart';
+
 class DoctorStatsModel {
   final int totalAppointments;
-  final int completedAppointments;
-  final int cancelledAppointments;
+  final int totalPatients;
+  final double monthlyIncome;
+  final double totalIncome;
   final double averageRating;
   final int totalReviews;
+  final String currency;
   final String? verificationStatus;
 
   DoctorStatsModel({
     this.totalAppointments = 0,
-    this.completedAppointments = 0,
-    this.cancelledAppointments = 0,
+    this.totalPatients = 0,
+    this.monthlyIncome = 0.0,
+    this.totalIncome = 0.0,
     this.averageRating = 0.0,
     this.totalReviews = 0,
+    this.currency = 'XOF',
     this.verificationStatus,
   });
 
   factory DoctorStatsModel.fromJson(Map<String, dynamic> json) {
     final stats = json['stats'] ?? {};
+    final monthlyIncomeData = stats['monthlyIncome'];
+
+    double income = 0.0;
+    if (monthlyIncomeData is Map<String, dynamic>) {
+        final currentMonth = new DateFormat('yyyy-MM').format(DateTime.now());
+        if (monthlyIncomeData['month'] == currentMonth) {
+            income = (monthlyIncomeData['amount'] ?? 0.0).toDouble();
+        }
+    }
+
     return DoctorStatsModel(
-      totalAppointments: stats['totalAppointments'] ?? 0,
-      completedAppointments: stats['completedAppointments'] ?? 0,
-      cancelledAppointments: stats['cancelledAppointments'] ?? 0,
+      totalAppointments: (stats['totalAppointments'] ?? 0).toInt(),
+      totalPatients: (stats['totalPatients'] ?? 0).toInt(),
+      monthlyIncome: income,
+      totalIncome: (stats['totalIncome'] ?? 0.0).toDouble(),
       averageRating: (stats['averageRating'] ?? 0.0).toDouble(),
-      totalReviews: stats['totalReviews'] ?? 0,
+      totalReviews: (stats['totalReviews'] ?? 0).toInt(),
+      currency: stats['currency'] ?? 'XOF',
       verificationStatus: json['verificationStatus'],
     );
   }
 
-  /// Calcule le nombre de patients vus (basé sur les rendez-vous terminés)
-  int get patientsCount => completedAppointments;
-  
-  /// Calcule les rendez-vous prévus aujourd'hui (dans ce cas, on utilise le total comme approximation)
-  int get todaysAppointments => totalAppointments - completedAppointments - cancelledAppointments;
-  
-  /// Retourne la note moyenne formatée sur 5
+  // TODO: Ces getters pourraient être améliorés pour refléter des données plus précises
+  int get patientsCount => totalPatients;
+  int get todaysAppointments => 0; // Cette donnée n'est pas fournie par l'API pour l'instant
+
   String get ratingText => '${averageRating.toStringAsFixed(1)}/5';
-  
-  /// Calcule un revenu approximatif basé sur le nombre de consultations terminées
-  /// (50€ par consultation en moyenne)
-  String get monthlyRevenue {
-    // On suppose que 60% des consultations totales sont pour le mois en cours
-    int estimatedMonthlyAppointments = (completedAppointments * 0.6).round();
-    int revenue = estimatedMonthlyAppointments * 50;
-    return '${revenue.toString()}€';
+
+  String get formattedMonthlyIncome {
+    final format = NumberFormat.currency(locale: 'fr_SN', symbol: currency, decimalDigits: 0);
+    return format.format(monthlyIncome);
   }
 }

@@ -580,7 +580,7 @@ router.put('/me', authenticate, authorize('doctor'), async (req, res) => {
 router.get('/me/stats', authenticate, authorize('doctor'), async (req, res) => {
   try {
     const doctor = await Doctor.findOne({ userId: req.user._id })
-      .select('stats verificationStatus');
+      .select('stats verificationStatus currency');
 
     if (!doctor) {
       return res.status(404).json({ error: 'Profil médecin non trouvé' });

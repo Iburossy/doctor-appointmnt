@@ -8,6 +8,9 @@ import '../../../core/services/notification_service.dart';
 import '../models/user_model.dart';
 
 class AuthProvider with ChangeNotifier {
+  // Mécanisme anti-boucle infinie
+  DateTime? _lastRefreshTime;
+  static const _minimumRefreshInterval = Duration(seconds: 3); // empêcher les rafraîchissements fréquents
   late final ApiService _apiService;
   
   UserModel? _user;
@@ -360,11 +363,29 @@ class AuthProvider with ChangeNotifier {
   }
   
   // Refresh user data with improved role synchronization
-  Future<void> refreshUser() async {
+  Future<void> refreshUser({bool forceFullRefresh = false}) async {
     if (_isAuthenticated) {
+      // Vérifier si un rafraîchissement a été effectué récemment
+      final now = DateTime.now();
+      if (_lastRefreshTime != null) {
+        final timeSinceLastRefresh = now.difference(_lastRefreshTime!);
+        if (timeSinceLastRefresh < _minimumRefreshInterval) {
+          print('DEBUG: Ignoring refresh request - throttled (${timeSinceLastRefresh.inMilliseconds}ms < ${_minimumRefreshInterval.inMilliseconds}ms)');
+          return; // Ignorer cette requête de rafraîchissement
+        }
+      }
+      
+      // Mettre à jour le timestamp du dernier rafraîchissement
+      _lastRefreshTime = now;
       _setLoading(true);
       
       try {
+        if (forceFullRefresh) {
+          print('DEBUG: Force refreshing user data with cache bypass');
+          await _getCurrentUser(forceFullRefresh: true);
+          return;
+        }
+        
         // Vérifier d'abord explicitement le rôle actuel via l'endpoint dédié
         final roleCheck = await _apiService.checkCurrentRole();
         if (roleCheck.isSuccess && roleCheck.data != null) {

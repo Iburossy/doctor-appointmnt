@@ -19,6 +19,7 @@ class AppointmentModel {
   final PaymentInfo? paymentInfo;
   final ReviewModel? review;
   final DoctorModel? doctorInfo; // Populated doctor information
+  final dynamic patient; // Patient information
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -41,6 +42,7 @@ class AppointmentModel {
     this.paymentInfo,
     this.review,
     this.doctorInfo,
+    this.patient,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -267,7 +269,11 @@ class AppointmentModel {
     final doctorInfoObj = doctorData != null
         ? DoctorModel.fromJson(doctorData)
         : (jsonCopy['doctorInfo'] != null ? DoctorModel.fromJson(jsonCopy['doctorInfo']) : null);
-    print('[DEBUG] doctorInfo = $doctorInfoObj (${doctorInfoObj?.runtimeType})');
+    print('[DEBUG] doctorInfo = $doctorInfoObj (${doctorInfoObj?.runtimeType})');    
+    
+    print('[DEBUG] Traitement du champ patient');
+    final patientObj = patientData ?? jsonCopy['patient'];
+    print('[DEBUG] patient = $patientObj (${patientObj?.runtimeType})');
     
     print('[DEBUG] Traitement du champ createdAt');
     final createdAt = jsonCopy['createdAt'] != null ? DateTime.parse(jsonCopy['createdAt']) : DateTime.now();
@@ -297,6 +303,7 @@ class AppointmentModel {
       paymentInfo: paymentInfoObj,
       review: reviewObj,
       doctorInfo: doctorInfoObj,
+      patient: patientObj,
       createdAt: createdAt,
       updatedAt: updatedAt,
     );
@@ -328,6 +335,7 @@ class AppointmentModel {
       'paymentInfo': paymentInfo?.toJson(),
       'review': review?.toJson(),
       'doctorInfo': doctorInfo?.toJson(),
+      'patient': patient,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
     };
@@ -353,6 +361,7 @@ class AppointmentModel {
     PaymentInfo? paymentInfo,
     ReviewModel? review,
     DoctorModel? doctorInfo,
+    dynamic patient,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -375,6 +384,7 @@ class AppointmentModel {
       paymentInfo: paymentInfo ?? this.paymentInfo,
       review: review ?? this.review,
       doctorInfo: doctorInfo ?? this.doctorInfo,
+      patient: patient ?? this.patient,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

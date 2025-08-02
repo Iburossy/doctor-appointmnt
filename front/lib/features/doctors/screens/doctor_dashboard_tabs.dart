@@ -5,17 +5,42 @@ import '../../auth/providers/auth_provider.dart';
 import '../providers/doctor_stats_provider.dart';
 
 // Classe pour l'onglet d'accueil
-class DoctorHomeTab extends StatelessWidget {
+class DoctorHomeTab extends StatefulWidget {
   const DoctorHomeTab({super.key});
 
+  @override
+  State<DoctorHomeTab> createState() => _DoctorHomeTabState();
+}
+
+class _DoctorHomeTabState extends State<DoctorHomeTab> {
+  bool _hasTriggeredRefresh = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Exécuter une seule fois après le premier build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadDoctorProfileOnce();
+    });
+  }
+  
+  Future<void> _loadDoctorProfileOnce() async {
+    // S'assurer que cette méthode n'est exécutée qu'une seule fois par cycle de vie du widget
+    if (!_hasTriggeredRefresh) {
+      setState(() => _hasTriggeredRefresh = true);
+      
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      if (authProvider.isAuthenticated && authProvider.isDoctor) {
+        print('DEBUG: DoctorHomeTab - Loading doctor profile (one-time)');
+        await authProvider.refreshUser(forceFullRefresh: true);
+      }
+    }
+  }
+  
   @override
   Widget build(BuildContext context) {
     return Consumer<AuthProvider>(
       builder: (context, authProvider, child) {
-        // Forcer le chargement du profil médecin si pas encore chargé
-        if (authProvider.user?.doctorProfile == null && authProvider.isAuthenticated) {
-          Future.microtask(() => authProvider.refreshUser());
-        }
         
         final user = authProvider.user;
         final doctorProfile = user?.doctorProfile;
@@ -57,6 +82,10 @@ class DoctorHomeTab extends StatelessWidget {
   }
 
   Widget _buildDoctorHeader(String doctorName, String? specialization) {
+    // Ajouter des logs pour debug
+    print('DEBUG: DoctorHomeTab - Displaying header with name: $doctorName');
+    print('DEBUG: DoctorHomeTab - Specialization: $specialization');
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -76,17 +105,17 @@ class DoctorHomeTab extends StatelessWidget {
             color: AppTheme.textPrimaryColor,
           ),
         ),
-        if (specialization != null) ...[
-          const SizedBox(height: 4),
-          Text(
-            specialization,
-            style: TextStyle(
-              fontSize: 16,
-              color: AppTheme.textSecondary,
-              fontStyle: FontStyle.italic,
-            ),
+        // Toujours afficher une spécialité, même générique si celle du médecin est manquante
+        const SizedBox(height: 4),
+        Text(
+          specialization ?? 'Médecin',
+          style: TextStyle(
+            fontSize: 16,
+            color: AppTheme.textSecondary,
+            fontStyle: FontStyle.italic,
           ),
-        ],
+        ),
+        
         const SizedBox(height: 16),
         Container(
           padding: const EdgeInsets.all(16),
@@ -223,8 +252,8 @@ class DoctorHomeTab extends StatelessWidget {
                 Expanded(
                   child: _buildStatCard(
                     'Revenus du mois',
-                    stats?.monthlyRevenue ?? '0€',
-                    Icons.euro,
+                    stats?.formattedMonthlyIncome ?? '0 XOF',
+                    Icons.monetization_on,
                     Colors.green,
                   ),
                 ),
@@ -430,98 +459,7 @@ class DoctorHomeTab extends StatelessWidget {
   }
 }
 
-// Classe pour l'onglet des rendez-vous
-class DoctorAppointmentsTab extends StatelessWidget {
-  const DoctorAppointmentsTab({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Mes rendez-vous',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.textPrimaryColor,
-              ),
-            ),
-            const SizedBox(height: 24),
-            // Filtres par statut
-            Row(
-              children: [
-                Expanded(
-                  child: _buildFilterChip('Tous', true),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: _buildFilterChip('En attente', false),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: _buildFilterChip('Confirmés', false),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-            // Liste des rendez-vous (placeholder)
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade50,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppTheme.borderColor),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.calendar_today_outlined,
-                    size: 64,
-                    color: AppTheme.textSecondary.withAlpha(128),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Aucun rendez-vous',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.textSecondary,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Les rendez-vous apparaîtront ici',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: AppTheme.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFilterChip(String label, bool isSelected) {
-    return FilterChip(
-      label: Text(label),
-      selected: isSelected,
-      onSelected: (bool selected) {
-        // TODO: Implémenter la logique de filtrage
-      },
-      selectedColor: AppTheme.primaryColor.withAlpha(51),
-      checkmarkColor: AppTheme.primaryColor,
-    );
-  }
-}
+// L'onglet des rendez-vous est maintenant dans un fichier séparé : doctor_appointments_tab.dart
 
 // Classe pour l'onglet des patients
 class DoctorPatientsTab extends StatelessWidget {

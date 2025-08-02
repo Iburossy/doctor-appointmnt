@@ -185,6 +185,163 @@ router.post('/', authenticate, requireVerification, [
   }
 });
 
+// @route   GET /api/appointments/doctor/my-appointments
+// @desc    Récupérer les rendez-vous pour le médecin connecté
+// @access  Private (Médecin)
+router.get('/doctor/my-appointments', authenticate, authorize('doctor'), async (req, res) => {
+  try {
+    // 1. Trouver le profil du médecin associé à l'utilisateur connecté
+    const doctorProfile = await Doctor.findOne({ userId: req.user._id });
+
+    if (!doctorProfile) {
+      console.log(`Aucun profil médecin trouvé pour l'utilisateur : ${req.user._id}`);
+      return res.status(404).json({ error: 'Profil médecin non trouvé.' });
+    }
+
+    // 2. Récupérer tous les rendez-vous pour ce médecin
+    const appointments = await Appointment.find({ doctor: doctorProfile._id })
+      .populate({
+        path: 'patient',
+        select: 'firstName lastName email phone profilePicture dateOfBirth gender' // Champs utiles pour l'affichage
+      })
+      .sort({ appointmentDate: -1, appointmentTime: -1 }); // Trier par date et heure décroissantes
+
+    // 3. Envoyer la réponse
+    res.json({
+      message: `${appointments.length} rendez-vous récupérés avec succès.`,
+      appointments
+    });
+
+  } catch (error) {
+    console.error('Erreur lors de la récupération des rendez-vous du médecin:', error);
+    res.status(500).json({ error: 'Erreur serveur lors de la récupération des rendez-vous.' });
+  }
+});
+
+// @route   PUT /api/appointments/:id/status
+// @desc    Mettre à jour le statut d'un rendez-vous (par le médecin)
+// @access  Private (Médecin)
+router.put('/:id/status', authenticate, authorize('doctor'), [
+  body('status')
+    .trim()
+    .isIn(['confirmed', 'cancelled', 'completed', 'rejected', 'pending'])
+    .withMessage('Le statut fourni est invalide.')
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ error: 'Données de statut invalides', details: errors.array() });
+  }
+
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    const doctorUserId = req.user._id;
+
+    // 1. Trouver le profil du médecin pour obtenir son ID de document Doctor
+    const doctorProfile = await Doctor.findOne({ userId: doctorUserId });
+    if (!doctorProfile) {
+      return res.status(403).json({ error: 'Profil médecin non trouvé pour cet utilisateur.' });
+    }
+
+    // 2. Trouver le rendez-vous et vérifier que le médecin est le bon
+    const appointment = await Appointment.findById(id);
+    if (!appointment) {
+      return res.status(404).json({ error: 'Rendez-vous non trouvé.' });
+    }
+
+    // 3. Vérifier que le médecin connecté est bien celui du rendez-vous
+    // On compare l'ID stocké dans le rdv (appointment.doctor._id) avec l'ID du profil du médecin connecté.
+    if (appointment.doctor._id.toString() !== doctorProfile._id.toString()) {
+      return res.status(403).json({ error: 'Action non autorisée. Vous n\'êtes pas le médecin pour ce rendez-vous.' });
+    }
+
+    // 4. Mettre à jour le statut
+    appointment.status = status;
+
+    // S'assurer que le tableau history existe avant de push
+    if (!Array.isArray(appointment.history)) {
+        appointment.history = [];
+    }
+    
+    appointment.history.push({
+      status,
+      updatedBy: 'doctor',
+      timestamp: new Date(),
+      notes: `Statut mis à jour à '${status}' par le médecin.`
+    });
+
+    await appointment.save();
+
+    // Si le statut est 'completed', mettre à jour les statistiques du médecin
+    if (status === 'completed') {
+      try {
+        // On a déjà le doctorProfile de la vérification d'autorisation
+        const doctor = doctorProfile;
+
+        // Initialiser l'objet stats s'il n'existe pas
+        if (!doctor.stats) {
+          doctor.stats = {
+            totalAppointments: 0,
+            totalPatients: 0,
+            monthlyIncome: 0,
+            totalIncome: 0,
+            averageRating: 0,
+            totalReviews: 0,
+          };
+        }
+
+        const appointmentAmount = appointment.payment && typeof appointment.payment.amount === 'number' ? appointment.payment.amount : 0;
+
+        // Mise à jour des statistiques
+        doctor.stats.totalAppointments = (doctor.stats.totalAppointments || 0) + 1;
+        doctor.stats.totalIncome = (doctor.stats.totalIncome || 0) + appointmentAmount;
+
+        // Gestion des revenus mensuels
+        const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
+        if (doctor.stats.monthlyIncome && typeof doctor.stats.monthlyIncome === 'object' && doctor.stats.monthlyIncome.month === currentMonth) {
+          doctor.stats.monthlyIncome.amount = (doctor.stats.monthlyIncome.amount || 0) + appointmentAmount;
+        } else {
+          // Nouveau mois ou première fois
+          doctor.stats.monthlyIncome = {
+            month: currentMonth,
+            amount: appointmentAmount
+          };
+        }
+
+        // Vérifier si c'est un nouveau patient pour ce médecin
+        const existingAppointmentsWithPatient = await Appointment.countDocuments({
+          doctor: doctor._id,
+          patient: appointment.patient,
+          status: 'completed',
+          _id: { $ne: appointment._id } // Exclure le rdv actuel
+        });
+
+        if (existingAppointmentsWithPatient === 0) {
+          doctor.stats.totalPatients = (doctor.stats.totalPatients || 0) + 1;
+        }
+        
+        await doctor.save();
+
+      } catch (statsError) {
+        console.error('Erreur lors de la mise à jour des statistiques du médecin:', statsError);
+        // On ne bloque pas la réponse principale pour une erreur de stats
+      }
+    }
+
+    // 5. Renvoyer le rendez-vous mis à jour (populé)
+    await appointment.populate([
+        { path: 'patient', select: 'firstName lastName phone' },
+        { path: 'doctor', populate: { path: 'userId', select: 'firstName lastName' } }
+    ]);
+
+    res.json({ message: 'Statut du rendez-vous mis à jour avec succès.', appointment });
+
+  } catch (error) {
+    console.error('Erreur lors de la mise à jour du statut du rendez-vous:', error);
+    res.status(500).json({ error: 'Erreur serveur lors de la mise à jour du statut.' });
+  }
+});
+
 // @route   GET /api/appointments/:id
 // @desc    Obtenir les détails d'un rendez-vous
 // @access  Private

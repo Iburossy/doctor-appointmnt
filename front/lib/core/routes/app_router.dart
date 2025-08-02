@@ -20,6 +20,8 @@ import '../../features/profile/screens/profile_screen.dart';
 import '../../features/profile/screens/edit_profile_screen.dart';
 import '../../features/doctors/screens/doctor_upgrade_screen.dart';
 import '../../features/doctors/screens/doctor_schedule_screen.dart';
+import '../../features/doctors/screens/doctor_appointment_details_screen.dart';
+import '../../features/appointments/models/appointment_model.dart';
 
 import '../../shared/screens/error_screen.dart';
 
@@ -155,6 +157,20 @@ class AppRouter {
       path: '/doctor-upgrade',
       name: 'doctor-upgrade',
       builder: (context, state) => const DoctorUpgradeScreen(),
+    ),
+
+    // Doctor Appointment Details
+    GoRoute(
+      path: DoctorAppointmentDetailsScreen.routeName,
+      name: 'doctor-appointment-details',
+      builder: (context, state) {
+        final appointment = state.extra as AppointmentModel?;
+        if (appointment == null) {
+          // Gérer le cas où l'objet n'est pas passé, peut-être rediriger
+          return const ErrorScreen(error: 'Rendez-vous non trouvé');
+        }
+        return DoctorAppointmentDetailsScreen(appointment: appointment);
+      },
     ),
   ];
   

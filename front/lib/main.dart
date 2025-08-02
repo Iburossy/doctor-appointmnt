@@ -17,6 +17,7 @@ import 'features/location/providers/location_provider.dart';
 import 'features/doctors/providers/doctors_provider.dart';
 import 'features/doctors/providers/doctor_profile_provider.dart';
 import 'features/doctors/providers/doctor_stats_provider.dart';
+import 'features/doctors/providers/doctor_appointments_provider.dart';
 import 'features/appointments/providers/appointments_provider.dart';
 
 void main() async {
@@ -96,6 +97,7 @@ class DoctorsApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => DoctorsProvider()),
         ChangeNotifierProvider(create: (_) => DoctorProfileProvider()),
         ChangeNotifierProvider(create: (_) => DoctorStatsProvider()),
+        ChangeNotifierProvider(create: (_) => DoctorAppointmentsProvider()),
         ChangeNotifierProvider(create: (_) => AppointmentsProvider()),
       ],
       child: Builder(
