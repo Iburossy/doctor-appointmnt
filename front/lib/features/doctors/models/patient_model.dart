@@ -6,6 +6,7 @@ class PatientModel {
   final String? email;
   final DateTime? dateOfBirth;
   final String? gender;
+  final String? profilePicture;
   final Map<String, dynamic>? address;
   final DateTime? lastAppointment;
   final int totalAppointments;
@@ -19,6 +20,7 @@ class PatientModel {
     this.email,
     this.dateOfBirth,
     this.gender,
+    this.profilePicture,
     this.address,
     this.lastAppointment,
     this.totalAppointments = 0,
@@ -94,6 +96,7 @@ class PatientModel {
           ? DateTime.tryParse(json['dateOfBirth']) 
           : null,
       gender: json['gender'],
+      profilePicture: json['profilePicture'],
       address: json['address'] as Map<String, dynamic>?,
       lastAppointment: json['lastAppointment'] != null 
           ? DateTime.tryParse(json['lastAppointment']) 
@@ -112,6 +115,7 @@ class PatientModel {
       'email': email,
       'dateOfBirth': dateOfBirth?.toIso8601String(),
       'gender': gender,
+      'profilePicture': profilePicture,
       'address': address,
       'lastAppointment': lastAppointment?.toIso8601String(),
       'totalAppointments': totalAppointments,

@@ -1,6 +1,92 @@
-rien ne s'affiche,
-je rappel que l'ecran que tu vois son fichier est "doctor_appointmnts_tab.dart".
-les modification que t'as apporté son visible sur l'utilisateur ayant le role "doctor" tu peux ne pas apporter de modification sur "doctor_dashboard_screen.dart" car on allait le faire.
+sur l'ecran de detail de rendez-vous du patient, regler pour que le medecin puisse voir le genre et sexe du patient
 
-tu dois ajouter app bar dans le fichier "home_screen.dart" et sur le fichier "doctor_appointmnts_tab.dart" car ce dernier 
 
+
+
+
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<key>CFBundleDisplayName</key>
+	<string>Samarv</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>samarv</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>$(FLUTTER_BUILD_NAME)</string>
+	<key>CFBundleSignature</key>
+	<string>????</string>
+	<key>CFBundleVersion</key>
+	<string>$(FLUTTER_BUILD_NUMBER)</string>
+	<key>LSRequiresIPhoneOS</key>
+	<true/>
+	<key>UILaunchStoryboardName</key>
+	<string>LaunchScreen</string>
+	<key>UIMainStoryboardFile</key>
+	<string>Main</string>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+	<key>UISupportedInterfaceOrientations~ipad</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationPortraitUpsideDown</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+	<key>CADisableMinimumFrameDurationOnPhone</key>
+	<true/>
+	<key>UIApplicationSupportsIndirectInputEvents</key>
+	<true/>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Cette application a besoin d'accéder à votre position pour vous montrer les médecins à proximité et calculer les itinéraires.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Cette application a besoin d'accéder à votre position pour vous montrer les médecins à proximité et calculer les itinéraires.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>Cette application a besoin d'accéder à votre position pour vous montrer les médecins à proximité et calculer les itinéraires.</string>
+	<key>NSUserNotificationUsageDescription</key>
+	<string>Cette application a besoin d'envoyer des notifications pour vous rappeler vos rendez-vous médicaux et vous informer des mises à jour importantes.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+		<string>remote-notification</string>
+	</array>
+	<key>io.flutter.embedded_views_preview</key>
+	<true/>
+</dict>
+</plist>
+
+
+
+appleDelegate 
+
+
+import Flutter
+import UIKit
+import GoogleMaps
+
+@main
+@objc class AppDelegate: FlutterAppDelegate {
+  override func application(
+    _ application: UIApplication,
+    didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
+  ) -> Bool {
+    // TODO: Remplacer YOUR_API_KEY par votre clé API Google Maps
+    GMSServices.provideAPIKey("YOUR_API_KEY")
+    GeneratedPluginRegistrant.register(with: self)
+    return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+  }
+}

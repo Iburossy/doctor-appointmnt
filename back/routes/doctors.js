@@ -729,7 +729,7 @@ router.get('/me/patients', authenticate, authorize('doctor'), async (req, res) =
       doctor: doctor._id,
       status: { $in: ['confirmed', 'completed'] }
     })
-    .populate('patient', 'firstName lastName phone email dateOfBirth gender address')
+    .populate('patient', 'firstName lastName phone email dateOfBirth gender address profilePicture')
     .sort({ appointmentDate: -1 });
 
     // Extraire les patients uniques avec leurs informations
@@ -749,6 +749,7 @@ router.get('/me/patients', authenticate, authorize('doctor'), async (req, res) =
             dateOfBirth: appointment.patient.dateOfBirth,
             gender: appointment.patient.gender,
             address: appointment.patient.address,
+            profilePicture: appointment.patient.profilePicture,
             lastAppointment: appointment.appointmentDate,
             totalAppointments: 1,
             completedAppointments: appointment.status === 'completed' ? 1 : 0

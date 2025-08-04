@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Samarv</string>
+	<string>PROXIDOC</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -13,7 +13,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>samarv</string>
+	<string>PROXIDOC</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -45,5 +45,39 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	
+	<!-- Permissions pour la localisation GPS -->
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Cette application a besoin d'accéder à votre localisation pour trouver les médecins les plus proches de vous.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Cette application a besoin d'accéder à votre localisation pour trouver les médecins les plus proches de vous.</string>
+	
+	<!-- Permissions pour les notifications push -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+		<string>background-fetch</string>
+	</array>
+	
+	<!-- Configuration Firebase pour les notifications -->
+	<key>FirebaseAppDelegateProxyEnabled</key>
+	<false/>
+	
+	<!-- Clé API Google Maps (remplacez YOUR_API_KEY par votre vraie clé) -->
+	<key>GMSApiKey</key>
+	<string>AIzaSyCAmPMShcxxhCDSpSv3lD5Ioq98sDqeyYY</string>
+	
+	<!-- Configuration pour les URL schemes -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.example.proxidoc</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>proxidoc</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

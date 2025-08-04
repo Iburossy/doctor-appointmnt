@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../core/theme/app_theme.dart';
 import 'doctor_profile_tab.dart';
 import 'doctor_dashboard_tabs.dart';
 import 'doctor_appointments_tab.dart';
 import 'doctor_patients_tab.dart';
+import '../providers/doctor_appointments_provider.dart';
 
 class DoctorDashboardScreen extends StatefulWidget {
   const DoctorDashboardScreen({super.key});
@@ -45,7 +47,11 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
           IconButton(
             onPressed: () {
               // Trigger refresh for appointments tab
-              // This will be handled by the tab itself
+              final appointmentsProvider = Provider.of<DoctorAppointmentsProvider>(
+                context,
+                listen: false,
+              );
+              appointmentsProvider.loadDoctorAppointments(forceRefresh: true);
             },
             icon: const Icon(
               Icons.refresh,

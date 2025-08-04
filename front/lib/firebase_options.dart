@@ -69,6 +69,6 @@ class DefaultFirebaseOptions {
     messagingSenderId: '791080158746',
     projectId: 'iburossy-doctors-app',
     storageBucket: 'iburossy-doctors-app.firebasestorage.app',
-    iosBundleId: 'com.example.samarv',
+    iosBundleId: 'com.example.proxidoc',
   );
 }

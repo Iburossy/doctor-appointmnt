@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'doctor_appointment_details_screen.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/config/app_config.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../providers/doctor_appointments_provider.dart';
 import '../../appointments/models/appointment_model.dart';
@@ -42,37 +44,22 @@ class _DoctorAppointmentsTabState extends State<DoctorAppointmentsTab> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Mes rendez-vous',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: const Color(0xFF1976D2), // Couleur bleue similaire à celle du bouton "Votre santé est notre priorité"
-        actions: [
-          IconButton(
-            onPressed: () => _loadAppointments(forceRefresh: true),
-            icon: const Icon(Icons.refresh, color: Colors.white),
-          ),
-        ],
-      ),
-      body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: () async {
-            _loadAppointments(forceRefresh: true);
-          },
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Suppression de _buildHeader() car maintenant dans l'AppBar
-                _buildFilterTabs(),
-                const SizedBox(height: 24),
-                _buildAppointmentsList(),
-              ],
-            ),
+    return SafeArea(
+      child: RefreshIndicator(
+        onRefresh: () async {
+          _loadAppointments(forceRefresh: true);
+        },
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Suppression de _buildHeader() car maintenant dans l'AppBar
+              _buildFilterTabs(),
+              const SizedBox(height: 24),
+              _buildAppointmentsList(),
+            ],
           ),
         ),
       ),
@@ -85,7 +72,7 @@ class _DoctorAppointmentsTabState extends State<DoctorAppointmentsTab> {
     return Container(
       height: 50,
       decoration: BoxDecoration(
-        color: const Color.fromARGB(255, 17, 187, 179),
+        color: Colors.grey[100],
         borderRadius: BorderRadius.circular(25),
       ),
       child: Row(
@@ -276,6 +263,95 @@ class _DoctorAppointmentsTabState extends State<DoctorAppointmentsTab> {
     }
   }
 
+  String _getFullAvatarUrl(String? avatarPath) {
+    if (avatarPath == null || avatarPath.isEmpty) {
+      return '';
+    }
+
+    // Si l'URL est déjà complète, la retourner telle quelle
+    if (avatarPath.startsWith('http')) {
+      return avatarPath;
+    }
+
+    // Construire l'URL de base sans le segment '/api'
+    final baseUrl = AppConfig.baseUrl.replaceAll('/api', '');
+    
+    // Si le chemin commence par '/', l'utiliser tel quel
+    if (avatarPath.startsWith('/')) {
+      return '$baseUrl$avatarPath';
+    }
+    
+    // Si c'est juste le nom du fichier, ajouter le chemin uploads/avatars
+    if (!avatarPath.contains('/')) {
+      return '$baseUrl/uploads/avatars/$avatarPath';
+    }
+
+    // Correction pour extraire le chemin relatif si un chemin absolu Windows est fourni
+    const marker = 'uploads';
+    final index = avatarPath.indexOf(marker);
+    if (index != -1) {
+      avatarPath = avatarPath.substring(index).replaceAll('\\', '/');
+    }
+
+    return '$baseUrl/$avatarPath';
+  }
+
+  Widget _buildPatientAvatar(dynamic patient) {
+    // Extraire le profilePicture du patient
+    String? profilePicture;
+    if (patient is PatientModel) {
+      profilePicture = patient.profilePicture;
+    } else if (patient is Map<String, dynamic>) {
+      profilePicture = patient['profilePicture'];
+    }
+    
+    final avatarUrl = _getFullAvatarUrl(profilePicture);
+    if (avatarUrl.isNotEmpty) {
+      return ClipOval(
+        child: CachedNetworkImage(
+          imageUrl: avatarUrl,
+          width: 48,
+          height: 48,
+          fit: BoxFit.cover,
+          placeholder: (context, url) => CircleAvatar(
+            radius: 24,
+            backgroundColor: Color.fromARGB(255, 32, 160, 200).withValues(alpha: 0.1),
+            child: Text(
+              _getPatientInitials(patient),
+              style: const TextStyle(
+                color: Color.fromARGB(255, 32, 160, 200),
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          errorWidget: (context, url, error) => CircleAvatar(
+            radius: 24,
+            backgroundColor: Color.fromARGB(255, 32, 160, 200).withValues(alpha: 0.1),
+            child: Text(
+              _getPatientInitials(patient),
+              style: const TextStyle(
+                color: Color.fromARGB(255, 32, 160, 200),
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ),
+      );
+    } else {
+      return CircleAvatar(
+        radius: 24,
+        backgroundColor: Color.fromARGB(255, 32, 160, 200).withValues(alpha: 0.1),
+        child: Text(
+          _getPatientInitials(patient),
+          style: const TextStyle(
+            color: Color.fromARGB(255, 32, 160, 200),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      );
+    }
+  }
+
   Widget _buildAppointmentCard(AppointmentModel appointment) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -307,22 +383,7 @@ class _DoctorAppointmentsTabState extends State<DoctorAppointmentsTab> {
           const SizedBox(height: 12),
           Row(
             children: [
-              CircleAvatar(
-                radius: 24,
-                backgroundColor: Color.fromARGB(
-                  255,
-                  32,
-                  160,
-                  200,
-                ).withValues(alpha: 0.1),
-                child: Text(
-                  _getPatientInitials(appointment.patient),
-                  style: const TextStyle(
-                    color: Color.fromARGB(255, 32, 160, 200),
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
+              _buildPatientAvatar(appointment.patient),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(

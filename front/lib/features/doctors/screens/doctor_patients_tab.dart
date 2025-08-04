@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/config/app_config.dart';
 import '../providers/doctor_patients_provider.dart';
 import '../models/patient_model.dart';
 
@@ -289,6 +291,93 @@ class _DoctorPatientsTabState extends State<DoctorPatientsTab> {
     );
   }
 
+  String _getFullAvatarUrl(String? avatarPath) {
+    if (avatarPath == null || avatarPath.isEmpty) {
+      return '';
+    }
+
+    // Si l'URL est déjà complète, la retourner telle quelle
+    if (avatarPath.startsWith('http')) {
+      return avatarPath;
+    }
+
+    // Construire l'URL de base sans le segment '/api'
+    final baseUrl = AppConfig.baseUrl.replaceAll('/api', '');
+    
+    // Si le chemin commence par '/', l'utiliser tel quel
+    if (avatarPath.startsWith('/')) {
+      return '$baseUrl$avatarPath';
+    }
+    
+    // Si c'est juste le nom du fichier, ajouter le chemin uploads/avatars
+    if (!avatarPath.contains('/')) {
+      return '$baseUrl/uploads/avatars/$avatarPath';
+    }
+
+    // Correction pour extraire le chemin relatif si un chemin absolu Windows est fourni
+    const marker = 'uploads';
+    final index = avatarPath.indexOf(marker);
+    if (index != -1) {
+      avatarPath = avatarPath.substring(index).replaceAll('\\', '/');
+    }
+
+    return '$baseUrl/$avatarPath';
+  }
+
+  Widget _buildPatientAvatar(PatientModel patient) {
+    final avatarUrl = _getFullAvatarUrl(patient.profilePicture);
+    if (avatarUrl.isNotEmpty) {
+      return ClipOval(
+        child: CachedNetworkImage(
+          imageUrl: avatarUrl,
+          width: 40,
+          height: 40,
+          fit: BoxFit.cover,
+          placeholder: (context, url) => CircleAvatar(
+            radius: 20,
+            backgroundColor: const Color.fromARGB(255, 32, 160, 200),
+            child: Text(
+              patient.firstName.isNotEmpty 
+                  ? patient.firstName[0].toUpperCase() 
+                  : 'P',
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          errorWidget: (context, url, error) => CircleAvatar(
+            radius: 20,
+            backgroundColor: const Color.fromARGB(255, 32, 160, 200),
+            child: Text(
+              patient.firstName.isNotEmpty 
+                  ? patient.firstName[0].toUpperCase() 
+                  : 'P',
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ),
+      );
+    } else {
+      return CircleAvatar(
+        radius: 20,
+        backgroundColor: const Color.fromARGB(255, 32, 160, 200),
+        child: Text(
+          patient.firstName.isNotEmpty 
+              ? patient.firstName[0].toUpperCase() 
+              : 'P',
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      );
+    }
+  }
+
   Widget _buildPatientCard(PatientModel patient) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -301,18 +390,7 @@ class _DoctorPatientsTabState extends State<DoctorPatientsTab> {
           children: [
             Row(
               children: [
-                CircleAvatar(
-                  backgroundColor: const Color.fromARGB(255, 32, 160, 200),
-                  child: Text(
-                    patient.firstName.isNotEmpty 
-                        ? patient.firstName[0].toUpperCase() 
-                        : 'P',
-                    style: TextStyle(
-                      color: AppTheme.primaryColor,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
+                _buildPatientAvatar(patient),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
