@@ -221,7 +221,7 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
                   height: 32,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: isActive ? AppTheme.primaryColor : Colors.grey[300],
+                    color: isActive ? const Color.fromARGB(255, 33, 150, 243) : Colors.grey[300],
                   ),
                   child: Center(
                     child: isCompleted
@@ -239,7 +239,7 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
                   Expanded(
                     child: Container(
                       height: 2,
-                      color: isCompleted ? AppTheme.primaryColor : Colors.grey[300],
+                      color: isCompleted ? const Color.fromARGB(255, 33, 150, 243) : Colors.grey[300],
                       margin: const EdgeInsets.symmetric(horizontal: 8),
                     ),
                   ),
@@ -276,7 +276,7 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
                 children: [
                   CircleAvatar(
                     radius: 40,
-                    backgroundColor: AppTheme.primaryColor,
+                    backgroundColor: const Color.fromARGB(255, 33, 150, 243),
                     backgroundImage: _doctor!.avatar != null
                         ? NetworkImage(_doctor!.avatar!)
                         : null,
@@ -328,7 +328,7 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
                               ),
                             ),
                             const SizedBox(width: 16),
-                            const Icon(Icons.work, color: AppTheme.primaryColor, size: 16),
+                            Icon(Icons.work, color: Color.fromARGB(255, 33, 150, 243), size: 16),
                             const SizedBox(width: 4),
                             Flexible(
                               child: Text(
@@ -359,7 +359,7 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
               padding: const EdgeInsets.all(16),
               child: Row(
                 children: [
-                  const Icon(Icons.payment, color: AppTheme.primaryColor),
+                  Icon(Icons.payment, color: Color.fromARGB(255, 33, 150, 243)),
                   const SizedBox(width: 12),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -373,10 +373,10 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
                       ),
                       Text(
                         _doctor!.formattedFee,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: AppTheme.primaryColor,
+                          color: Color.fromARGB(255, 33, 150, 243),
                         ),
                       ),
                     ],
@@ -447,10 +447,10 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     decoration: BoxDecoration(
-                      color: isSelected ? AppTheme.primaryColor : Colors.grey[100],
+                      color: isSelected ? Color.fromARGB(255, 33, 150, 243) : Colors.grey[100],
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                        color: isSelected ? AppTheme.primaryColor : Colors.grey[300]!,
+                        color: isSelected ? Color.fromARGB(255, 33, 150, 243) : Colors.grey[300]!,
                       ),
                     ),
                     child: Text(
@@ -569,10 +569,10 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
               padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.check_circle_outline,
                     size: 64,
-                    color: AppTheme.primaryColor,
+                    color: Color.fromARGB(255, 33, 150, 243),
                   ),
                   const SizedBox(height: 16),
                   const Text(
@@ -653,7 +653,7 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
               style: TextStyle(
                 fontSize: isTotal ? 16 : 14,
                 fontWeight: isTotal ? FontWeight.bold : FontWeight.w500,
-                color: isTotal ? AppTheme.primaryColor : AppTheme.textPrimaryColor,
+                color: isTotal ? Color.fromARGB(255, 33, 150, 243) : AppTheme.textPrimaryColor,
               ),
             ),
           ),
@@ -689,7 +689,7 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
             child: ElevatedButton(
               onPressed: _currentStep == 3 ? _bookAppointment : _canProceedToNextStep() ? _nextStep : null,
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryColor,
+                backgroundColor: Color.fromARGB(255, 33, 150, 243),
                 foregroundColor: Colors.white,
               ),
               child: Text(_currentStep == 3 ? 'Confirmer' : 'Suivant'),

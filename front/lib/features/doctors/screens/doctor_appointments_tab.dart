@@ -6,6 +6,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../providers/doctor_appointments_provider.dart';
 import '../../appointments/models/appointment_model.dart';
+import '../../doctors/models/patient_model.dart';
 
 class DoctorAppointmentsTab extends StatefulWidget {
   const DoctorAppointmentsTab({super.key});
@@ -28,9 +29,12 @@ class _DoctorAppointmentsTabState extends State<DoctorAppointmentsTab> {
   }
 
   void _loadAppointments({bool forceRefresh = false}) {
-    final appointmentsProvider = Provider.of<DoctorAppointmentsProvider>(context, listen: false);
+    final appointmentsProvider = Provider.of<DoctorAppointmentsProvider>(
+      context,
+      listen: false,
+    );
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    
+
     if (authProvider.isAuthenticated && authProvider.isDoctor) {
       appointmentsProvider.loadDoctorAppointments(forceRefresh: forceRefresh);
     }
@@ -38,89 +42,90 @@ class _DoctorAppointmentsTabState extends State<DoctorAppointmentsTab> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: RefreshIndicator(
-        onRefresh: () async {
-          _loadAppointments(forceRefresh: true);
-        },
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildHeader(),
-              const SizedBox(height: 24),
-              _buildFilterTabs(),
-              const SizedBox(height: 24),
-              _buildAppointmentsList(),
-            ],
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text(
+          'Mes rendez-vous',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: const Color(0xFF1976D2), // Couleur bleue similaire à celle du bouton "Votre santé est notre priorité"
+        actions: [
+          IconButton(
+            onPressed: () => _loadAppointments(forceRefresh: true),
+            icon: const Icon(Icons.refresh, color: Colors.white),
+          ),
+        ],
+      ),
+      body: SafeArea(
+        child: RefreshIndicator(
+          onRefresh: () async {
+            _loadAppointments(forceRefresh: true);
+          },
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Suppression de _buildHeader() car maintenant dans l'AppBar
+                _buildFilterTabs(),
+                const SizedBox(height: 24),
+                _buildAppointmentsList(),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildHeader() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        const Text(
-          'Mes rendez-vous',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: AppTheme.textPrimaryColor,
-          ),
-        ),
-        IconButton(
-          onPressed: () => _loadAppointments(forceRefresh: true),
-          icon: const Icon(
-            Icons.refresh,
-            color: AppTheme.primaryColor,
-          ),
-        ),
-      ],
-    );
-  }
+  // La méthode _buildHeader a été supprimée car son contenu a été déplacé dans l'AppBar
 
   Widget _buildFilterTabs() {
     return Container(
       height: 50,
       decoration: BoxDecoration(
-        color: Colors.grey[100],
+        color: const Color.fromARGB(255, 17, 187, 179),
         borderRadius: BorderRadius.circular(25),
       ),
       child: Row(
-        children: _filters.map((filter) {
-          final isSelected = _selectedFilter == filter;
-          return Expanded(
-            child: GestureDetector(
-              onTap: () {
-                setState(() {
-                  _selectedFilter = filter;
-                });
-              },
-              child: Container(
-                margin: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: isSelected ? AppTheme.primaryColor : Colors.transparent,
-                  borderRadius: BorderRadius.circular(21),
-                ),
-                child: Center(
-                  child: Text(
-                    filter,
-                    style: TextStyle(
-                      color: isSelected ? Colors.white : AppTheme.textSecondary,
-                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                      fontSize: 14,
+        children:
+            _filters.map((filter) {
+              final isSelected = _selectedFilter == filter;
+              return Expanded(
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _selectedFilter = filter;
+                    });
+                  },
+                  child: Container(
+                    margin: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color:
+                          isSelected
+                              ? Color.fromARGB(255, 32, 160, 200)
+                              : Colors.transparent,
+                      borderRadius: BorderRadius.circular(21),
+                    ),
+                    child: Center(
+                      child: Text(
+                        filter,
+                        style: TextStyle(
+                          color:
+                              isSelected
+                                  ? Colors.white
+                                  : AppTheme.textSecondary,
+                          fontWeight:
+                              isSelected ? FontWeight.w600 : FontWeight.normal,
+                          fontSize: 14,
+                        ),
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ),
-          );
-        }).toList(),
+              );
+            }).toList(),
       ),
     );
   }
@@ -136,22 +141,27 @@ class _DoctorAppointmentsTabState extends State<DoctorAppointmentsTab> {
           return _buildErrorState(appointmentsProvider.error!);
         }
 
-        final filteredAppointments = _getFilteredAppointments(appointmentsProvider.appointments);
+        final filteredAppointments = _getFilteredAppointments(
+          appointmentsProvider.appointments,
+        );
 
         if (filteredAppointments.isEmpty) {
           return _buildEmptyState();
         }
 
         return Column(
-          children: filteredAppointments.map((appointment) {
-            return _buildAppointmentCard(appointment);
-          }).toList(),
+          children:
+              filteredAppointments.map((appointment) {
+                return _buildAppointmentCard(appointment);
+              }).toList(),
         );
       },
     );
   }
 
-  List<AppointmentModel> _getFilteredAppointments(List<AppointmentModel> appointments) {
+  List<AppointmentModel> _getFilteredAppointments(
+    List<AppointmentModel> appointments,
+  ) {
     switch (_selectedFilter) {
       case 'En attente':
         return appointments.where((apt) => apt.status == 'pending').toList();
@@ -167,7 +177,9 @@ class _DoctorAppointmentsTabState extends State<DoctorAppointmentsTab> {
       child: Padding(
         padding: EdgeInsets.all(32.0),
         child: CircularProgressIndicator(
-          valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
+          valueColor: AlwaysStoppedAnimation<Color>(
+            Color.fromARGB(255, 32, 160, 200),
+          ),
         ),
       ),
     );
@@ -179,11 +191,7 @@ class _DoctorAppointmentsTabState extends State<DoctorAppointmentsTab> {
         padding: const EdgeInsets.all(32.0),
         child: Column(
           children: [
-            const Icon(
-              Icons.error_outline,
-              size: 64,
-              color: Colors.red,
-            ),
+            const Icon(Icons.error_outline, size: 64, color: Colors.red),
             const SizedBox(height: 16),
             Text(
               'Erreur de chargement',
@@ -197,16 +205,13 @@ class _DoctorAppointmentsTabState extends State<DoctorAppointmentsTab> {
             Text(
               error,
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                color: AppTheme.textSecondary,
-              ),
+              style: TextStyle(fontSize: 14, color: AppTheme.textSecondary),
             ),
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: _loadAppointments,
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryColor,
+                backgroundColor: Color.fromARGB(255, 32, 160, 200),
                 foregroundColor: Colors.white,
               ),
               child: const Text('Réessayer'),
@@ -241,10 +246,7 @@ class _DoctorAppointmentsTabState extends State<DoctorAppointmentsTab> {
             Text(
               _getEmptyStateMessage(),
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                color: AppTheme.textSecondary,
-              ),
+              style: TextStyle(fontSize: 14, color: AppTheme.textSecondary),
             ),
           ],
         ),
@@ -298,10 +300,7 @@ class _DoctorAppointmentsTabState extends State<DoctorAppointmentsTab> {
               _buildStatusBadge(appointment.status),
               Text(
                 _formatDate(appointment.appointmentDate),
-                style: TextStyle(
-                  fontSize: 12,
-                  color: AppTheme.textSecondary,
-                ),
+                style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
               ),
             ],
           ),
@@ -310,11 +309,16 @@ class _DoctorAppointmentsTabState extends State<DoctorAppointmentsTab> {
             children: [
               CircleAvatar(
                 radius: 24,
-                backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
+                backgroundColor: Color.fromARGB(
+                  255,
+                  32,
+                  160,
+                  200,
+                ).withValues(alpha: 0.1),
                 child: Text(
                   _getPatientInitials(appointment.patient),
                   style: const TextStyle(
-                    color: AppTheme.primaryColor,
+                    color: Color.fromARGB(255, 32, 160, 200),
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -393,7 +397,7 @@ class _DoctorAppointmentsTabState extends State<DoctorAppointmentsTab> {
                   child: ElevatedButton(
                     onPressed: () => _confirmAppointment(appointment),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primaryColor,
+                      backgroundColor: const Color(0xFF1976D2), // Couleur bleue similaire à celle du bouton "Votre santé est notre priorité"
                       foregroundColor: Colors.white,
                     ),
                     child: const Text('Confirmer'),
@@ -404,8 +408,10 @@ class _DoctorAppointmentsTabState extends State<DoctorAppointmentsTab> {
                   child: OutlinedButton(
                     onPressed: () => _viewAppointmentDetails(appointment),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: AppTheme.primaryColor,
-                      side: const BorderSide(color: AppTheme.primaryColor),
+                      foregroundColor: Color.fromARGB(255, 32, 160, 200),
+                      side: const BorderSide(
+                        color: Color.fromARGB(255, 32, 160, 200),
+                      ),
                     ),
                     child: const Text('Voir détails'),
                   ),
@@ -421,7 +427,7 @@ class _DoctorAppointmentsTabState extends State<DoctorAppointmentsTab> {
   Widget _buildStatusBadge(String status) {
     Color color;
     String text;
-    
+
     switch (status) {
       case 'pending':
         color = Colors.orange;
@@ -464,7 +470,7 @@ class _DoctorAppointmentsTabState extends State<DoctorAppointmentsTab> {
   String _formatDate(DateTime date) {
     final now = DateTime.now();
     final difference = date.difference(now).inDays;
-    
+
     if (difference == 0) {
       return 'Aujourd\'hui';
     } else if (difference == 1) {
@@ -477,58 +483,66 @@ class _DoctorAppointmentsTabState extends State<DoctorAppointmentsTab> {
   }
 
   String _getPatientInitials(dynamic patient) {
-    if (patient == null) return '?';
-    
-    final firstName = patient['firstName'] ?? '';
-    final lastName = patient['lastName'] ?? '';
-    
-    return '${firstName.isNotEmpty ? firstName[0].toUpperCase() : ''}${lastName.isNotEmpty ? lastName[0].toUpperCase() : ''}';
+    if (patient is PatientModel) {
+      return patient.initials;
+    }
+    return '?';
   }
 
   String _getPatientName(dynamic patient) {
-    if (patient == null) return 'Patient inconnu';
-    
-    final firstName = patient['firstName'] ?? '';
-    final lastName = patient['lastName'] ?? '';
-    
-    return '$firstName $lastName'.trim();
+    if (patient is PatientModel) {
+      return patient.fullName;
+    }
+    return 'Patient inconnu';
   }
 
   void _confirmAppointment(AppointmentModel appointment) {
-    final appointmentsProvider = Provider.of<DoctorAppointmentsProvider>(context, listen: false);
+    final appointmentsProvider = Provider.of<DoctorAppointmentsProvider>(
+      context,
+      listen: false,
+    );
     appointmentsProvider.updateAppointmentStatus(appointment.id, 'confirmed');
   }
 
   void _rejectAppointment(AppointmentModel appointment) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Refuser le rendez-vous'),
-        content: const Text('Êtes-vous sûr de vouloir refuser ce rendez-vous ?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Annuler'),
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Refuser le rendez-vous'),
+            content: const Text(
+              'Êtes-vous sûr de vouloir refuser ce rendez-vous ?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Annuler'),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  final appointmentsProvider =
+                      Provider.of<DoctorAppointmentsProvider>(
+                        context,
+                        listen: false,
+                      );
+                  appointmentsProvider.updateAppointmentStatus(
+                    appointment.id,
+                    'cancelled',
+                  );
+                },
+                style: TextButton.styleFrom(foregroundColor: Colors.red),
+                child: const Text('Refuser'),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              final appointmentsProvider = Provider.of<DoctorAppointmentsProvider>(context, listen: false);
-              appointmentsProvider.updateAppointmentStatus(appointment.id, 'cancelled');
-            },
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Refuser'),
-          ),
-        ],
-      ),
     );
   }
 
   void _viewAppointmentDetails(AppointmentModel appointment) {
     // Naviguer vers l'écran de détails en passant l'objet rendez-vous
-    GoRouter.of(context).push(
-      DoctorAppointmentDetailsScreen.routeName,
-      extra: appointment,
-    );
+    GoRouter.of(
+      context,
+    ).push(DoctorAppointmentDetailsScreen.routeName, extra: appointment);
   }
 }

@@ -6,6 +6,7 @@ import '../../auth/providers/auth_provider.dart';
 import '../../doctors/screens/doctors_search_screen.dart';
 import '../../profile/screens/profile_screen.dart';
 import '../../location/providers/location_provider.dart';
+import '../../appointments/screens/patient_appointments_tab.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -32,14 +33,45 @@ class _HomeScreenState extends State<HomeScreen> {
   final List<Widget> _pages = [
     const _HomeTab(),
     const _DoctorsTab(),
-    const _AppointmentsTab(),
+    const PatientAppointmentsTab(),
     const ProfileScreen(), // Utiliser ProfileScreen au lieu de _ProfileTab
+  ];
+  
+  final List<String> _pageTitles = [
+    'Accueil',
+    'Médecins',
+    'Mes rendez-vous',
+    'Mon profil',
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
+      appBar: AppBar(
+        title: Text(
+          _pageTitles[_selectedIndex],
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        backgroundColor: const Color(0xFF1976D2), // Couleur bleue similaire à celle du bouton "Votre santé est notre priorité"
+        actions: _selectedIndex == 2 ? [
+          IconButton(
+            onPressed: () {
+              // Rafraîchir les rendez-vous si on est sur l'onglet rendez-vous
+              if (_pages[_selectedIndex] is PatientAppointmentsTab) {
+                // Le rafraîchissement sera géré par l'onglet lui-même
+              }
+            },
+            icon: const Icon(
+              Icons.refresh,
+              color: Colors.white,
+            ),
+          ),
+        ] : null,
+      ),
       body: _pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
@@ -156,8 +188,8 @@ class _HomeTab extends StatelessWidget {
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                AppTheme.primaryColor,
-                AppTheme.primaryColor.withValues(alpha: 0.8),
+                const Color.fromARGB(255, 8, 38, 210),
+                const Color.fromARGB(255, 22, 162, 205).withValues(alpha: 0.8),
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -305,8 +337,8 @@ class _HomeTab extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppTheme.primaryColor,
-            AppTheme.primaryColor.withValues(alpha: 0.8),
+            const Color.fromARGB(255, 8, 38, 210),
+            const Color.fromARGB(255, 22, 162, 205).withValues(alpha: 0.8),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -510,20 +542,3 @@ class _DoctorsTab extends StatelessWidget {
   }
 }
 
-class _AppointmentsTab extends StatelessWidget {
-  const _AppointmentsTab();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Center(
-      child: Text(
-        'Mes rendez-vous\n(À implémenter)',
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          fontSize: 18,
-          color: AppTheme.textSecondaryColor,
-        ),
-      ),
-    );
-  }
-}

@@ -421,9 +421,15 @@ class AuthProvider with ChangeNotifier {
       if (gender != null) profileData['gender'] = gender;
       
       // Gérer l'adresse correctement
+      print('🏠 FRONTEND - Paramètres d\'adresse reçus:');
+      print('  - address: $address');
+      print('  - street: $street');
+      print('  - city: $city');
+      
       if (address != null) {
         // Ancien format - chaîne simple
         profileData['address'] = {'street': address};
+        print('🏠 FRONTEND - Utilisation ancien format address: ${profileData['address']}');
       } else if ((street != null || city != null) || 
                 (profileData.containsKey('street') || profileData.containsKey('city'))) {
         // Nouveau format - objet avec street et city
@@ -431,12 +437,18 @@ class AuthProvider with ChangeNotifier {
           'street': street ?? profileData.remove('street'),
           'city': city ?? profileData.remove('city'),
         };
+        print('🏠 FRONTEND - Objet adresse avant nettoyage: $addressObj');
         // Supprimer les valeurs nulles ou vides
         addressObj.removeWhere((key, value) => value == null || value.toString().isEmpty);
         if (addressObj.isNotEmpty) {
           profileData['address'] = addressObj;
+          print('🏠 FRONTEND - Objet adresse final: ${profileData['address']}');
+        } else {
+          print('🏠 FRONTEND - Objet adresse vide, non ajouté');
         }
       }
+      
+      print('🚀 FRONTEND - Données finales à envoyer: $profileData');
 
       // Étape 1: Mettre à jour les informations textuelles
       if (profileData.isNotEmpty) {

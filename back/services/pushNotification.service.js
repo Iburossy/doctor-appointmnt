@@ -1,8 +1,9 @@
 const admin = require('firebase-admin');
 const path = require('path');
 
-// Path to your service account key file
-const serviceAccountPath = path.join(__dirname, '..', 'firebase-service-account-key.json');
+// Path to your service account key file - configurable via env vars
+const serviceAccountPath = path.join(__dirname, '..', process.env.FIREBASE_SERVICE_ACCOUNT_PATH || 'firebase-service-account-key.json');
+console.log(`🔑 Utilisation du fichier de service account Firebase: ${serviceAccountPath}`);
 
 let firebaseInitialized = false;
 

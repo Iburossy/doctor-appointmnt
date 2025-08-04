@@ -65,7 +65,7 @@ class _DoctorProfileTabState extends State<DoctorProfileTab> {
                   icon: const Icon(Icons.login),
                   label: const Text('Se connecter'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryColor,
+                    backgroundColor: const Color.fromARGB(255, 32, 160, 200),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                     shape: RoundedRectangleBorder(
@@ -166,9 +166,9 @@ class _DoctorProfileTabState extends State<DoctorProfileTab> {
                       child: ElevatedButton.icon(
                         onPressed: () => context.goNamed('doctor-schedule'),
                         icon: const Icon(Icons.calendar_today),
-                        label: const Text('Gérer mes horaires'),
+                        label: const Text('Mes horaires'),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.primaryColor,
+                          backgroundColor: const Color.fromARGB(255, 32, 160, 200),
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           shape: RoundedRectangleBorder(
@@ -185,6 +185,7 @@ class _DoctorProfileTabState extends State<DoctorProfileTab> {
                           context.pushNamed('edit-doctor-profile');
                         },
                         icon: const Icon(Icons.edit),
+                        
                         label: const Text('Modifier'),
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 12),
@@ -226,14 +227,14 @@ class _DoctorProfileTabState extends State<DoctorProfileTab> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppTheme.primaryColor.withValues(alpha: 0.1),
+        color: const Color.fromARGB(255, 32, 160, 200).withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
         children: [
           CircleAvatar(
             radius: 40,
-            backgroundColor: AppTheme.primaryColor,
+            backgroundColor: const Color.fromARGB(255, 32, 160, 200),
             backgroundImage:
                 user.profilePicture != null && user.profilePicture!.isNotEmpty
                     ? NetworkImage(_getFullAvatarUrl(user.profilePicture!))
@@ -394,7 +395,7 @@ class _DoctorProfileTabState extends State<DoctorProfileTab> {
         children: [
           Icon(
             icon,
-            color: AppTheme.primaryColor,
+            color: const Color.fromARGB(255, 32, 160, 200),
             size: 20,
           ),
           const SizedBox(width: 16),

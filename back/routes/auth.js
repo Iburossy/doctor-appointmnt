@@ -453,6 +453,11 @@ router.post('/reset-password', [
 router.get('/me', authenticate, async (req, res) => {
   try {
     const user = req.user;
+    console.log('👤 GET /auth/me - Données utilisateur:', {
+      dateOfBirth: user.dateOfBirth,
+      gender: user.gender,
+      profilePicture: user.profilePicture
+    });
     const userData = {
       id: user._id,
       firstName: user.firstName,
@@ -463,6 +468,8 @@ router.get('/me', authenticate, async (req, res) => {
       isPhoneVerified: user.isPhoneVerified,
       isEmailVerified: user.isEmailVerified,
       profilePicture: user.profilePicture,
+      dateOfBirth: user.dateOfBirth,
+      gender: user.gender,
       address: user.address,
       language: user.language,
       notifications: user.notifications

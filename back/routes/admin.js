@@ -25,6 +25,8 @@ router.get('/dashboard', auth, adminCheck('admin'), async (req, res) => {
     const totalPatients = await User.countDocuments({ role: 'patient', isActive: true });
     const totalDoctors = await Doctor.countDocuments({ verificationStatus: 'approved', isActive: true });
     const pendingDoctorRequests = await DoctorRequest.countDocuments({ status: 'pending' });
+    const approvedDoctorRequests = await DoctorRequest.countDocuments({ status: 'approved' });
+    const rejectedDoctorRequests = await DoctorRequest.countDocuments({ status: 'rejected' });
     
     // Statistiques des rendez-vous
     const totalAppointments = await Appointment.countDocuments();
@@ -116,6 +118,11 @@ router.get('/dashboard', auth, adminCheck('admin'), async (req, res) => {
     }
 
     res.json({
+      requestStats: {
+        pending: pendingDoctorRequests,
+        approved: approvedDoctorRequests,
+        rejected: rejectedDoctorRequests
+      },
       overview: {
         totalUsers,
         totalPatients,
@@ -251,7 +258,7 @@ router.get('/doctor-requests', auth, adminCheck('admin'), [
     }
 
     const doctorRequests = await DoctorRequest.find(filter)
-      .populate('userId', 'firstName lastName phone email createdAt')
+      .populate('userId', 'firstName lastName phone email createdAt profilePicture')
       .populate('reviewedBy', 'firstName lastName email')
       .sort({ requestedAt: -1 })
       .skip(skip)

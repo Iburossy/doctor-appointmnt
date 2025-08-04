@@ -22,9 +22,38 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
     const DoctorProfileTab(),
   ];
 
+  final List<String> _pageTitles = [
+    'Tableau de bord',
+    'Mes rendez-vous',
+    'Mes patients',
+    'Mon profil',
+  ];
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          _pageTitles[_selectedIndex],
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        backgroundColor: const Color.fromARGB(255, 32, 160, 200),
+        actions: _selectedIndex == 1 ? [
+          IconButton(
+            onPressed: () {
+              // Trigger refresh for appointments tab
+              // This will be handled by the tab itself
+            },
+            icon: const Icon(
+              Icons.refresh,
+              color: Colors.white,
+            ),
+          ),
+        ] : null,
+      ),
       body: _pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
@@ -34,7 +63,7 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
             _selectedIndex = index;
           });
         },
-        selectedItemColor: const Color.fromARGB(255, 9, 84, 205),
+        selectedItemColor: const Color.fromARGB(255, 32, 160, 200),
         unselectedItemColor: AppTheme.textSecondary,
         items: const [
           BottomNavigationBarItem(

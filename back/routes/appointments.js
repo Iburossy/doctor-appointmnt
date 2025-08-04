@@ -185,6 +185,81 @@ router.post('/', authenticate, requireVerification, [
   }
 });
 
+// @route   GET /api/appointments/patient/my-appointments
+// @desc    Récupérer les rendez-vous du patient connecté
+// @access  Private (Patient)
+router.get('/patient/my-appointments', authenticate, async (req, res) => {
+  try {
+    console.log('🔍 Récupération des rendez-vous pour le patient:', req.user._id);
+    
+    // Récupérer tous les rendez-vous du patient connecté
+    const appointments = await Appointment.find({ 
+      patient: req.user._id 
+    })
+    .populate({
+      path: 'doctor',
+      select: 'userId specialties bio rating reviewCount avatar verificationStatus',
+      populate: {
+        path: 'userId',
+        select: 'firstName lastName email phone'
+      }
+    })
+    .sort({ createdAt: -1 }); // Trier par date de création décroissante
+
+    console.log(`📊 Nombre de rendez-vous trouvés: ${appointments.length}`);
+
+    // Formater les données pour le frontend
+    const formattedAppointments = appointments.map(appointment => {
+      const doctor = appointment.doctor;
+      const doctorUser = doctor?.userId;
+      
+      return {
+        _id: appointment._id,
+        appointmentDate: appointment.appointmentDate,
+        appointmentTime: appointment.appointmentTime,
+        timeSlot: appointment.appointmentTime,
+        status: appointment.status,
+        reason: appointment.reason,
+        consultationType: appointment.consultationType,
+        symptoms: appointment.symptoms || [],
+        patientNotes: appointment.patientNotes,
+        doctorNotes: appointment.doctorNotes,
+        prescriptions: appointment.prescriptions || [],
+        createdAt: appointment.createdAt,
+        updatedAt: appointment.updatedAt,
+        doctorInfo: doctor ? {
+          _id: doctor._id,
+          firstName: doctorUser?.firstName || '',
+          lastName: doctorUser?.lastName || '',
+          email: doctorUser?.email || '',
+          phone: doctorUser?.phone || '',
+          specialties: doctor.specialties || [],
+          bio: doctor.bio || '',
+          rating: doctor.rating || 0,
+          reviewCount: doctor.reviewCount || 0,
+          avatar: doctor.avatar,
+          verificationStatus: doctor.verificationStatus
+        } : null
+      };
+    });
+
+    console.log('✅ Rendez-vous formatés avec succès');
+    
+    res.json({
+      success: true,
+      appointments: formattedAppointments,
+      total: formattedAppointments.length
+    });
+    
+  } catch (error) {
+    console.error('❌ Erreur lors de la récupération des rendez-vous patient:', error);
+    res.status(500).json({
+      error: 'Erreur serveur lors de la récupération des rendez-vous',
+      details: error.message
+    });
+  }
+});
+
 // @route   GET /api/appointments/doctor/my-appointments
 // @desc    Récupérer les rendez-vous pour le médecin connecté
 // @access  Private (Médecin)
@@ -347,32 +422,96 @@ router.put('/:id/status', authenticate, authorize('doctor'), [
 // @access  Private
 router.get('/:id', authenticate, async (req, res) => {
   try {
-    const appointment = await Appointment.findById(req.params.id);
+    console.log('🔍 Récupération des détails du rendez-vous:', req.params.id);
+    console.log('👤 Utilisateur connecté:', req.user._id, 'Rôle:', req.user.role);
+    
+    const appointment = await Appointment.findById(req.params.id)
+      .populate({
+        path: 'doctor',
+        select: 'userId specialties bio rating reviewCount avatar verificationStatus',
+        populate: {
+          path: 'userId',
+          select: 'firstName lastName email phone'
+        }
+      })
+      .populate({
+        path: 'patient',
+        select: 'firstName lastName email phone'
+      });
 
     if (!appointment) {
+      console.log('❌ Rendez-vous non trouvé avec l\'ID:', req.params.id);
       return res.status(404).json({
         error: 'Rendez-vous non trouvé'
       });
     }
 
+    console.log('📊 Rendez-vous trouvé - Patient:', appointment.patient._id, 'Médecin:', appointment.doctor?._id);
+
     // Vérifier que l'utilisateur a le droit de voir ce RDV
-    const isPatient = appointment.patient.toString() === req.user._id.toString();
+    const isPatient = appointment.patient._id.toString() === req.user._id.toString();
     const isDoctor = req.user.role === 'doctor' && 
-      await Doctor.findOne({ userId: req.user._id, _id: appointment.doctor });
+      await Doctor.findOne({ userId: req.user._id, _id: appointment.doctor?._id });
     const isAdmin = req.user.role === 'admin';
 
+    console.log('🔐 Vérifications d\'accès - isPatient:', isPatient, 'isDoctor:', !!isDoctor, 'isAdmin:', isAdmin);
+
     if (!isPatient && !isDoctor && !isAdmin) {
+      console.log('❌ Accès refusé pour l\'utilisateur:', req.user._id);
       return res.status(403).json({
         error: 'Accès refusé'
       });
     }
 
-    res.json({ appointment });
+    // Formater les données pour le frontend
+    const doctor = appointment.doctor;
+    const doctorUser = doctor?.userId;
+    const patientUser = appointment.patient;
+    
+    const formattedAppointment = {
+      _id: appointment._id,
+      appointmentDate: appointment.appointmentDate,
+      appointmentTime: appointment.appointmentTime,
+      timeSlot: appointment.appointmentTime,
+      status: appointment.status,
+      reason: appointment.reason,
+      consultationType: appointment.consultationType,
+      symptoms: appointment.symptoms || [],
+      patientNotes: appointment.patientNotes,
+      doctorNotes: appointment.doctorNotes,
+      prescriptions: appointment.prescriptions || [],
+      createdAt: appointment.createdAt,
+      updatedAt: appointment.updatedAt,
+      doctorInfo: doctor ? {
+        _id: doctor._id,
+        firstName: doctorUser?.firstName || '',
+        lastName: doctorUser?.lastName || '',
+        email: doctorUser?.email || '',
+        phone: doctorUser?.phone || '',
+        specialties: doctor.specialties || [],
+        bio: doctor.bio || '',
+        rating: doctor.rating || 0,
+        reviewCount: doctor.reviewCount || 0,
+        avatar: doctor.avatar,
+        verificationStatus: doctor.verificationStatus
+      } : null,
+      patientInfo: patientUser ? {
+        _id: patientUser._id,
+        firstName: patientUser.firstName || '',
+        lastName: patientUser.lastName || '',
+        email: patientUser.email || '',
+        phone: patientUser.phone || ''
+      } : null
+    };
+
+    console.log('✅ Rendez-vous formaté avec succès');
+    res.json({ appointment: formattedAppointment });
 
   } catch (error) {
-    console.error('Erreur récupération rendez-vous:', error);
+    console.error('❌ Erreur récupération rendez-vous:', error);
     res.status(500).json({
-      error: 'Erreur lors de la récupération du rendez-vous'
+      error: 'Erreur lors de la récupération du rendez-vous',
+      details: error.message
     });
   }
 });

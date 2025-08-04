@@ -1,4 +1,5 @@
 import '../../doctors/models/doctor_model.dart';
+import '../../doctors/models/patient_model.dart';
 
 class AppointmentModel {
   final String id;
@@ -157,139 +158,42 @@ class AppointmentModel {
     return [];
   }
 
-  // Factory constructor from JSON
   factory AppointmentModel.fromJson(Map<String, dynamic> json) {
-    try {
-      
-      
-      // Extraire les informations du patient et du médecin si elles sont imbriquées
-      
-      final patientData = json['patient'] is Map ? json['patient'] as Map<String, dynamic> : null;
-      final doctorData = json['doctor'] is Map ? json['doctor'] as Map<String, dynamic> : null;
-      final paymentData = json['payment'] is Map ? json['payment'] as Map<String, dynamic> : null;
-      
-      // Ignorer les champs complexes pour éviter les erreurs de parsing
-      
-      final jsonCopy = Map<String, dynamic>.from(json);
-      
-      // Supprimer tous les champs complexes non essentiels
-      final fieldsToRemove = [
-        'reminders', 'documents', 'files', 'medicalRecords', 'notifications',
-        'messages', 'attachments', 'history', 'timeline', 'followUps'
-      ];
-      
-      for (final field in fieldsToRemove) {
-        jsonCopy.remove(field);
-      }
-      
-      
-      jsonCopy.forEach((key, value) {
-        
-      });
-    
-    
-    
-    // Traiter chaque champ individuellement avec des logs
-    
-    final id = jsonCopy['_id'] ?? jsonCopy['id'] ?? '';
-    
-    
-    final patientId = patientData?['_id'] ?? patientData?['id'] ?? jsonCopy['patient'] ?? '';
-    
-    
-    final doctorId = doctorData?['_id'] ?? doctorData?['id'] ?? jsonCopy['doctor'] ?? '';
-    
-    
-    
-    final appointmentDate = DateTime.parse(jsonCopy['appointmentDate']);
-    
-    
-    final timeSlot = jsonCopy['appointmentTime'] ?? jsonCopy['timeSlot'] ?? '';
-    
-    
-    final status = jsonCopy['status'] ?? 'pending';
-    
-    
-    
-    final reason = jsonCopy['reason'];
-    
-    
-    final symptoms = _parseStringList(jsonCopy['symptoms']);
-    
-    
-    final notes = jsonCopy['patientNotes'] ?? jsonCopy['notes'];
-    
-    
-    final diagnosis = jsonCopy['diagnosis'];
-    
-    
-    final prescription = _parseStringList(jsonCopy['prescription']);
-    
-    
-    final doctorNotes = jsonCopy['doctorNotes'];
-    
-    
-    final cancellationReason = jsonCopy['cancellationReason'];
-    
-    
-    final duration = jsonCopy['duration'];
-    
-    
-    final consultationType = jsonCopy['consultationType'];
-    
-    
-    final paymentInfoObj = paymentData != null
-        ? PaymentInfo.fromJson(paymentData)
-        : (jsonCopy['paymentInfo'] != null ? PaymentInfo.fromJson(jsonCopy['paymentInfo']) : null);
-    
-    
-    final reviewObj = jsonCopy['review'] != null
-        ? ReviewModel.fromJson(jsonCopy['review'])
-        : null;
-    
-    
-    final doctorInfoObj = doctorData != null
-        ? DoctorModel.fromJson(doctorData)
-        : (jsonCopy['doctorInfo'] != null ? DoctorModel.fromJson(jsonCopy['doctorInfo']) : null);
-    
-    
-    final patientObj = patientData ?? jsonCopy['patient'];
-    
-    
-    
-    final createdAt = jsonCopy['createdAt'] != null ? DateTime.parse(jsonCopy['createdAt']) : DateTime.now();
-    
-    
-    final updatedAt = jsonCopy['updatedAt'] != null ? DateTime.parse(jsonCopy['updatedAt']) : DateTime.now();
-    
-    
-    return AppointmentModel(
-      id: id,
-      patientId: patientId,
-      doctorId: doctorId,
-      appointmentDate: appointmentDate,
-      timeSlot: timeSlot,
-      status: status,
-      reason: reason,
-      symptoms: symptoms,
-      notes: notes,
-      diagnosis: diagnosis,
-      prescription: prescription,
-      doctorNotes: doctorNotes,
-      cancellationReason: cancellationReason,
-      duration: duration,
-      consultationType: consultationType,
-      paymentInfo: paymentInfoObj,
-      review: reviewObj,
-      doctorInfo: doctorInfoObj,
-      patient: patientObj,
-      createdAt: createdAt,
-      updatedAt: updatedAt,
-    );
-    } catch (e, stackTrace) {
-      
-      rethrow;
+    final patientData = json['patient'] is Map<String, dynamic> ? json['patient'] : null;
+    final doctorData = json['doctor'] is Map<String, dynamic> ? json['doctor'] : null;
+
+    PatientModel? patientObj;
+    if (patientData != null) {
+      patientObj = PatientModel.fromJson(patientData);
+    } else if (json['patient'] is String) {
+      // Si on a seulement l'ID, on crée un objet partiel
+      // Idéalement, il faudrait une logique pour fetch le patient complet
+      patientObj = PatientModel(id: json['patient'], firstName: 'Patient', lastName: '');
     }
+
+    return AppointmentModel(
+      id: json['_id'] ?? json['id'] ?? '',
+      patientId: patientObj?.id ?? json['patient']?.toString() ?? '',
+      doctorId: doctorData?['_id'] ?? json['doctor']?.toString() ?? '',
+      appointmentDate: DateTime.parse(json['appointmentDate']),
+      timeSlot: json['appointmentTime'] ?? json['timeSlot'] ?? '',
+      status: json['status'] ?? 'pending',
+      reason: json['reason'],
+      symptoms: _parseStringList(json['symptoms']),
+      notes: json['patientNotes'] ?? json['notes'],
+      diagnosis: json['diagnosis'],
+      prescription: _parseStringList(json['prescription']),
+      doctorNotes: json['doctorNotes'],
+      cancellationReason: json['cancellationReason'],
+      duration: json['duration'],
+      consultationType: json['consultationType'],
+      paymentInfo: json['payment'] != null ? PaymentInfo.fromJson(json['payment']) : null,
+      review: json['review'] != null ? ReviewModel.fromJson(json['review']) : null,
+      doctorInfo: doctorData != null ? DoctorModel.fromJson(doctorData) : null,
+      patient: patientObj, // Assigner l'objet PatientModel correctement parsé
+      createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']) : DateTime.now(),
+      updatedAt: json['updatedAt'] != null ? DateTime.parse(json['updatedAt']) : DateTime.now(),
+    );
   }
 
   // Convert to JSON

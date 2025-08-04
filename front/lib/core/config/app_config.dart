@@ -1,12 +1,16 @@
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
+/// @deprecated Utiliser la nouvelle configuration dans lib/config/app_config.dart
+/// Cette classe est maintenue pour la compatibilité avec le code existant
 class AppConfig {
   // App Information
-  static const String appName = 'Doctors App';
-  static const String appVersion = '1.0.0';
+  static String get appName => dotenv.env['APP_NAME'] ?? 'Doctors App';
+  static String get appVersion => dotenv.env['APP_VERSION'] ?? '1.0.0';
   static const String appDescription = 'Application de prise de rendez-vous médical - Sénégal';
   
   // API Configuration
-  static const String baseUrl = 'http://10.0.2.2:5000/api'; // Spécial IP pour accéder à localhost depuis l'émulateur Android
-  static const String staticUrl = 'http://10.0.2.2:5000'; // URL pour les fichiers statiques (sans /api)
+  static String get baseUrl => dotenv.env['API_BASE_URL'] ?? 'http://10.0.2.2:5000/api';
+  static String get staticUrl => dotenv.env['API_BASE_URL']?.replaceAll('/api', '') ?? 'http://10.0.2.2:5000';
   static const String apiVersion = 'v1';
   
   // Endpoints
@@ -24,7 +28,7 @@ class AppConfig {
   static const String locationKey = 'user_location';
   
   // Default Values
-  static const String defaultLanguage = 'fr';
+  static String get defaultLanguage => dotenv.env['DEFAULT_LANGUAGE'] ?? 'fr';
   static const String defaultCountryCode = '+221';
   static const String defaultCurrency = 'XOF';
   static const String defaultCountry = 'Sénégal';
@@ -34,8 +38,8 @@ class AppConfig {
   static const int maxPageSize = 50;
   
   // Timeouts
-  static const int connectionTimeout = 30000; // 30 seconds
-  static const int receiveTimeout = 30000; // 30 seconds
+  static int get connectionTimeout => int.tryParse(dotenv.env['API_TIMEOUT'] ?? '30000') ?? 30000;
+  static int get receiveTimeout => int.tryParse(dotenv.env['API_TIMEOUT'] ?? '30000') ?? 30000;
   
   // SMS & Phone
   static const int otpLength = 6;
@@ -54,9 +58,16 @@ class AppConfig {
   static const int reminderHours = 24; // hours before appointment
   
   // File Upload
-  static const int maxFileSize = 5 * 1024 * 1024; // 5MB
-  static const List<String> allowedImageTypes = ['jpg', 'jpeg', 'png'];
-  static const List<String> allowedDocTypes = ['pdf', 'doc', 'docx'];
+  static int get maxFileSize => int.tryParse(dotenv.env['MAX_FILE_SIZE'] ?? '5242880') ?? 5242880;
+  static List<String> get allowedFileTypes => 
+      (dotenv.env['ALLOWED_FILE_TYPES'] ?? 'jpg,jpeg,png,pdf,doc,docx')
+          .split(',')
+          .map((e) => e.trim().toLowerCase())
+          .toList();
+  static List<String> get allowedImageTypes => 
+      allowedFileTypes.where((type) => ['jpg', 'jpeg', 'png'].contains(type)).toList();
+  static List<String> get allowedDocTypes => 
+      allowedFileTypes.where((type) => ['pdf', 'doc', 'docx'].contains(type)).toList();
   
   // UI Constants
   static const double borderRadius = 12.0;

@@ -20,6 +20,7 @@ import 'features/doctors/providers/doctor_stats_provider.dart';
 import 'features/doctors/providers/doctor_appointments_provider.dart';
 import 'features/doctors/providers/doctor_patients_provider.dart';
 import 'features/appointments/providers/appointments_provider.dart';
+import 'features/appointments/providers/patient_appointments_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -98,6 +99,7 @@ class DoctorsApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => DoctorsProvider()),
         ChangeNotifierProvider(create: (_) => DoctorProfileProvider()),
         ChangeNotifierProvider(create: (_) => DoctorStatsProvider()),
+        ChangeNotifierProvider(create: (_) => PatientAppointmentsProvider()),
         ChangeNotifierProvider(create: (_) => DoctorAppointmentsProvider()),
         ChangeNotifierProvider(create: (_) => DoctorPatientsProvider()),
         ChangeNotifierProvider(create: (_) => AppointmentsProvider()),

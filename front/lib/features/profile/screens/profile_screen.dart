@@ -23,8 +23,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
       body: Consumer<AuthProvider>(
         builder: (context, authProvider, child) {
           final user = authProvider.user;
-          
-          // Debug: afficher toutes les données utilisateur
+        
+          // Debug: afficher les données utilisateur
+          print('DEBUG - User data:');
+          print('  - profilePicture: ${user?.profilePicture}');
+          print('  - dateOfBirth: ${user?.dateOfBirth}');
+          print('  - gender: ${user?.gender}');
+          print('  - address: ${user?.address}');
+        
           if (user != null) {
             // Données utilisateur chargées
           } else {
@@ -84,12 +90,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
               SliverAppBar(
                 expandedHeight: 240,
                 pinned: true,
-                backgroundColor: AppTheme.primaryColor,
+                backgroundColor: Colors.white, // Fond blanc au lieu du vert
+                foregroundColor: Colors.black, // Icônes noires pour la visibilité
+                elevation: 0, // Suppression de l'ombre
                 actions: [
                   IconButton(
                     icon: const Icon(
                       Icons.refresh,
-                      color: Colors.white,
+                      color: Colors.black, // Icône noire au lieu de blanche
                     ),
                     onPressed: () async {
                       // Actualisation des données utilisateur
@@ -107,16 +115,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ],
                 flexibleSpace: FlexibleSpaceBar(
                   background: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          AppTheme.primaryColor,
-                          AppTheme.primaryColor.withValues(alpha: 0.8),
-                        ],
-                      ),
-                    ),
+                    color: Colors.white, // Fond blanc simple
                     child: SafeArea(
                       child: SingleChildScrollView(
                         physics: const ClampingScrollPhysics(),
@@ -170,7 +169,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       : const Icon(
                                           Icons.person,
                                           size: 40,
-                                          color: AppTheme.primaryColor,
+                                          color: Color.fromARGB(255, 33, 150, 243),
                                         ),
                                 ),
                               ),
@@ -181,7 +180,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 style: const TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.white,
+                                  color: Colors.black87, // Texte noir pour la visibilité
                                 ),
                               ),
                               const SizedBox(height: 4),
@@ -196,7 +195,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   user.role == 'doctor' ? 'Médecin' : 'Patient',
                                   style: const TextStyle(
                                     fontSize: 12,
-                                    color: Colors.white,
+                                    color: Color.fromARGB(255, 255, 255, 255),
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),
@@ -205,9 +204,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               // Téléphone
                               Text(
                                 user.phone ?? '',
-                                style: TextStyle(
+                                style: const TextStyle(
                                   fontSize: 14,
-                                  color: Colors.white.withValues(alpha: 0.9),
+                                  color: Colors.black54, // Texte gris foncé pour la visibilité
                                 ),
                               ),
                             ],
@@ -355,6 +354,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
       return avatarPath;
     }
 
+    // Construire l'URL de base sans le segment '/api'
+    final baseUrl = AppConfig.baseUrl.replaceAll('/api', '');
+    
+    // Si le chemin commence par '/', l'utiliser tel quel
+    if (avatarPath.startsWith('/')) {
+      final fullUrl = '$baseUrl$avatarPath';
+      print('DEBUG - Full avatar URL (with slash): $fullUrl');
+      return fullUrl;
+    }
+    
+    // Si c'est juste le nom du fichier, ajouter le chemin uploads/avatars
+    if (!avatarPath.contains('/')) {
+      final fullUrl = '$baseUrl/uploads/avatars/$avatarPath';
+      print('DEBUG - Full avatar URL (filename only): $fullUrl');
+      return fullUrl;
+    }
+
     // Correction pour extraire le chemin relatif si un chemin absolu Windows est fourni
     const marker = 'uploads';
     final index = avatarPath.indexOf(marker);
@@ -362,11 +378,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       avatarPath = avatarPath.substring(index).replaceAll('\\', '/');
     }
 
-    // Construire l'URL de base sans le segment '/api'
-    final baseUrl = AppConfig.baseUrl.replaceAll('/api', '');
-
     final fullUrl = '$baseUrl/$avatarPath';
-    print('DEBUG - Full avatar URL: $fullUrl');
+    print('DEBUG - Full avatar URL (fallback): $fullUrl');
     return fullUrl;
   }
   

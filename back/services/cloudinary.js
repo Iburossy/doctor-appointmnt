@@ -21,10 +21,10 @@ const uploadToCloudinary = async (fileBuffer, options = {}) => {
       cloudinary.uploader.upload_stream(
         {
           resource_type: 'auto', // Détecte automatiquement le type (image, video, raw)
-          folder: options.folder || 'doctors_app', // Dossier dans Cloudinary
+          folder: options.folder || process.env.CLOUDINARY_DEFAULT_FOLDER || 'doctors_app', // Dossier dans Cloudinary
           public_id: options.public_id, // ID personnalisé (optionnel)
           transformation: options.transformation, // Transformations (resize, etc.)
-          tags: options.tags || ['doctor_documents'], // Tags pour organiser
+          tags: options.tags || (process.env.CLOUDINARY_DEFAULT_TAGS || 'doctor_documents').split(','), // Tags pour organiser
         },
         (error, result) => {
           if (error) {

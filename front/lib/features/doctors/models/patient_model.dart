@@ -27,6 +27,12 @@ class PatientModel {
 
   String get fullName => '$firstName $lastName'.trim();
 
+  String get initials {
+    final fName = firstName.isNotEmpty ? firstName[0] : '';
+    final lName = lastName.isNotEmpty ? lastName[0] : '';
+    return '$fName$lName'.toUpperCase();
+  }
+
   int? get age {
     if (dateOfBirth == null) return null;
     final now = DateTime.now();
@@ -79,7 +85,7 @@ class PatientModel {
 
   factory PatientModel.fromJson(Map<String, dynamic> json) {
     return PatientModel(
-      id: json['id'] ?? '',
+      id: json['_id'] ?? json['id'] ?? '',
       firstName: json['firstName'] ?? '',
       lastName: json['lastName'] ?? '',
       phone: json['phone'],

@@ -106,7 +106,7 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
             child: CustomButton(
               text: 'Prendre rendez-vous',
               onPressed: () => _bookAppointment(doctor),
-              backgroundColor: AppTheme.primaryColor,
+              backgroundColor: const Color.fromARGB(255, 33, 150, 243),
             ),
           );
         },
@@ -120,7 +120,7 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
       expandedHeight: 300,
       floating: false,
       pinned: true,
-      backgroundColor: AppTheme.primaryColor,
+      backgroundColor: const Color.fromARGB(255, 33, 150, 243),
       leading: IconButton(
         icon: const Icon(
           Icons.arrow_back,
@@ -135,8 +135,8 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-                AppTheme.primaryColor,
-                AppTheme.primaryColor.withValues(alpha: 0.8),
+                const Color.fromARGB(255, 33, 150, 243),
+                const Color.fromARGB(255, 33, 150, 243).withValues(alpha: 0.8),
               ],
             ),
           ),
@@ -161,7 +161,7 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
                     : null,
               ),
               
-              const SizedBox(height: 16),
+              const SizedBox(height: 10),
               
               // Doctor Name
               Text(

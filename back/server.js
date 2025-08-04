@@ -10,12 +10,19 @@ const app = express();
 // Security middleware
 // Configuration de Helmet pour autoriser le chargement des ressources cross-origin (images, etc.)
 app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
-// Configuration CORS plus flexible pour le développement
-const whitelist = ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:8080'];
-if (process.env.NODE_ENV === 'production') {
-  // Ajoutez ici vos domaines de production
-  // whitelist.push('https://your-production-domain.com');
+// Configuration CORS avec origines autorisées depuis les variables d'environnement
+const whitelist = (process.env.CORS_ALLOWED_ORIGINS || 'http://localhost:3000').split(',').filter(Boolean);
+
+// Pour Flutter qui n'a pas forcément d'origine - permettre null (requis pour les apps mobiles)
+whitelist.push(null);
+
+// Ajouter des domaines de production si nécessaire
+if (process.env.NODE_ENV === 'production' && process.env.CORS_PRODUCTION_ORIGINS) {
+  const productionOrigins = process.env.CORS_PRODUCTION_ORIGINS.split(',').filter(Boolean);
+  whitelist.push(...productionOrigins);
 }
+
+console.log('🌐 CORS autorisé pour:', whitelist.filter(origin => origin !== null));
 
 const corsOptions = {
   origin: function (origin, callback) {
@@ -109,8 +116,9 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Serveur démarré sur le port ${PORT}`);
   console.log(`📱 API disponible sur http://localhost:${PORT}/api`);
+  console.log(`📱 API disponible sur http://192.168.1.124:${PORT}/api (pour téléphone physique)`);
   console.log(`🏥 Environment: ${process.env.NODE_ENV || 'development'}`);
 });

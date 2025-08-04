@@ -10,13 +10,11 @@ import '../../../shared/widgets/loading_overlay.dart';
 class AppointmentDetailScreen extends StatefulWidget {
   final String appointmentId;
 
-  const AppointmentDetailScreen({
-    super.key,
-    required this.appointmentId,
-  });
+  const AppointmentDetailScreen({super.key, required this.appointmentId});
 
   @override
-  State<AppointmentDetailScreen> createState() => _AppointmentDetailScreenState();
+  State<AppointmentDetailScreen> createState() =>
+      _AppointmentDetailScreenState();
 }
 
 class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
@@ -38,8 +36,10 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
 
     try {
       final appointmentsProvider = context.read<AppointmentsProvider>();
-      final appointment = await appointmentsProvider.getAppointmentDetails(widget.appointmentId);
-      
+      final appointment = await appointmentsProvider.getAppointmentDetails(
+        widget.appointmentId,
+      );
+
       if (mounted) {
         setState(() {
           _appointment = appointment;
@@ -73,35 +73,33 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
           if (_appointment != null && _appointment!.isUpcoming)
             PopupMenuButton<String>(
               onSelected: _handleMenuAction,
-              itemBuilder: (context) => [
-                const PopupMenuItem(
-                  value: 'reschedule',
-                  child: Row(
-                    children: [
-                      Icon(Icons.schedule, size: 20),
-                      SizedBox(width: 8),
-                      Text('Reprogrammer'),
-                    ],
-                  ),
-                ),
-                const PopupMenuItem(
-                  value: 'cancel',
-                  child: Row(
-                    children: [
-                      Icon(Icons.cancel, size: 20, color: Colors.red),
-                      SizedBox(width: 8),
-                      Text('Annuler', style: TextStyle(color: Colors.red)),
-                    ],
-                  ),
-                ),
-              ],
+              itemBuilder:
+                  (context) => [
+                    const PopupMenuItem(
+                      value: 'reschedule',
+                      child: Row(
+                        children: [
+                          Icon(Icons.schedule, size: 20),
+                          SizedBox(width: 8),
+                          Text('Reprogrammer'),
+                        ],
+                      ),
+                    ),
+                    const PopupMenuItem(
+                      value: 'cancel',
+                      child: Row(
+                        children: [
+                          Icon(Icons.cancel, size: 20, color: Colors.red),
+                          SizedBox(width: 8),
+                          Text('Annuler', style: TextStyle(color: Colors.red)),
+                        ],
+                      ),
+                    ),
+                  ],
             ),
         ],
       ),
-      body: LoadingOverlay(
-        isLoading: _isLoading,
-        child: _buildBody(),
-      ),
+      body: LoadingOverlay(isLoading: _isLoading, child: _buildBody()),
     );
   }
 
@@ -121,34 +119,34 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
         children: [
           // Status Card
           _buildStatusCard(),
-          
+
           const SizedBox(height: 16),
-          
+
           // Doctor Info Card
           _buildDoctorInfoCard(),
-          
+
           const SizedBox(height: 16),
-          
+
           // Appointment Details Card
           _buildAppointmentDetailsCard(),
-          
+
           const SizedBox(height: 16),
-          
+
           // Medical Info Card (if available)
-          if (_appointment!.diagnosis != null || _appointment!.prescription.isNotEmpty)
+          if (_appointment!.diagnosis != null ||
+              _appointment!.prescription.isNotEmpty)
             _buildMedicalInfoCard(),
-          
+
           const SizedBox(height: 16),
-          
+
           // Payment Info Card (if available)
-          if (_appointment!.paymentInfo != null)
-            _buildPaymentInfoCard(),
-          
+          if (_appointment!.paymentInfo != null) _buildPaymentInfoCard(),
+
           const SizedBox(height: 24),
-          
+
           // Action Buttons
           _buildActionButtons(),
-          
+
           const SizedBox(height: 16),
         ],
       ),
@@ -159,7 +157,7 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
     Color statusColor;
     IconData statusIcon;
     String statusText;
-    
+
     switch (_appointment!.status) {
       case 'pending':
         statusColor = Colors.orange;
@@ -186,7 +184,7 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
         statusIcon = Icons.help;
         statusText = 'Statut inconnu';
     }
-    
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -196,11 +194,7 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
       ),
       child: Row(
         children: [
-          Icon(
-            statusIcon,
-            color: statusColor,
-            size: 24,
-          ),
+          Icon(statusIcon, color: statusColor, size: 24),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
@@ -219,7 +213,7 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
 
   Widget _buildDoctorInfoCard() {
     final doctor = _appointment!.doctorInfo;
-    
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -244,34 +238,36 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
               color: AppTheme.textPrimaryColor,
             ),
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           Row(
             children: [
               // Doctor Avatar
               CircleAvatar(
                 radius: 30,
-                backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
-                backgroundImage: doctor?.avatar != null
-                    ? NetworkImage(doctor!.avatar!)
-                    : null,
-                child: doctor?.avatar == null
-                    ? Text(
-                        doctor != null 
-                            ? doctor.firstName[0] + doctor.lastName[0]
-                            : 'Dr',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.primaryColor,
-                        ),
-                      )
-                    : null,
+                backgroundColor: const Color.fromARGB(255, 33, 150, 243).withValues(alpha: 0.1),
+                backgroundImage:
+                    doctor?.avatar != null
+                        ? NetworkImage(doctor!.avatar!)
+                        : null,
+                child:
+                    doctor?.avatar == null
+                        ? Text(
+                          doctor != null
+                              ? doctor.firstName[0] + doctor.lastName[0]
+                              : 'Dr',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: const Color.fromARGB(255, 33, 150, 243),
+                          ),
+                        )
+                        : null,
               ),
-              
+
               const SizedBox(width: 16),
-              
+
               // Doctor Info
               Expanded(
                 child: Column(
@@ -285,29 +281,25 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
                         color: AppTheme.textPrimaryColor,
                       ),
                     ),
-                    
+
                     if (doctor != null) ...[
                       const SizedBox(height: 4),
                       Text(
                         doctor.displaySpecialization,
                         style: TextStyle(
                           fontSize: 14,
-                          color: AppTheme.primaryColor,
+                          color: const Color.fromARGB(255, 33, 150, 243),
                           fontWeight: FontWeight.w600,
                         ),
                       ),
                     ],
-                    
+
                     const SizedBox(height: 8),
-                    
+
                     Row(
                       children: [
                         if (doctor?.isVerified == true) ...[
-                          Icon(
-                            Icons.verified,
-                            size: 16,
-                            color: Colors.blue,
-                          ),
+                          Icon(Icons.verified, size: 16, color: Colors.blue),
                           const SizedBox(width: 4),
                           Text(
                             'Vérifié',
@@ -319,13 +311,9 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
                           ),
                           const SizedBox(width: 12),
                         ],
-                        
+
                         if (doctor != null) ...[
-                          Icon(
-                            Icons.star,
-                            size: 16,
-                            color: Colors.amber,
-                          ),
+                          Icon(Icons.star, size: 16, color: Colors.amber),
                           const SizedBox(width: 4),
                           Text(
                             doctor.formattedRating,
@@ -340,17 +328,16 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
                   ],
                 ),
               ),
-              
+
               // Call Button
               if (doctor?.phone != null)
                 IconButton(
                   onPressed: () => _callDoctor(doctor!.phone),
-                  icon: Icon(
-                    Icons.phone,
-                    color: AppTheme.primaryColor,
-                  ),
+                  icon: Icon(Icons.phone, color: AppTheme.primaryColor),
                   style: IconButton.styleFrom(
-                    backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
+                    backgroundColor: AppTheme.primaryColor.withValues(
+                      alpha: 0.1,
+                    ),
                   ),
                 ),
             ],
@@ -385,25 +372,23 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
               color: AppTheme.textPrimaryColor,
             ),
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           // Date and Time
           _buildDetailRow(
             Icons.calendar_today,
             'Date',
-            DateFormat('EEEE d MMMM yyyy', 'fr_FR')
-                .format(_appointment!.appointmentDate),
+            DateFormat(
+              'EEEE d MMMM yyyy',
+              'fr_FR',
+            ).format(_appointment!.appointmentDate),
           ),
-          
+
           const SizedBox(height: 12),
-          
-          _buildDetailRow(
-            Icons.access_time,
-            'Heure',
-            _appointment!.timeSlot,
-          ),
-          
+
+          _buildDetailRow(Icons.access_time, 'Heure', _appointment!.timeSlot),
+
           // Reason
           if (_appointment!.reason != null) ...[
             const SizedBox(height: 12),
@@ -413,17 +398,13 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
               _appointment!.reason!,
             ),
           ],
-          
+
           // Notes
           if (_appointment!.notes != null) ...[
             const SizedBox(height: 12),
-            _buildDetailRow(
-              Icons.note,
-              'Notes',
-              _appointment!.notes!,
-            ),
+            _buildDetailRow(Icons.note, 'Notes', _appointment!.notes!),
           ],
-          
+
           // Clinic Info
           if (_appointment!.doctorInfo?.clinicInfo != null) ...[
             const SizedBox(height: 12),
@@ -463,9 +444,9 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
               color: AppTheme.textPrimaryColor,
             ),
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           // Diagnosis
           if (_appointment!.diagnosis != null) ...[
             _buildDetailRow(
@@ -475,7 +456,7 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
             ),
             const SizedBox(height: 12),
           ],
-          
+
           // Prescription
           if (_appointment!.prescription.isNotEmpty)
             _buildDetailRow(
@@ -483,7 +464,7 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
               'Prescription',
               _appointment!.prescription.join(', '),
             ),
-          
+
           // Doctor Notes
           if (_appointment!.doctorNotes != null) ...[
             const SizedBox(height: 12),
@@ -500,7 +481,7 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
 
   Widget _buildPaymentInfoCard() {
     final payment = _appointment!.paymentInfo!;
-    
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -525,25 +506,25 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
               color: AppTheme.textPrimaryColor,
             ),
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           _buildDetailRow(
             Icons.payment,
             'Montant',
             '${payment.amount.toStringAsFixed(0)} FCFA',
           ),
-          
+
           const SizedBox(height: 12),
-          
+
           _buildDetailRow(
             Icons.credit_card,
             'Méthode',
             payment.method ?? 'Non spécifié',
           ),
-          
+
           const SizedBox(height: 12),
-          
+
           _buildDetailRow(
             Icons.check_circle,
             'Statut',
@@ -558,11 +539,7 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(
-          icon,
-          size: 20,
-          color: AppTheme.textSecondary,
-        ),
+        Icon(icon, size: 20, color: AppTheme.textSecondary),
         const SizedBox(width: 12),
         Expanded(
           child: Column(
@@ -596,7 +573,7 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
     if (!_appointment!.isUpcoming) {
       return const SizedBox.shrink();
     }
-    
+
     return Column(
       children: [
         // Primary Actions
@@ -606,8 +583,8 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
               child: OutlinedButton(
                 onPressed: _rescheduleAppointment,
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: AppTheme.primaryColor,
-                  side: BorderSide(color: AppTheme.primaryColor),
+                  foregroundColor: const Color.fromARGB(255, 33, 150, 243),
+                  side: BorderSide(color: const Color.fromARGB(255, 33, 150, 243)),
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
                 child: const Text('Reprogrammer'),
@@ -627,9 +604,9 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
             ),
           ],
         ),
-        
+
         const SizedBox(height: 12),
-        
+
         // Secondary Action
         SizedBox(
           width: double.infinity,
@@ -655,11 +632,7 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.error_outline,
-              size: 64,
-              color: Colors.red,
-            ),
+            Icon(Icons.error_outline, size: 64, color: Colors.red),
             const SizedBox(height: 16),
             const Text(
               'Erreur de chargement',
@@ -672,10 +645,7 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
             const SizedBox(height: 8),
             Text(
               _error!,
-              style: TextStyle(
-                fontSize: 16,
-                color: AppTheme.textSecondary,
-              ),
+              style: TextStyle(fontSize: 16, color: AppTheme.textSecondary),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
@@ -734,53 +704,57 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
   void _cancelAppointment() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Annuler le rendez-vous'),
-        content: const Text(
-          'Êtes-vous sûr de vouloir annuler ce rendez-vous ?\n\n'
-          'Cette action ne peut pas être annulée.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Non'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.of(context).pop();
-              
-              final appointmentsProvider = context.read<AppointmentsProvider>();
-              final success = await appointmentsProvider.cancelAppointment(_appointment!.id);
-              
-              if (mounted) {
-                if (success) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Rendez-vous annulé avec succès'),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
-                  
-                  // Reload appointment details
-                  _loadAppointmentDetails();
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Erreur lors de l\'annulation'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                }
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Annuler le rendez-vous'),
+            content: const Text(
+              'Êtes-vous sûr de vouloir annuler ce rendez-vous ?\n\n'
+              'Cette action ne peut pas être annulée.',
             ),
-            child: const Text('Oui, annuler'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Non'),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  Navigator.of(context).pop();
+
+                  final appointmentsProvider =
+                      context.read<AppointmentsProvider>();
+                  final success = await appointmentsProvider.cancelAppointment(
+                    _appointment!.id,
+                  );
+
+                  if (mounted) {
+                    if (success) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Rendez-vous annulé avec succès'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+
+                      // Reload appointment details
+                      _loadAppointmentDetails();
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Erreur lors de l\'annulation'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text('Oui, annuler'),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 

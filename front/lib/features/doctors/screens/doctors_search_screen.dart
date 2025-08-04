@@ -115,22 +115,15 @@ class _DoctorsSearchScreenState extends State<DoctorsSearchScreen> {
               slivers: [
                 // App Bar
                 SliverAppBar(
-                  expandedHeight: _showFilters ? 280 : 210,
+                  expandedHeight: _showFilters ? 220 : 150,
                   floating: false,
                   pinned: true,
-                  backgroundColor: AppTheme.primaryColor,
+                  backgroundColor: Colors.white, // AppBar blanche pour un look professionnel
+                  foregroundColor: Colors.black, // Icônes et texte en noir pour la visibilité (y compris flèche de retour)
+                  elevation: 0, // Suppression de l'ombre pour un look plus clean
                   flexibleSpace: FlexibleSpaceBar(
                     background: Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            AppTheme.primaryColor,
-                            AppTheme.primaryColor.withValues(alpha: 0.8),
-                          ],
-                        ),
-                      ),
+                      color: Colors.white, // Fond blanc simple et professionnel
                       child: SafeArea(
                         child: Stack(
                           children: [
@@ -239,19 +232,19 @@ class _DoctorsSearchScreenState extends State<DoctorsSearchScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.2),
+          color: const Color(0xFF1976D2).withOpacity(0.1), // Fond bleu léger
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+          border: Border.all(color: const Color(0xFF1976D2).withOpacity(0.3)),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.tune, color: Colors.white, size: 20),
+            const Icon(Icons.tune, color: Color(0xFF1976D2), size: 20), // Icône bleue
             const SizedBox(width: 8),
             Text(
               _showFilters ? 'Masquer les filtres' : 'Afficher les filtres',
               style: const TextStyle(
-                color: Colors.white,
+                color: Color(0xFF1976D2), // Texte bleu
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -265,9 +258,9 @@ class _DoctorsSearchScreenState extends State<DoctorsSearchScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.1),
+        color: Colors.grey.withOpacity(0.1), // Fond gris léger
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+        border: Border.all(color: Colors.grey.withOpacity(0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -276,7 +269,7 @@ class _DoctorsSearchScreenState extends State<DoctorsSearchScreen> {
           const Text(
             'Spécialité',
             style: TextStyle(
-              color: Colors.white,
+              color: Colors.black87, // Texte noir pour la visibilité
               fontWeight: FontWeight.w600,
               fontSize: 16,
             ),
@@ -318,14 +311,14 @@ class _DoctorsSearchScreenState extends State<DoctorsSearchScreen> {
               const Text(
                 'Rayon de recherche: ',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: Colors.black87, // Texte noir pour la visibilité
                   fontWeight: FontWeight.w600,
                 ),
               ),
               Text(
                 '${_searchRadius.round()} km',
                 style: const TextStyle(
-                  color: Colors.white,
+                  color: Colors.black87, // Texte noir pour la visibilité
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -336,8 +329,8 @@ class _DoctorsSearchScreenState extends State<DoctorsSearchScreen> {
             min: 1.0,
             max: 50.0,
             divisions: 49,
-            activeColor: Colors.white,
-            inactiveColor: Colors.white.withValues(alpha: 0.3),
+            activeColor: const Color(0xFF1976D2), // Couleur bleue pour le slider actif
+            inactiveColor: Colors.grey.withOpacity(0.3), // Gris pour la partie inactive
             onChanged: (value) {
               setState(() {
                 _searchRadius = value;
@@ -354,7 +347,7 @@ class _DoctorsSearchScreenState extends State<DoctorsSearchScreen> {
               child: const Text(
                 'Effacer les filtres',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: Color(0xFF1976D2), // Couleur bleue pour le bouton
                   fontWeight: FontWeight.w500,
                 ),
               ),

@@ -304,7 +304,7 @@ class _LoginScreenState extends State<LoginScreen> {
         TextButton(
           onPressed: () => context.goNamed('forgot-password'),
           child: const Text(
-            'Mot de passe oublié ?',
+            'Oublié ?',
             style: TextStyle(
               fontSize: 14,
               color: AppTheme.primaryColor,

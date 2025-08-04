@@ -40,7 +40,10 @@ class DoctorAppointmentsProvider with ChangeNotifier {
           }
         }).where((appointment) => appointment != null).cast<AppointmentModel>().toList();
         
-        _appointments.sort((a, b) => b.appointmentDate.compareTo(a.appointmentDate));
+        // Tri d'abord par date de création (plus récent en haut)
+        _appointments.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+        // Si besoin d'un tri secondaire par date de rendez-vous
+        // _appointments.sort((a, b) => b.appointmentDate.compareTo(a.appointmentDate));
         _hasBeenLoaded = true; // Marquer comme chargé
         debugPrint('Successfully loaded ${_appointments.length} appointments.');
 

@@ -139,7 +139,7 @@ class _DoctorPatientsTabState extends State<DoctorPatientsTab> {
             'Nouveaux',
             stats['new'].toString(),
             Icons.person_add,
-            Colors.green,
+            const Color.fromARGB(255, 58, 105, 171),
           ),
         ),
         const SizedBox(width: 12),
@@ -302,7 +302,7 @@ class _DoctorPatientsTabState extends State<DoctorPatientsTab> {
             Row(
               children: [
                 CircleAvatar(
-                  backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
+                  backgroundColor: const Color.fromARGB(255, 32, 160, 200),
                   child: Text(
                     patient.firstName.isNotEmpty 
                         ? patient.firstName[0].toUpperCase() 
@@ -345,7 +345,7 @@ class _DoctorPatientsTabState extends State<DoctorPatientsTab> {
                       decoration: BoxDecoration(
                         color: patient.totalAppointments == 1 
                             ? Colors.green.withValues(alpha: 0.1)
-                            : AppTheme.primaryColor.withValues(alpha: 0.1),
+                            : Color.fromARGB(255, 32, 160, 200).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
@@ -354,7 +354,7 @@ class _DoctorPatientsTabState extends State<DoctorPatientsTab> {
                           fontSize: 12,
                           color: patient.totalAppointments == 1 
                               ? Colors.green
-                              : AppTheme.primaryColor,
+                              : Color.fromARGB(255, 32, 160, 200),
                           fontWeight: FontWeight.w500,
                         ),
                       ),

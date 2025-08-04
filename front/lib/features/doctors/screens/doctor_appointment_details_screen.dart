@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../providers/doctor_appointments_provider.dart';
 import '../../appointments/models/appointment_model.dart';
+import '../models/patient_model.dart';
 import '../../../core/theme/app_theme.dart';
 
 class DoctorAppointmentDetailsScreen extends StatelessWidget {
@@ -33,7 +34,7 @@ class DoctorAppointmentDetailsScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Détails du rendez-vous'),
-        backgroundColor: AppTheme.primaryColor,
+        backgroundColor: const Color.fromARGB(255, 32, 160, 200),
         foregroundColor: Colors.white,
       ),
       body: SingleChildScrollView(
@@ -72,15 +73,22 @@ class DoctorAppointmentDetailsScreen extends StatelessWidget {
   }
 
   Widget _buildPatientInfoCard() {
-    // Le champ 'patient' est une Map<String, dynamic>
-    final firstName = appointment.patient?['firstName'] ?? '';
-    final lastName = appointment.patient?['lastName'] ?? '';
-    final patientName = (firstName.isNotEmpty || lastName.isNotEmpty) 
-        ? '$firstName $lastName'.trim() 
-        : 'Non renseigné';
+    final PatientModel? patient = appointment.patient;
+    if (patient == null) {
+      // Affiche un message si les informations du patient ne sont pas disponibles
+      return Card(
+        elevation: 2,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: const Padding(
+          padding: EdgeInsets.all(16.0),
+          child: Text('Informations du patient non disponibles.'),
+        ),
+      );
+    }
 
-    final patientAge = appointment.patient?['age']?.toString() ?? 'N/A';
-    final patientGender = appointment.patient?['gender'] ?? 'N/A';
+    final patientName = patient.fullName;
+    final patientAge = patient.age?.toString() ?? 'N/A';
+    final patientGender = patient.gender ?? 'N/A';
 
     return Card(
       elevation: 2,
@@ -93,7 +101,7 @@ class DoctorAppointmentDetailsScreen extends StatelessWidget {
             Text('Informations du Patient', style: AppTheme.titleStyle),
             const SizedBox(height: 16),
             _buildDetailRow(Icons.person_outline, 'Nom', patientName),
-            _buildDetailRow(Icons.cake_outlined, 'Âge', '$patientAge ans'),
+            _buildDetailRow(Icons.cake_outlined, 'Âge', patientAge != 'N/A' ? '$patientAge ans' : 'N/A'),
             _buildDetailRow(Icons.transgender_outlined, 'Sexe', patientGender),
           ],
         ),
@@ -204,7 +212,7 @@ class DoctorAppointmentDetailsScreen extends StatelessWidget {
           icon: const Icon(Icons.task_alt_outlined),
           label: const Text('Terminer le RDV'),
           style: ElevatedButton.styleFrom(
-            backgroundColor: AppTheme.primaryColor,
+            backgroundColor: const Color.fromARGB(255, 32, 160, 200),
             foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
             textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)
@@ -222,7 +230,7 @@ class DoctorAppointmentDetailsScreen extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: AppTheme.primaryColor, size: 20),
+          Icon(icon, color: const Color.fromARGB(255, 32, 160, 200), size: 20),
           const SizedBox(width: 16),
           Text('$label: ', style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.textSecondary)),
           Expanded(child: Text(value, style: TextStyle(color: AppTheme.textPrimaryColor))),

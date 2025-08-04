@@ -120,7 +120,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Profil mis à jour avec succès'),
-              backgroundColor: Colors.green,
+              backgroundColor: Color.fromARGB(255, 33, 150, 243),
             ),
           );
           
@@ -210,7 +210,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               child: Container(
                 padding: const EdgeInsets.all(4),
                 decoration: const BoxDecoration(
-                  color: AppTheme.primaryColor,
+                  color: Color.fromARGB(255, 33, 150, 243),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.edit, color: Colors.white, size: 20),
@@ -239,7 +239,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               child: const Text(
                 'Sauvegarder',
                 style: TextStyle(
-                  color: AppTheme.primaryColor,
+                  color: Color.fromARGB(255, 33, 150, 243),
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -324,12 +324,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 
                 const SizedBox(height: 32),
                 
-                // Bouton de sauvegarde
-                CustomButton(
-                  text: 'Sauvegarder les modifications',
-                  onPressed: _isLoading ? null : _saveProfile,
-                  isLoading: _isLoading,
-                ),
+                // // Bouton de sauvegarde
+                // CustomButton(
+                //   text: 'Sauvegarder les modifications',
+                  
+                //   onPressed: _isLoading ? null : _saveProfile,
+                //   isLoading: _isLoading,
+                // ),
                 
                 const SizedBox(height: 32),
               ],
@@ -362,7 +363,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               children: [
                 Icon(
                   icon,
-                  color: AppTheme.primaryColor,
+                  color: Color.fromARGB(255, 33, 150, 243),
                   size: 20,
                 ),
                 const SizedBox(width: 8),
@@ -414,14 +415,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           keyboardType: keyboardType,
           validator: validator,
           decoration: InputDecoration(
-            prefixIcon: icon != null ? Icon(icon, color: AppTheme.primaryColor) : null,
+            prefixIcon: icon != null ? Icon(icon, color: Color.fromARGB(255, 33, 150, 243)) : null,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(color: Colors.grey),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppTheme.primaryColor, width: 2),
+              borderSide: const BorderSide(color: Color.fromARGB(255, 33, 150, 243), width: 2),
             ),
             filled: true,
             fillColor: isEnabled ? Colors.white : Colors.grey[200],
@@ -502,7 +503,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppTheme.primaryColor),
+          borderSide: const BorderSide(color: Color.fromARGB(255, 33, 150, 243)),
         ),
         filled: true,
         fillColor: Colors.white,

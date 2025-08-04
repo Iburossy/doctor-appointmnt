@@ -3,10 +3,17 @@ import 'package:provider/provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../providers/doctor_stats_provider.dart';
+import '../providers/doctor_appointments_provider.dart';
+import '../../appointments/models/appointment_model.dart';
 
 // Classe pour l'onglet d'accueil
 class DoctorHomeTab extends StatefulWidget {
-  const DoctorHomeTab({super.key});
+  final VoidCallback? onViewAllAppointments;
+  
+  const DoctorHomeTab({
+    super.key,
+    this.onViewAllAppointments,
+  });
 
   @override
   State<DoctorHomeTab> createState() => _DoctorHomeTabState();
@@ -18,10 +25,21 @@ class _DoctorHomeTabState extends State<DoctorHomeTab> {
   @override
   void initState() {
     super.initState();
-    // Exécuter une seule fois après le premier build
+    _loadDoctorProfileOnce();
+    
+    // Charger les rendez-vous au démarrage
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadDoctorProfileOnce();
+      _loadAppointments();
     });
+  }
+  
+  void _loadAppointments({bool forceRefresh = false}) {
+    final appointmentsProvider = Provider.of<DoctorAppointmentsProvider>(context, listen: false);
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    
+    if (authProvider.isAuthenticated && authProvider.isDoctor) {
+      appointmentsProvider.loadDoctorAppointments(forceRefresh: forceRefresh);
+    }
   }
   
   Future<void> _loadDoctorProfileOnce() async {
@@ -44,7 +62,11 @@ class _DoctorHomeTabState extends State<DoctorHomeTab> {
         final user = authProvider.user;
         final doctorProfile = user?.doctorProfile;
 
-        return SafeArea(
+        return RefreshIndicator(
+          onRefresh: () async {
+            await _loadDoctorProfileOnce();
+            _loadAppointments(forceRefresh: true);
+          },
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(24.0),
             child: Column(
@@ -118,7 +140,7 @@ class _DoctorHomeTabState extends State<DoctorHomeTab> {
             gradient: LinearGradient(
               colors: [
                 const Color.fromARGB(255, 12, 106, 173),
-                const Color.fromARGB(255, 24, 38, 238),
+                const Color.fromARGB(255, 32, 160, 200),
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -227,7 +249,7 @@ class _DoctorHomeTabState extends State<DoctorHomeTab> {
                     'Patients aujourd\'hui',
                     '${stats?.patientsCount ?? 0}',
                     Icons.people,
-                    AppTheme.primaryColor,
+                    const Color.fromARGB(255, 32, 160, 200),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -334,19 +356,17 @@ class _DoctorHomeTabState extends State<DoctorHomeTab> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             const Text(
-              'Prochains rendez-vous',
+              'RV confirmés à venir',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
                 color: AppTheme.textPrimaryColor,
               ),
             ),
-            TextButton(
-              onPressed: () {
-                // TODO: Navigation vers la liste complète
-              },
-              child: const Text('Voir tout'),
-            ),
+            // TextButton(
+            //   onPressed: widget.onViewAllAppointments,
+            //   child: const Text('Voir tout'),
+            // ),
           ],
         ),
         const SizedBox(height: 16),
@@ -357,22 +377,76 @@ class _DoctorHomeTabState extends State<DoctorHomeTab> {
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: AppTheme.borderColor),
           ),
-          child: Column(
-            children: [
-              Icon(
-                Icons.calendar_today_outlined,
-                size: 48,
-                color: AppTheme.textSecondary.withAlpha(128),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Aucun rendez-vous aujourd\'hui',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: AppTheme.textSecondary,
-                ),
-              ),
-            ],
+          child: Consumer<DoctorAppointmentsProvider>(
+            builder: (context, appointmentsProvider, child) {
+              if (appointmentsProvider.isLoading) {
+                return const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: CircularProgressIndicator(color: Color.fromARGB(255, 32, 160, 200)),
+                  ),
+                );
+              }
+              
+              if (appointmentsProvider.error != null) {
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      children: [
+                        const Icon(Icons.error_outline, color: Colors.red, size: 32),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Erreur de chargement',
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            if (mounted) {
+                              _loadAppointments(forceRefresh: true);
+                            }
+                          },
+                          child: const Text('Réessayer'),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }
+              
+              // Filtrer pour obtenir uniquement les rendez-vous confirmés à venir
+              final upcomingAppointments = appointmentsProvider.appointments
+                  .where((apt) => apt.status == 'confirmed' && apt.appointmentDate.isAfter(DateTime.now()))
+                  .toList();
+              
+              // Trier par date (les plus proches d'abord)
+              upcomingAppointments.sort((a, b) => a.appointmentDate.compareTo(b.appointmentDate));
+              
+              // Limiter à 3 rendez-vous maximum
+              final displayAppointments = upcomingAppointments.take(3).toList();
+              
+              if (displayAppointments.isEmpty) {
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      children: [
+                        Icon(Icons.calendar_today_outlined, color: Colors.grey, size: 48),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Aucun rendez-vous à venir',
+                          style: TextStyle(color: AppTheme.textSecondary),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }
+              
+              return Column(
+                children: displayAppointments.map((appointment) => _buildAppointmentItem(appointment)).toList(),
+              );
+            },
           ),
         ),
       ],
@@ -451,6 +525,69 @@ class _DoctorHomeTabState extends State<DoctorHomeTab> {
         ],
       ),
     );
+  }
+  
+  Widget _buildAppointmentItem(AppointmentModel appointment) {
+    // Formater la date et l'heure
+    final dateFormat = appointment.appointmentDate.day == DateTime.now().day
+        ? 'Aujourd\'hui à ${_formatTime(appointment.appointmentDate)}'
+        : '${_formatDate(appointment.appointmentDate)} à ${_formatTime(appointment.appointmentDate)}';
+    
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: AppTheme.primaryColor.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(Icons.calendar_today, color: AppTheme.primaryColor, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  appointment.patient?.fullName ?? 'Patient',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  dateFormat,
+                  style: TextStyle(color: AppTheme.textSecondary, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  String _formatDate(DateTime date) {
+    final now = DateTime.now();
+    final tomorrow = DateTime(now.year, now.month, now.day + 1);
+    
+    if (date.day == now.day && date.month == now.month && date.year == now.year) {
+      return 'Aujourd\'hui';
+    } else if (date.day == tomorrow.day && date.month == tomorrow.month && date.year == tomorrow.year) {
+      return 'Demain';
+    } else {
+      return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}';
+    }
+  }
+  
+  String _formatTime(DateTime date) {
+    return '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
   }
 }
 
