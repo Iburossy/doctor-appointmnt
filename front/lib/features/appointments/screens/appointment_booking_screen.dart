@@ -5,6 +5,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../doctors/providers/doctors_provider.dart';
 import '../providers/appointments_provider.dart';
 import '../../doctors/models/doctor_model.dart';
+import '../../../shared/widgets/app_bottom_navigation.dart';
 
 class AppointmentBookingScreen extends StatefulWidget {
   final String doctorId;
@@ -139,7 +140,7 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
   }
   
   void _nextStep() {
-    if (_currentStep < 3) {
+    if (_currentStep < 2) {
       setState(() => _currentStep++);
       _pageController.nextPage(
         duration: const Duration(milliseconds: 300),
@@ -231,10 +232,20 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
       children: [
         Scaffold(
           appBar: AppBar(
-            title: const Text('Prendre rendez-vous'),
-            backgroundColor: Colors.white,
-            foregroundColor: AppTheme.textPrimaryColor,
-            elevation: 0,
+            title: const Text(
+              'Prendre rendez-vous',
+              style: TextStyle(
+                color: Color.fromARGB(255, 255, 255, 255),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            backgroundColor: const Color.fromARGB(255, 33, 150, 243), 
+            foregroundColor: const Color.fromARGB(255, 255, 255, 255),
+            iconTheme: const IconThemeData(
+              color: Color.fromARGB(255, 255, 255, 255),
+            ),
+            elevation: 1,
+            shadowColor: Colors.grey.withValues(alpha: 0.1),
           ),
           body: _doctor == null
               ? const Center(child: CircularProgressIndicator())
@@ -249,7 +260,6 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
                         controller: _pageController,
                         physics: const NeverScrollableScrollPhysics(),
                         children: [
-                          _buildDoctorInfoStep(),
                           _buildDateSelectionStep(),
                           _buildAppointmentDetailsStep(),
                           _buildConfirmationStep(),
@@ -261,6 +271,10 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
                     _buildNavigationButtons(),
                   ],
                 ),
+          bottomNavigationBar: const AppBottomNavigation(
+            currentIndex: 1, // Index pour "Médecins" car on réserve un RDV avec un médecin
+            selectedItemColor: Color.fromARGB(255, 33, 150, 243),
+          ),
         ),
         // Loading overlay
         if (_isLoading)
@@ -278,7 +292,7 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       child: Row(
-        children: List.generate(4, (index) {
+        children: List.generate(3, (index) {
           final isActive = index <= _currentStep;
           final isCompleted = index < _currentStep;
           
@@ -320,144 +334,7 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
     );
   }
   
-  Widget _buildDoctorInfoStep() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Informations du médecin',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: AppTheme.textPrimaryColor,
-            ),
-          ),
-          const SizedBox(height: 24),
-          
-          // Doctor card
-          Card(
-            elevation: 2,
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    radius: 40,
-                    backgroundColor: const Color.fromARGB(255, 33, 150, 243),
-                    backgroundImage: _doctor!.avatar != null
-                        ? NetworkImage(_doctor!.avatar!)
-                        : null,
-                    child: _doctor!.avatar == null
-                        ? Text(
-                            _doctor!.firstName[0] + _doctor!.lastName[0],
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          )
-                        : null,
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _doctor!.displayName,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.textPrimaryColor,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          _doctor!.displaySpecialization,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: AppTheme.textSecondaryColor,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            const Icon(Icons.star, color: Colors.amber, size: 16),
-                            const SizedBox(width: 4),
-                            Flexible(
-                              child: Text(
-                                _doctor!.formattedRating,
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: AppTheme.textSecondaryColor,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Icon(Icons.work, color: Color.fromARGB(255, 33, 150, 243), size: 16),
-                            const SizedBox(width: 4),
-                            Flexible(
-                              child: Text(
-                                _doctor!.formattedExperience,
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: AppTheme.textSecondaryColor,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          
-          const SizedBox(height: 24),
-          
-          // Consultation fee
-          Card(
-            elevation: 1,
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  Icon(Icons.payment, color: Color.fromARGB(255, 33, 150, 243)),
-                  const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Tarif de consultation',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: AppTheme.textSecondaryColor,
-                        ),
-                      ),
-                      Text(
-                        _doctor!.formattedFee,
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Color.fromARGB(255, 33, 150, 243),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+
   
   Widget _buildDateSelectionStep() {
     return SingleChildScrollView(
@@ -778,12 +655,12 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
           if (_currentStep > 0) const SizedBox(width: 16),
           Expanded(
             child: ElevatedButton(
-              onPressed: _currentStep == 3 ? _bookAppointment : _canProceedToNextStep() ? _nextStep : null,
+              onPressed: _currentStep == 2 ? _bookAppointment : _canProceedToNextStep() ? _nextStep : null,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Color.fromARGB(255, 33, 150, 243),
                 foregroundColor: Colors.white,
               ),
-              child: Text(_currentStep == 3 ? 'Confirmer' : 'Suivant'),
+              child: Text(_currentStep == 2 ? 'Confirmer' : 'Suivant'),
             ),
           ),
         ],
@@ -794,10 +671,8 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
   bool _canProceedToNextStep() {
     switch (_currentStep) {
       case 0:
-        return true; // Doctor info is always loaded
+        return _selectedDate != null && _selectedTimeSlot != null; // Sélection de date
       case 1:
-        return _selectedDate != null && _selectedTimeSlot != null;
-      case 2:
         return true; // Motif optionnel pour simplifier l'expérience utilisateur
       default:
         return false;

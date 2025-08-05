@@ -4,10 +4,12 @@ import 'package:go_router/go_router.dart';
 
 class AppBottomNavigation extends StatelessWidget {
   final int currentIndex;
+  final Color? selectedItemColor;
   
   const AppBottomNavigation({
     super.key,
     required this.currentIndex,
+    this.selectedItemColor,
   });
 
   @override
@@ -32,7 +34,7 @@ class AppBottomNavigation extends StatelessWidget {
         }
       },
       type: BottomNavigationBarType.fixed,
-      selectedItemColor: AppTheme.primaryColor,
+      selectedItemColor: selectedItemColor ?? AppTheme.primaryColor,
       unselectedItemColor: AppTheme.textSecondary,
       selectedLabelStyle: const TextStyle(
         fontWeight: FontWeight.w600,

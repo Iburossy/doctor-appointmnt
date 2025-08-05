@@ -307,6 +307,70 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
           
           const SizedBox(height: 16),
           
+          // Spécialités (si plus d'une)
+          if (doctor.specialties.length > 1)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppTheme.primaryColor.withValues(alpha: 0.05),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.medical_services,
+                        color: AppTheme.primaryColor,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Spécialités',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.textSecondaryColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: doctor.specialties.map((specialty) {
+                      return Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: AppTheme.primaryColor.withValues(alpha: 0.3),
+                          ),
+                        ),
+                        child: Text(
+                          specialty,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            color: AppTheme.primaryColor,
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ],
+              ),
+            ),
+          
+          if (doctor.specialties.length > 1) const SizedBox(height: 16),
+          
           Row(
             children: [
               Expanded(

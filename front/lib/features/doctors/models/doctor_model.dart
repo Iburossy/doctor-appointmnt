@@ -78,6 +78,20 @@ class DoctorModel {
 
   // Display specialization
   String get displaySpecialization {
+    if (specialties.isEmpty) return 'Médecin généraliste';
+    if (specialties.length == 1) return specialties.first;
+    if (specialties.length == 2) return '${specialties[0]} • ${specialties[1]}';
+    return '${specialties[0]} • ${specialties[1]} +${specialties.length - 2}';
+  }
+
+  // Display all specialties
+  String get allSpecialties {
+    if (specialties.isEmpty) return 'Médecin généraliste';
+    return specialties.join(' • ');
+  }
+
+  // Primary specialty (first one)
+  String get primarySpecialty {
     if (specialties.isNotEmpty) return specialties.first;
     return 'Médecin généraliste';
   }

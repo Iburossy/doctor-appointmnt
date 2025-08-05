@@ -21,6 +21,7 @@ class DoctorUpgradeScreen extends StatefulWidget {
 class _DoctorUpgradeScreenState extends State<DoctorUpgradeScreen> {
   final _formKey = GlobalKey<FormState>();
   final _specializationController = TextEditingController();
+  final List<String> _selectedSpecialties = [];
   final _licenseController = TextEditingController();
   final _experienceController = TextEditingController();
   final _educationController = TextEditingController();
@@ -236,7 +237,7 @@ class _DoctorUpgradeScreenState extends State<DoctorUpgradeScreen> {
       
       final Map<String, dynamic> formData = {
         'medicalLicenseNumber': _licenseController.text,
-        'specialties': [_specializationController.text], // Convertir en tableau
+        'specialties': _selectedSpecialties, // Utiliser les spécialités sélectionnées
         'yearsOfExperience': int.tryParse(_experienceController.text) ?? 0,
         'education': [
           {
@@ -432,6 +433,16 @@ class _DoctorUpgradeScreenState extends State<DoctorUpgradeScreen> {
                               text: 'Suivant',
                               onPressed: () {
                                 if (_currentStep < 2) {
+                                  // Validation spéciale pour l'étape des informations professionnelles
+                                  if (_currentStep == 0 && _selectedSpecialties.isEmpty) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Veuillez sélectionner au moins une spécialité'),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                    return;
+                                  }
                                   setState(() {
                                     _currentStep++;
                                   });
@@ -491,17 +502,7 @@ class _DoctorUpgradeScreenState extends State<DoctorUpgradeScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildDropdownField(
-          controller: _specializationController,
-          label: 'Spécialisation',
-          items: _specializations,
-          validator: (value) {
-            if (value == null || value.isEmpty) {
-              return 'La spécialisation est requise';
-            }
-            return null;
-          },
-        ),
+        _buildSpecialtySelector(),
         const SizedBox(height: 16),
         _buildTextField(
           controller: _licenseController,
@@ -819,44 +820,77 @@ class _DoctorUpgradeScreenState extends State<DoctorUpgradeScreen> {
     );
   }
   
-  Widget _buildDropdownField({
-    required TextEditingController controller,
-    required String label,
-    required List<String> items,
-    String? Function(String?)? validator,
-  }) {
-    return DropdownButtonFormField<String>(
-      value: controller.text.isEmpty ? null : controller.text,
-      decoration: InputDecoration(
-        labelText: label,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey[300]!),
+
+  
+  Widget _buildSpecialtySelector() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Spécialités médicales',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+            color: AppTheme.textPrimaryColor,
+          ),
         ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey[300]!),
+        const SizedBox(height: 8),
+        const Text(
+          'Sélectionnez une ou plusieurs spécialités',
+          style: TextStyle(
+            fontSize: 14,
+            color: AppTheme.textSecondaryColor,
+          ),
         ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppTheme.primaryColor),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: _specializations.map((specialty) {
+            final isSelected = _selectedSpecialties.contains(specialty);
+            return FilterChip(
+              label: Text(
+                specialty,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                ),
+              ),
+              selected: isSelected,
+              onSelected: (selected) {
+                setState(() {
+                  if (selected) {
+                    _selectedSpecialties.add(specialty);
+                  } else {
+                    _selectedSpecialties.remove(specialty);
+                  }
+                });
+              },
+              selectedColor: AppTheme.primaryColor.withValues(alpha: 0.2),
+              checkmarkColor: AppTheme.primaryColor,
+              backgroundColor: Colors.grey[100],
+              side: BorderSide(
+                color: isSelected ? AppTheme.primaryColor : Colors.grey[300]!,
+                width: isSelected ? 1.5 : 1,
+              ),
+            );
+          }).toList(),
         ),
-        filled: true,
-        fillColor: Colors.white,
-      ),
-      items: items.map((String item) {
-        return DropdownMenuItem<String>(
-          value: item,
-          child: Text(item),
-        );
-      }).toList(),
-      onChanged: (String? newValue) {
-        controller.text = newValue ?? '';
-      },
-      validator: validator,
+        if (_selectedSpecialties.isEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text(
+              'Veuillez sélectionner au moins une spécialité',
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.red[600],
+              ),
+            ),
+          ),
+      ],
     );
   }
-  
+
   Widget _buildLanguageSelector() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
