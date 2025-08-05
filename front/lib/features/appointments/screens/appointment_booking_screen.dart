@@ -29,12 +29,8 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
   DoctorModel? _doctor;
   bool _isLoading = false;
   
-  // Créneaux horaires disponibles (simulés)
-  final List<String> _timeSlots = [
-    '08:00', '08:30', '09:00', '09:30', '10:00', '10:30',
-    '11:00', '11:30', '14:00', '14:30', '15:00', '15:30',
-    '16:00', '16:30', '17:00', '17:30'
-  ];
+  // Créneaux horaires disponibles basés sur les horaires réels du médecin
+  List<String> _availableTimeSlots = [];
   
   @override
   void initState() {
@@ -50,6 +46,73 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
     super.dispose();
   }
   
+  // Génère les créneaux horaires disponibles pour une date donnée
+  void _generateAvailableTimeSlots(DateTime selectedDate) {
+    if (_doctor == null) {
+      _availableTimeSlots = [];
+      return;
+    }
+
+    // Obtenir le jour de la semaine (en anglais)
+    final dayNames = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+    final dayName = dayNames[selectedDate.weekday - 1];
+
+    // Trouver les horaires de travail pour ce jour
+    final workingHoursForDay = _doctor!.workingHours.firstWhere(
+      (wh) => wh.day.toLowerCase() == dayName,
+      orElse: () => WorkingHours(day: dayName, startTime: '', endTime: '', isAvailable: false),
+    );
+
+    if (!workingHoursForDay.isAvailable) {
+      _availableTimeSlots = [];
+      return;
+    }
+
+    // Parser les heures de début et fin
+    final startTime = _parseTime(workingHoursForDay.startTime);
+    final endTime = _parseTime(workingHoursForDay.endTime);
+
+    if (startTime == null || endTime == null) {
+      _availableTimeSlots = [];
+      return;
+    }
+
+    // Générer les créneaux de 30 minutes
+    final slots = <String>[];
+    var currentTime = startTime;
+
+    while (currentTime.isBefore(endTime)) {
+      // Formater l'heure au format HH:mm
+      final formattedTime = '${currentTime.hour.toString().padLeft(2, '0')}:${currentTime.minute.toString().padLeft(2, '0')}';
+      slots.add(formattedTime);
+      
+      // Ajouter 30 minutes
+      currentTime = currentTime.add(const Duration(minutes: 30));
+    }
+
+    _availableTimeSlots = slots;
+  }
+
+  // Parse une chaîne de temps (ex: "09:00") en DateTime
+  DateTime? _parseTime(String timeString) {
+    if (timeString.isEmpty) return null;
+    
+    try {
+      final parts = timeString.split(':');
+      if (parts.length != 2) return null;
+      
+      final hour = int.parse(parts[0]);
+      final minute = int.parse(parts[1]);
+      
+      if (hour < 0 || hour > 23 || minute < 0 || minute > 59) return null;
+      
+      final now = DateTime.now();
+      return DateTime(now.year, now.month, now.day, hour, minute);
+    } catch (e) {
+      return null;
+    }
+  }
+
   Future<void> _loadDoctorDetails() async {
     setState(() => _isLoading = true);
     
@@ -58,7 +121,13 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
       final doctor = await doctorsProvider.getDoctorDetails(widget.doctorId);
       
       if (doctor != null) {
-        setState(() => _doctor = doctor);
+        setState(() {
+          _doctor = doctor;
+          // Générer les créneaux pour la date sélectionnée si elle existe
+          if (_selectedDate != null) {
+            _generateAvailableTimeSlots(_selectedDate!);
+          }
+        });
       } else {
         _showErrorDialog('Impossible de charger les informations du médecin');
       }
@@ -417,6 +486,7 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
                 setState(() {
                   _selectedDate = date;
                   _selectedTimeSlot = null; // Reset time slot when date changes
+                  _generateAvailableTimeSlots(date); // Générer les créneaux pour la nouvelle date
                 });
               },
             ),
@@ -435,10 +505,31 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
             const SizedBox(height: 16),
             
             // Time slots
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: _timeSlots.map((timeSlot) {
+          _availableTimeSlots.isEmpty
+              ? Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        Icon(Icons.info_outline, color: Colors.orange),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'Aucun créneau disponible pour cette date.',
+                            style: TextStyle(
+                              color: Colors.orange[700],
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              : Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: _availableTimeSlots.map((timeSlot) {
                 final isSelected = _selectedTimeSlot == timeSlot;
                 return GestureDetector(
                   onTap: () {
